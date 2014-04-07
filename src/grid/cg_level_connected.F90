@@ -56,6 +56,8 @@ module cg_level_connected
       procedure :: vertical_prep              !< initialize prolongation and restriction targets; not PRIVATE because of single call in cg_leaves:update
       procedure, private :: vertical_b_prep   !< Initialize prolongation targets for fine-coarse boundary exchange
       procedure, private :: vertical_bf_prep  !< Initialize prolongation targets for fine->coarse flux exchange
+      procedure, private :: vertical_b_prep_SFC         !< Fast implementation, employing SFC properties.
+      procedure, private :: vertical_b_prep_bruteforce  !< Bruteforce implementation, more general but also way slower.
 
       procedure :: prolong                    !< interpolate the grid data which has the flag vital set to this%finer level
       procedure :: prolong_1var               !< interpolate the grid data in specified q field to this%finer level
@@ -401,6 +403,52 @@ contains
 
    subroutine vertical_b_prep(this)
 
+      use refinement, only: prefer_n_bruteforce
+
+      implicit none
+
+      class(cg_level_connected_T), intent(inout), target :: this !< the list on which to update connectivity data for fine-coarse boundary exchange
+
+      logical :: use_SFC
+
+      if (.not. this%need_vb_update) return
+
+      use_SFC = this%dot%is_blocky .and. .not. prefer_n_bruteforce
+      if (associated(this%coarser)) use_SFC = use_SFC .and. this%coarser%dot%is_blocky
+
+      if (use_SFC) then
+         call this%vertical_b_prep_SFC
+      else
+         call this%vertical_b_prep_bruteforce
+      end if
+
+   end subroutine vertical_b_prep
+
+!> \brief Fast implementation, employing SFC properties.
+
+   subroutine vertical_b_prep_SFC(this)
+
+      use dataio_pub, only: warn
+      use mpisetup,   only: master
+
+      implicit none
+
+      class(cg_level_connected_T), intent(inout), target :: this !< the list on which to update connectivity data for fine-coarse boundary exchange
+
+      logical, save :: firstcall = .true.
+
+      if (master .and. firstcall) call warn("[cg_level_connected:vertical_b_prep_SFC] Not implemented yet, using bruteforce")
+
+      call this%vertical_b_prep_bruteforce
+
+      firstcall = .false.
+
+   end subroutine vertical_b_prep_SFC
+
+!> \brief Bruteforce implementation, more general but also way slower.
+
+   subroutine vertical_b_prep_bruteforce(this)
+
       use cg_cost_data,   only: I_REFINE
       use cg_list,        only: cg_list_element
       use cg_list_global, only: all_cg
@@ -459,8 +507,6 @@ contains
       integer, parameter :: initial_size = 16 ! for seglist
       real, parameter :: grow_ratio = 2.      ! for seglist
       integer(kind=4) :: isl                          ! current position in seglist
-
-      if (.not. this%need_vb_update) return
 
       coarse => this%coarser
       if (.not. associated(coarse)) then
@@ -525,7 +571,7 @@ contains
                                              call t_pool%get(this%l%id, tag_min, tag_max)
                                              tag = tag_min
                                           endif
-                                          if (tag<0) call die("[cg_level_connected:vertical_b_prep] tag overflow")
+                                          if (tag<0) call die("[cg_level_connected:vertical_b_prep_bruteforce] tag overflow")
                                           segp (:, LO) = seg  (:, LO) - [ ix, iy, iz ] * per(:)
                                           segp (:, HI) = seg  (:, HI) - [ ix, iy, iz ] * per(:)
                                           ! Find 1-layer thick areas which will be involved in fine->coarse flux exchanges
@@ -538,7 +584,7 @@ contains
                                                 segf(dd, :) = segf(dd, :) + [ -1, 1 ]
                                                 segf = f2c(segf)
                                                 if (is_overlap(segf,segp2)) then
-                                                   if (found_flux) call die("[cg_level_connected:vertical_b_prep] matches multiple directions")
+                                                   if (found_flux) call die("[cg_level_connected:vertical_b_prep_bruteforce] matches multiple directions")
                                                    segf(:, LO) = max(segf(:, LO), segp2(:, LO))
                                                    segf(:, HI) = min(segf(:, HI), segp2(:, HI))
                                                    segp2 = segf
@@ -591,7 +637,7 @@ contains
          call cgl%cg%costs%stop(I_REFINE)
          cgl => cgl%nxt
       enddo
-      if (mpifc_cnt > 0) call warn("[cg_level_connected:vertical_b_prep] mixed MPI and fine-coarse boundary will be treated as FC here and then fixed in intenal_boundaries")
+      if (mpifc_cnt > 0) call warn("[cg_level_connected:vertical_b_prep_bruteforce] mixed MPI and fine-coarse boundary will be treated as FC here and then fixed in intenal_boundaries")
       !> \warning OPT Try to exclude parts that will be overwritten by guardcell exchange on the same level
 
       pscnt = 0
@@ -681,7 +727,7 @@ contains
 
       this%need_vb_update = .false.
 
-   end subroutine vertical_b_prep
+   end subroutine vertical_b_prep_bruteforce
 
 !>
 !! \brief Initialize targets for fine->coarse flux exchange
