@@ -98,16 +98,21 @@ contains
 
       use cg_leaves,        only: leaves
       use cg_list_global,   only: all_cg
+      use constants,        only: INVALID
       use constants,        only: xdim, zdim
       use domain,           only: dom
-      use named_array_list, only: wna
+      use named_array_list, only: wna, fna
 
       implicit none
 
       integer(kind=4) :: dir
 
       do dir = xdim, zdim
-         if (dom%has_dir(dir)) call all_cg%internal_boundaries_4d(wna%bi, dir=dir) ! should be more selective (modified leaves?)
+         if (dom%has_dir(dir)) then
+            if (wna%bi /= INVALID) call all_cg%internal_boundaries_4d(wna%bi, dir=dir)
+            if (fna%bi /= INVALID) call all_cg%internal_boundaries_fd(fna%bi, dir=dir)
+            ! should be more selective (modified leaves?)
+         endif
       enddo
 
       ! Do not fuse these loops
