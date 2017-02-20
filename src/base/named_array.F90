@@ -94,7 +94,10 @@ module named_array
       type(fc_3d_arr), dimension(ndims) :: f_arr
    contains
       procedure :: array_fc_cc_point
-      procedure :: cc_point => array_fc_cc_point !< cell-centered value (simplest interpolation: average)
+!      procedure :: arrayfc_span_ijkse
+      procedure :: arrayfc_span_ijkse8
+      generic, public :: span      => arrayfc_span_ijkse8 !, arrayfc_span, arrayfc_span_ijkse
+     procedure :: cc_point => array_fc_cc_point !< cell-centered value (simplest interpolation: average)
    end type named_array_fc
 
 contains
@@ -418,6 +421,28 @@ contains
       endif
 
    end function array3d_span
+
+!> \brief Get a selected range of values
+
+   function arrayfc_span_ijkse8(this, d, v) result(p3d)
+
+      use constants, only: xdim, ydim, zdim, LO, HI
+
+      implicit none
+
+      class(named_array_fc),            intent(inout) :: this
+      integer,                         intent(in)    :: d
+      integer(kind=8), dimension(:,:), intent(in)    :: v
+
+      real, dimension(:,:,:), pointer                :: p3d
+
+      if (.not.associated(this%f_arr(d)%arr)) then
+         p3d => null()
+      else
+         p3d => this%f_arr(d)%arr(v(xdim,LO):v(xdim,HI),v(ydim,LO):v(ydim,HI),v(zdim,LO):v(zdim,HI))
+      endif
+
+   end function arrayfc_span_ijkse8
 
 !> \brief Get a selected range of values
 

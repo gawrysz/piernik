@@ -255,7 +255,7 @@ contains
    subroutine internal_boundaries_local(this, ind, tgt, dmask)
 
       use cg_list,          only: cg_list_element
-      use constants,        only: xdim, cor_dim, INVALID
+      use constants,        only: xdim, ydim, zdim, cor_dim, INVALID
       use dataio_pub,       only: die
       use grid_cont,        only: grid_container, segment
 
@@ -273,6 +273,7 @@ contains
       real, dimension(:,:,:,:), pointer :: pa4d, pa4d_o
       logical                           :: active
       type(segment), pointer            :: i_seg, o_seg !< shortcuts
+      type(segment)                     :: f_seg
 
       cgl => this%first
       do while (associated(cgl))
@@ -321,7 +322,31 @@ contains
                            pa4d_o => i_seg%local%w(ind)%span(o_seg%se(:,:))
                            pa4d(:,:,:,:) = pa4d_o(:,:,:,:)
                            ! missing FACE
-                        case default
+                        case (FACE)
+                           f_seg%se = i_seg%se(:,:)
+                           ! modify
+                           pa3d => cg%f(ind)%span(xdim, f_seg%se)
+                           f_seg%se = o_seg%se(:,:)
+                           ! modify
+                           pa3d_o => i_seg%local%f(ind)%span(xdim, f_seg%se)
+                           pa3d(:,:,:) = pa3d_o(:,:,:)
+
+                           f_seg%se = i_seg%se(:,:)
+                           ! modify
+                           pa3d => cg%f(ind)%span(ydim, f_seg%se)
+                           f_seg%se = o_seg%se(:,:)
+                           ! modify
+                           pa3d_o => i_seg%local%f(ind)%span(ydim, f_seg%se)
+                           pa3d(:,:,:) = pa3d_o(:,:,:)
+
+                           f_seg%se = i_seg%se(:,:)
+                           ! modify
+                           pa3d => cg%f(ind)%span(zdim, f_seg%se)
+                           f_seg%se = o_seg%se(:,:)
+                           ! modify
+                           pa3d_o => i_seg%local%f(ind)%span(zdim, f_seg%se)
+                           pa3d(:,:,:) = pa3d_o(:,:,:)
+                       case default
                            call die("[cg_list_bnd:internal_boundaries_local] unknown target family (2)")
                         end select
                      endif
