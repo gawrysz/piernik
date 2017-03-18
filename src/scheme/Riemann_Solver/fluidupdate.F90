@@ -669,11 +669,20 @@ contains
 
         subroutine update(weights)
 
+           use constants,  only: xdim, ydim, zdim
+           use fluidindex, only: flind
+           use fluidtypes, only: component_fluid
+           use func,       only: ekin, emag
+           use global,     only: smalld, use_smalld, smallei
+
            implicit none
 
            real, optional, dimension(:), intent(in) :: weights
 
            real, dimension(:), allocatable :: w
+           class(component_fluid), pointer :: fl
+           real, dimension(size(u, 2)) :: kin_ener, int_ener, mag_ener
+           integer :: f
 
            if (present(weights)) then
               allocate(w(size(weights)))
@@ -698,6 +707,36 @@ contains
            b_cc(:,nx) = b_cc(:,nx-1)
 
            deallocate(w)
+
+           if (use_smalld) then
+              ! Apply minimal density
+              do f = 1, flind%fluids
+                 fl => flind%all_fluids(f)%fl
+                 where (u(fl%idn, :) < smalld)
+                    u(fl%idn, :) = smalld
+                    ! local_magic_mass
+                 end where
+              end do
+           end if
+
+           ! Apply mimnimal internal energy
+           ! Please note that vonstrained transport will update magnetic field to a slightly different values
+           do f = 1, flind%fluids
+              fl => flind%all_fluids(f)%fl
+              if (fl%has_energy) then
+                 kin_ener = ekin(u(fl%imx, :), u(fl%imy, :), u(fl%imz, :), u(fl%idn, :))
+                 if (fl%is_magnetized) then
+                    mag_ener = emag(b_cc(xdim, :), b_cc(ydim, :), b_cc(zdim, :))
+                    int_ener = u(fl%ien, :) - mag_ener
+                 endif
+                 int_ener = u(fl%ien, :) - kin_ener
+
+                 int_ener = max(int_ener, smallei)
+
+                 u(fl%ien, :) = int_ener + kin_ener
+                 if (fl%is_magnetized) u(fl%ien, :) = u(fl%ien, :) + mag_ener
+              endif
+           enddo
 
         end subroutine update
 
