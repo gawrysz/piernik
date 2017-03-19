@@ -673,7 +673,7 @@ contains
            use fluidindex, only: flind
            use fluidtypes, only: component_fluid
            use func,       only: ekin, emag
-           use global,     only: smalld, use_smalld, smallei
+           use global,     only: smalld, use_smalld, smallei, use_smallei
 
            implicit none
 
@@ -721,22 +721,24 @@ contains
 
            ! Apply mimnimal internal energy
            ! Please note that vonstrained transport will update magnetic field to a slightly different values
-           do f = 1, flind%fluids
-              fl => flind%all_fluids(f)%fl
-              if (fl%has_energy) then
-                 kin_ener = ekin(u(fl%imx, :), u(fl%imy, :), u(fl%imz, :), u(fl%idn, :))
-                 if (fl%is_magnetized) then
-                    mag_ener = emag(b_cc(xdim, :), b_cc(ydim, :), b_cc(zdim, :))
-                    int_ener = u(fl%ien, :) - mag_ener
+           if (use_smallei) then
+              do f = 1, flind%fluids
+                 fl => flind%all_fluids(f)%fl
+                 if (fl%has_energy) then
+                    kin_ener = ekin(u(fl%imx, :), u(fl%imy, :), u(fl%imz, :), u(fl%idn, :))
+                    if (fl%is_magnetized) then
+                       mag_ener = emag(b_cc(xdim, :), b_cc(ydim, :), b_cc(zdim, :))
+                       int_ener = u(fl%ien, :) - mag_ener
+                    endif
+                    int_ener = u(fl%ien, :) - kin_ener
+
+                    int_ener = max(int_ener, smallei)
+
+                    u(fl%ien, :) = int_ener + kin_ener
+                    if (fl%is_magnetized) u(fl%ien, :) = u(fl%ien, :) + mag_ener
                  endif
-                 int_ener = u(fl%ien, :) - kin_ener
-
-                 int_ener = max(int_ener, smallei)
-
-                 u(fl%ien, :) = int_ener + kin_ener
-                 if (fl%is_magnetized) u(fl%ien, :) = u(fl%ien, :) + mag_ener
-              endif
-           enddo
+              enddo
+           endif
 
         end subroutine update
 
