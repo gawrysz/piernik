@@ -720,7 +720,7 @@ contains
            end if
 
            ! Apply mimnimal internal energy
-           ! Please note that vonstrained transport will update magnetic field to a slightly different values
+           ! Please note that constrained transport will update magnetic field to a slightly different values
            if (use_smallei) then
               do f = 1, flind%fluids
                  fl => flind%all_fluids(f)%fl

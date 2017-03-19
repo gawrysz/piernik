@@ -106,8 +106,8 @@ contains
 !!   <tr><td>repeat_step      </td><td>.true. </td><td>logical value                        </td><td>\copydoc global::use_smalld       </td></tr>
 !!   <tr><td>smallp           </td><td>1.e-10 </td><td>real value                           </td><td>\copydoc global::smallp           </td></tr>
 !!   <tr><td>smalld           </td><td>1.e-10 </td><td>real value                           </td><td>\copydoc global::smalld           </td></tr>
-!!   <tr><td>use_smalld       </td><td>.true. </td><td>logical value                        </td><td>\copydoc global::use_smalld       </td></tr>
-!!   <tr><td>use_smallei      </td><td>.true. </td><td>logical value                        </td><td>\copydoc global::use_smallei      </td></tr>
+!!   <tr><td>use_smalld       </td><td>.false.</td><td>logical value                        </td><td>\copydoc global::use_smalld       </td></tr>
+!!   <tr><td>use_smallei      </td><td>.false.</td><td>logical value                        </td><td>\copydoc global::use_smallei      </td></tr>
 !!   <tr><td>smallei          </td><td>1.e-10 </td><td>real value                           </td><td>\copydoc global::smallei          </td></tr>
 !!   <tr><td>smallc           </td><td>1.e-10 </td><td>real value                           </td><td>\copydoc global::smallc           </td></tr>
 !!   <tr><td>integration_order</td><td>2      </td><td>1 or 2 (or 3 - currently unavailable)</td><td>\copydoc global::integration_order</td></tr>
@@ -163,8 +163,8 @@ contains
       cfr_smooth  = 0.0
       smallp      = big_float
       smalld      = big_float
-      use_smalld  = .true.
-      use_smallei = .true.
+      use_smalld  = .false.
+      use_smallei = .false.
       smallc      = 1.e-10
       smallei     = 1.e-10
       dt_initial  = -1.              !< negative value indicates automatic choice of initial timestep
