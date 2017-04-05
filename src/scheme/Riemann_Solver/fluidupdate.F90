@@ -728,10 +728,10 @@ contains
                     kin_ener = ekin(u(fl%imx, :), u(fl%imy, :), u(fl%imz, :), u(fl%idn, :))
                     if (fl%is_magnetized) then
                        mag_ener = emag(b_cc(xdim, :), b_cc(ydim, :), b_cc(zdim, :))
-                       int_ener = u(fl%ien, :) - mag_ener
-                    endif
-                    int_ener = u(fl%ien, :) - kin_ener
-
+                       int_ener = u(fl%ien, :) - mag_ener - kin_ener
+                    else
+                       int_ener = u(fl%ien, :) - kin_ener
+                    end if
                     int_ener = max(int_ener, smallei)
 
                     u(fl%ien, :) = int_ener + kin_ener
