@@ -129,6 +129,7 @@ contains
 
     use constants,  only: half, zero, one, xdim, ydim, zdim, idn, imx, imy, imz, ien
     use func,       only: operator(.notequals.), operator(.equals.)
+    use global,     only: use_smallei, smallei, use_smalld, smalld
 
     ! arguments
 
@@ -303,11 +304,13 @@ contains
           ! Left intermediate state conservative form
 
           u_starl(idn)  =  dn_l/slsm
+          if (use_smalld) u_starl(idn) = max(u_starl(idn), smalld)
           u_starl(imx:imz)  =  u_starl(idn)*v_starl
 
           ! Right intermediate state conservative form
 
           u_starr(idn)  =  dn_r/srsm
+          if (use_smalld) u_starr(idn) = max(u_starr(idn), smalld)
           u_starr(imx:imz)  =  u_starr(idn)*v_starr
 
           ! Total energy of left and right intermediate states Eq. (48)
