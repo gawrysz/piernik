@@ -48,16 +48,26 @@ def read_all_gdf_data(fname):
 data1 = read_all_gdf_data(sys.argv[1])
 data2 = read_all_gdf_data(sys.argv[2])
 
+keylen=0
 for key in data1.keys():
     if key in data2:
         rank = len(data1[key].shape)
         if (rank == 3):
-            print "L2 norm for field %14s = %g" % (key, np.linalg.norm(data1[key] - data2[key]))
+            keylen = max(keylen, len(key))
+        elif (rank == 4):
+            keylen = max(keylen, len(key) + 4)  # 4 is the correction for subfield enums
+
+
+for key in data1.keys():
+    if key in data2:
+        rank = len(data1[key].shape)
+        if (rank == 3):
+            print "L2 norm for field %*s = %g" % (keylen, key, np.linalg.norm(data1[key] - data2[key]))
             if (data1[key].shape[-1] == 1):
                 scipy.misc.imsave('_diff_%s.png' %key, data1[key][:,:,0] - data2[key][:,:,0])
         elif (rank == 4):
             for i in range(data1[key].shape[0]):
-                print "L2 norm for field %10s[%2d] = %g" % (key, i, np.linalg.norm(data1[key][i, :, :, :] - data2[key][i, :, :, :]))
+                print "L2 norm for field %*s[%2d] = %g" % (keylen - 4, key, i, np.linalg.norm(data1[key][i, :, :, :] - data2[key][i, :, :, :]))
                 if (data1[key].shape[-1] == 1):
                     scipy.misc.imsave('_diff_%s%d.png' % (key,i), data1[key][i,:,:,0] - data2[key][i,:,:,0])
         else:
