@@ -957,7 +957,7 @@ contains
          endif
 
          vstat%count = v
-         if (norm_lhs.notequals.zero) then
+         if (norm_lhs > zero) then
             vstat%factor(vstat%count) = norm_old/norm_lhs
          else
             vstat%factor(vstat%count) = huge(1.0)
