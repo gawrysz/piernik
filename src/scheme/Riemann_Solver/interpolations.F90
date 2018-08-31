@@ -150,7 +150,7 @@ contains
     case ('parabolic', 'PARABOLIC', 'ppm', '3')
        interp => parabolic
     case default
-       write(msg, '(4a)') "[interpolations:set_interpolations] unknown interpolation '", interpol_str, "'"
+       write(msg, '(3a)') "[interpolations:set_interpolations] unknown interpolation '", interpol_str, "'"
        call die(msg)
        interp => null()
     end select
