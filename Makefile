@@ -23,6 +23,7 @@
 #   'make pep8'            # run pep8 on all Python scripts, ignore long lines
 #                            (obsoleted by pycodestyle)
 #   'make pycodestyle'     # run pycodestyle on all Python scripts, ignore long lines
+#   'make shellcheck'      # run shellcheck on all Bash scripts
 #   'make chk_err_msg'     # check filenames in error messages
 #   'make doxy'            # generate/updare Doxygen documentation
 #   'make gold'            # run the gold tests from ./jenkins directory
@@ -108,6 +109,10 @@ gold-serial:
 
 gold-clean:
 	\rm -rf jenkins/workspace/*
+
+shellcheck:
+	echo ShellCheck
+	shellcheck `git ls-files | grep '\.sh$$'` bin/f90grep bin/f90sed bin/gdb_killall bin/gdb_wrap
 
 doxy:
 	doxygen piernik.doxy
