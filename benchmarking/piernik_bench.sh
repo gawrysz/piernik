@@ -57,7 +57,7 @@ awkfor() {
 }
 
 # some cleanup
-PROBLEM_LIST="maclaurin advection_test crtest jeans tearing sedov otvortex 3body"
+PROBLEM_LIST="maclaurin sedov advection_test crtest jeans tearing otvortex 3body"
 
 if [ $DO_MAKE == 1 ] ; then
     touch Makefile
@@ -103,12 +103,6 @@ if [ $DO_MAKE == 1 ] ; then
 
 	echo -n "Multi-thread make four objects   "
 	( time $MAKE -j $OBJ_LIST > /dev/null ) 2>&1 | awkfor
-	$MAKE $OBJ_LIST CL=1 > /dev/null
-
-	OBJ_LIST=$( get_n_problems 8 )
-
-	echo -n "Multi-thread make eight objects  "
-	( time $MAKE -j $OBJ_LIST > /dev/null ) 2>&1 | awkfor
     }
     echo
 fi
@@ -116,6 +110,9 @@ fi
 #
 # Benchmarking: Piernik
 #
+
+# RUN=mpirun
+RUN=mpiexec.hydra
 
 for p in $B_PROBLEM_LIST ; do
     for t in flood weak strong; do
@@ -156,9 +153,9 @@ for p in $B_PROBLEM_LIST ; do
 			    echo -n $i
 			    case $t in
 				weak)
-				    mpirun -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 1 ))' xmax = '$(( $i * 1 ))'/' 2> /dev/null ;;
+				    $RUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 1 ))' xmax = '$(( $i * 1 ))'/' 2> /dev/null ;;
 				strong)
-				    mpirun -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
+				    $RUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
 			    esac | grep "dWallClock" | awk 'BEGIN {t=0; n=0;} {if ($12 != 0.) {printf("%7.2f ", $12); t+=$12; n++;} } END {printf("%7.3f ", t/n)}'
 			fi
 			echo ;;
@@ -181,9 +178,9 @@ for p in $B_PROBLEM_LIST ; do
 			    echo -n $i
 			    case $t in
 				weak)
-				    mpirun -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 512 ))' xmax = '$(( $i * 512 ))'/' 2> /dev/null ;;
+				    $RUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 512 ))' xmax = '$(( $i * 512 ))'/' 2> /dev/null ;;
 				strong)
-				    mpirun -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
+				    $RUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
 			    esac | grep "C1-cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
 			    awk '/Spent/ { printf("%s ",$5) }' *log
 			fi
@@ -216,7 +213,7 @@ for p in $B_PROBLEM_LIST ; do
 				    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
 				    REQMEM=$( echo $NX $i | awk '{print int($1**3 * $2 * 0.00060)}' )
 				    if [ $MEMM -gt $REQMEM ] ; then
-					mpirun -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &MPI_BLOCKS AMR_bsize = 3*32 /' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}'
+					$RUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &MPI_BLOCKS AMR_bsize = 3*32 /' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}'
 				    else
 					SKIP=1
 				    fi ;;
@@ -224,7 +221,7 @@ for p in $B_PROBLEM_LIST ; do
 				    NX=$( echo 128 $SCALE | awk '{print int($1*$2)}')
 				    REQMEM=$( echo $NX | awk '{print int($1**3 * 0.00060)}' )
 				    if [ $MEMM -gt $REQMEM ] ; then
-					mpirun -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &MPI_BLOCKS AMR_bsize = 3*32 /' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}'
+					$RUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &MPI_BLOCKS AMR_bsize = 3*32 /' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}'
 				    else
 					SKIP=1
 				    fi ;;
