@@ -353,6 +353,7 @@ class PPPset:
         else:
             self.out += 'show title; print "No data to plot"'
 
+
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                  description="Piernik Precise Profiling Presenter", epilog="""
 examples:
