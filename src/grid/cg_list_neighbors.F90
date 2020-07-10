@@ -140,7 +140,8 @@ contains
       call ppp_main%start(fn_label, PPP_AMR)
 
       if (do_external_corners) then
-         write(msg, '(3a)') "[cg_list_neighbors:find_neighbors] do_external_corners implemented experimentally (", trim(merge("SFC       ", "bruteforce", this%dot%is_blocky .and. .not. prefer_n_bruteforce)), ")"
+         write(msg, '(3a)') "[cg_list_neighbors:find_neighbors] do_external_corners implemented experimentally (", &
+              trim(merge("SFC       ", "bruteforce", this%dot%is_blocky .and. .not. prefer_n_bruteforce)), ")"
          if (master .and. firstcall) call warn(msg)
          firstcall = .false.
       endif
@@ -189,7 +190,11 @@ contains
                if (allocated(i_bnd(d)%seg)) then
                   if (size(i_bnd(d)%seg) /= size(o_bnd(d)%seg)) call warn("[cg_list_neighbors:print_bnd_list] size(i_bnd(d)%seg) /= size(o_bnd(d)%seg)")
                   do i = lbound(i_bnd(d)%seg, dim=1), ubound(i_bnd(d)%seg, dim=1)
-                     write(msg,'(a,i5,a,i2,a,i4,a,i2,a,i4,2(a,3i6,a,3i6,a,i4,a,i8,l2,a,i8))') "cln:fn+ @", proc, " ^", this%l%id, " gid#", cgl%cg%grid_id, " dir=", d, " #i=", i, " [", i_bnd(d)%seg(i)%se(:, LO), " ]x[ ", i_bnd(d)%seg(i)%se(:, HI), " ] -> @", i_bnd(d)%seg(i)%proc, " %",i_bnd(d)%seg(i)%tag, associated(i_bnd(d)%seg(i)%local), " cnt=", product(i_bnd(d)%seg(i)%se(:, HI) - i_bnd(d)%seg(i)%se(:, LO) + 1), " [ ", o_bnd(d)%seg(i)%se(:, LO), " ]x[ ", o_bnd(d)%seg(i)%se(:, HI), " ] -> @", o_bnd(d)%seg(i)%proc, " %",o_bnd(d)%seg(i)%tag, associated(o_bnd(d)%seg(i)%local), " cnt=", product(o_bnd(d)%seg(i)%se(:, HI) - o_bnd(d)%seg(i)%se(:, LO) + 1)
+                     write(msg, '(a,i5,a,i2,a,i4,a,i2,a,i4,2(a,3i6,a,3i6,a,i4,a,i8,l2,a,i8))') "cln:fn+ @", proc, " ^", this%l%id, " gid#", cgl%cg%grid_id, " dir=", d, &
+                          " #i=", i, " [", i_bnd(d)%seg(i)%se(:, LO), " ]x[ ", i_bnd(d)%seg(i)%se(:, HI), " ] -> @", i_bnd(d)%seg(i)%proc, " %", i_bnd(d)%seg(i)%tag, &
+                          associated(i_bnd(d)%seg(i)%local), " cnt=", product(i_bnd(d)%seg(i)%se(:, HI) - i_bnd(d)%seg(i)%se(:, LO) + 1), " [ ", o_bnd(d)%seg(i)%se(:, LO), &
+                          " ]x[ ", o_bnd(d)%seg(i)%se(:, HI), " ] -> @", o_bnd(d)%seg(i)%proc, " %",o_bnd(d)%seg(i)%tag, associated(o_bnd(d)%seg(i)%local), &
+                          " cnt=", product(o_bnd(d)%seg(i)%se(:, HI) - o_bnd(d)%seg(i)%se(:, LO) + 1)
                      call printinfo(msg, .true.)
                   enddo
                endif
