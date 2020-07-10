@@ -193,7 +193,11 @@ contains
          if (tmpdir(lchar_tmpdir:lchar_tmpdir) == '/') lchar_tmpdir = lchar_tmpdir - 1
       endif
 
+#ifdef _CRAYFTN
+      write(pid, '(i5)') 12345
+#else /* ! _CRAYFTN */
       write(pid, '(i5)') getpid()
+#endif /* ! _CRAYFTN */
 
       ! The filenames here will be unique, unless multiple Piernik instances
       ! from multiple machines are started in the same shared directory.

@@ -121,7 +121,12 @@ contains
 
       system_mem_usage = INVALID
 
+#ifdef _CRAYFTN
+      write(pid_char, '(i8)') 12345678
+#else /* ! _CRAYFTN */
       write(pid_char, '(i8)') getpid()
+#endif  /* ! _CRAYFTN */
+
       filename = '/proc/' // trim(adjustl(pid_char)) // '/status'
 
       inquire (file=filename, exist=io_exists)
