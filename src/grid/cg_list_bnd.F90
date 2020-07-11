@@ -581,7 +581,7 @@ contains
       enddo
 
       allocate(mpistatus(MPI_STATUS_SIZE, nr))
-      call MPI_Waitall(nr, req(:nr), mpistatus, mpi_err)
+      call MPI_Waitall(nr, req(:nr), mpistatus, mpi_err)  ! here MPICH in Fedora 31 died so often and so randomly :-(
       deallocate(mpistatus)
 
       ! Move the received data from buffers to the right place. Deallocate buffers
