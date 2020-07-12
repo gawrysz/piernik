@@ -3,6 +3,8 @@ runs/
 *~
 .lastsetup
 *.pyc
+python/DirWalk.pyc
+python/__pycache__/
 .setuprc
 html/
 dep.png
