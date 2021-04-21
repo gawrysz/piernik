@@ -104,7 +104,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("crdiffusion.F90:107")
 
          wcr => cg%w(wna%ind(wcr_n))%arr
          if (.not. associated(wcr)) call die("[crdiffusion:all_wcr_boundaries] cannot get wcr")
@@ -200,7 +200,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("crdiffusion.F90:203")
 
          wcr => cg%w(wcri)%arr
          if (.not. associated(wcr)) call die("[crdiffusion:cr_diff] cannot get wcr")
@@ -265,7 +265,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("crdiffusion.F90:268")
 
          ndm = cg%lhn(:,HI) - idm
          hdm = cg%lhn(:,LO) ; hdm(crdim) = cg%lhn(crdim,HI)

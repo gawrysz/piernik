@@ -152,7 +152,7 @@ contains
 
          if (ind > ubound(cgl%cg%q(:), dim=1) .or. ind < lbound(cgl%cg%q(:), dim=1)) call die("[cg_list_dataop:get_extremum] Wrong index")
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("cg_list_dataop.F90:155")
 
             tab => cgl%cg%q(ind)%span(cgl%cg%ijkse)
             select case (minmax)
@@ -237,7 +237,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:240")
 
          cgl%cg%q(ind)%arr(:, :, :) = val
 
@@ -268,7 +268,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:271")
 
          cgl%cg%q(i_to)%arr(:, :, :) = cgl%cg%q(i_from)%arr(:, :, :)
 
@@ -300,7 +300,7 @@ contains
       call ppp_main%start(qwc_label, PPP_AMR)
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:303")
 
          cgl%cg%w(w_to)%arr(w_ind, :, :, :) = cgl%cg%q(q_from)%arr(:, :, :)
 
@@ -333,7 +333,7 @@ contains
       call ppp_main%start(wqc_label, PPP_AMR)
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:336")
 
          cgl%cg%q(q_to)%arr(:, :, :) = cgl%cg%w(w_from)%arr(w_ind, :, :, :)
 
@@ -362,7 +362,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:365")
 
          cgl%cg%q(i_to)%arr(:, :, :) = cgl%cg%q(i_to)%arr(:, :, :) + cgl%cg%q(i_add)%arr(:, :, :)
 
@@ -390,7 +390,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:393")
 
          cgl%cg%q(i_add)%arr(:, :, :) = cgl%cg%q(i_add)%arr(:, :, :) + val
 
@@ -444,7 +444,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:447")
 
          cgl%cg%q(ind)%arr(:, :, :) = iv_safe(lbound(iv_safe, dim=1))%val * cgl%cg%q(iv_safe(lbound(iv_safe, dim=1))%ind)%arr(:, :, :)
          do i = lbound(iv_safe, dim=1)+1, ubound(iv_safe, dim=1)
@@ -493,7 +493,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_dataop.F90:496")
 
          select case (dom%geometry_type)
             case (GEO_XYZ)
@@ -564,7 +564,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_dataop.F90:567")
 
          select case (dom%geometry_type)
             case (GEO_XYZ)
@@ -614,7 +614,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:617")
 
          scalar_product = scalar_product + sum(cgl%cg%q(var1)%span(cgl%cg%ijkse)*cgl%cg%q(var2)%span(cgl%cg%ijkse), mask=cgl%cg%leafmap)
          ! do we need any weighting by volume of elements?
@@ -643,7 +643,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:646")
 
          do i = lbound(cgl%cg%q(ind)%arr, dim=1), ubound(cgl%cg%q(ind)%arr, dim=1)
             cgl%cg%q(ind)%arr(i, :, :) = cgl%cg%q(ind)%arr(i, :, :) * cgl%cg%x(i)
@@ -675,7 +675,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:678")
 
          do i = lbound(cgl%cg%q(ind)%arr, dim=1), ubound(cgl%cg%q(ind)%arr, dim=1)
             if (cgl%cg%x(i).equals.zero) call die("[cg_list_dataop:div_by_r] cannot divide by radius == 0")
@@ -716,7 +716,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_list_dataop.F90:719")
 
          cgl%cg%mg%bnd_x(:,:,:) = value
          cgl%cg%mg%bnd_y(:,:,:) = value

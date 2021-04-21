@@ -433,7 +433,7 @@ contains
 
       cgl => first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("unified_ref_crit_list.F90:436")
 
          call this%mark(cgl%cg)
 
@@ -471,7 +471,7 @@ contains
             call ppp_main%start(plot_label, PPP_AMR + PPP_IO)
             cgl => first
             do while (associated(cgl))
-               call cgl%cg%costs%start
+               call cgl%cg%costs%start("unified_ref_crit_list.F90:474")
 
                call p%mark(cgl%cg)
 

@@ -763,7 +763,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigrid_diffusion.F90:766")
 
          do idir = xdim, zdim
             if (dom%has_dir(idir)) then
@@ -849,7 +849,7 @@ contains
          cgl => curl%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("multigrid_diffusion.F90:852")
 
             i1 = cg%is; id = 1 ! mv to multigridvars, init_multigrid
             j1 = cg%js; jd = 1

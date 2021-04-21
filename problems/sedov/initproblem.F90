@@ -209,7 +209,7 @@ contains
          cgl => leaves%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("initproblem.F90:212")
 
             do k = cg%lhn(zdim,LO), cg%lhn(zdim,HI)
                do j = cg%lhn(ydim,LO), cg%lhn(ydim,HI)

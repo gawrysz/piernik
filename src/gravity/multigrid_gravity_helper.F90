@@ -138,7 +138,7 @@ contains
       cgl => curl%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigrid_gravity_helper.F90:141")
 
          p3 => cg%q(src)%span(cg%ijkse)
          cg%mg%src(:, :, :) = p3

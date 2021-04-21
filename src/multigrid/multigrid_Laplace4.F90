@@ -122,7 +122,7 @@ contains
       cgl => cg_llst%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigrid_Laplace4.F90:125")
 
          Lx1 = c41 * cg%idx2
          Ly1 = c41 * cg%idy2

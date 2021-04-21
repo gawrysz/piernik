@@ -112,7 +112,7 @@ contains
       ! it can be converted to URC routine but it must be guaranteed that it goes after parents_prevent_derefinement because it modifies cg%flag%map
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("refinement_update.F90:115")
 
          call cgl%cg%refinemap2SFC_list
 
@@ -144,7 +144,7 @@ contains
             ! formerly cg_list::clear_ref_flags
             cgl => curl%first
             do while (associated(cgl))
-               call cgl%cg%costs%start
+               call cgl%cg%costs%start("refinement_update.F90:147")
 
                call cgl%cg%flag%init
 
@@ -176,7 +176,7 @@ contains
 
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("refinement_update.F90:179")
 
             associate (cg => cgl%cg)
                if (cg%flag%get(int(cg%ijkse, kind=8), cg%leafmap)) cg%flag%derefine = .false.
@@ -209,7 +209,7 @@ contains
          cnt = 0
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("refinement_update.F90:212")
 
             if (cgl%cg%flag%get(int(cgl%cg%ijkse, kind=8), cgl%cg%leafmap)) cnt = cnt + 1
 
@@ -299,7 +299,7 @@ contains
       cgl => lev%first
       do while (associated(cgl))
          associate (cg => cgl%cg)
-            call cg%costs%start
+            call cg%costs%start("refinement_update.F90:302")
 
             if (cg%flag%get()) then
                if (allocated(cg%ri_tgt%seg)) then
@@ -728,7 +728,7 @@ contains
 
       if (.not. associated(curl%finer)) call finest%add_finer
 
-      call cgl%cg%costs%start
+      call cgl%cg%costs%start("refinement_update.F90:731")
       associate (flag => cgl%cg%flag)
          if (flag%pending_blocks()) then
             do b = lbound(flag%SFC_refine_list, dim=1), ubound(flag%SFC_refine_list, dim=1)
@@ -791,7 +791,7 @@ contains
       ! Put a level number to the working array, restrict it and exchange internal boundaries
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("refinement_update.F90:794")
 
          cgl%cg%wa = cgl%cg%l%id
 
@@ -814,7 +814,7 @@ contains
       do while (associated(cgl))
 
          associate (cg => cgl%cg)
-            call cg%costs%start
+            call cg%costs%start("refinement_update.F90:817")
 
             call cg%flag%reset_blocks
             call cg%flag%clear

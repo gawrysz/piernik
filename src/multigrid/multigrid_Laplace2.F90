@@ -92,7 +92,7 @@ contains
       cgl => cg_llst%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigrid_Laplace2.F90:95")
 
          ! Coefficients for a simplest 3-point Laplacian operator: [ 1, -2, 1 ]
          ! for 2D and 1D setups appropriate elements of [ Lx, Ly, Lz ] should be == 0.
@@ -242,7 +242,7 @@ contains
          cgl => curl%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("multigrid_Laplace2.F90:245")
 
             if (dom%geometry_type == GEO_RPZ) then
                deallocate(crx, crx1, cry, crz, cr)

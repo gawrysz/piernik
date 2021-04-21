@@ -227,7 +227,7 @@ contains
          cgl => this%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("cg_level_connected.F90:230")
 
             if (allocated(ps)) call die("cll:vp f a ps")
             fmax = 0
@@ -310,7 +310,7 @@ contains
          cgl => this%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("cg_level_connected.F90:313")
 
             if (allocated(ps)) call die("cll:vp c a ps")
             fmax = 0
@@ -491,7 +491,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_level_connected.F90:494")
 
          ls = isl
 
@@ -721,7 +721,7 @@ contains
 
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_level_connected.F90:724")
 
          associate ( seg => cgl%cg%pib_tgt%seg )
          if (allocated(cgl%cg%rof_tgt%seg)) deallocate(cgl%cg%rof_tgt%seg)
@@ -773,7 +773,7 @@ contains
          cgl => coarse%first
 
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("cg_level_connected.F90:776")
 
             if (allocated(cgl%cg%rif_tgt%seg)) deallocate(cgl%cg%rif_tgt%seg)
             do dd = xdim, zdim
@@ -992,7 +992,7 @@ contains
       cgl => fine%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:995")
 
          associate( seg => cg%pi_tgt%seg )
          if (allocated(cg%pi_tgt%seg)) then
@@ -1017,7 +1017,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:1020")
 
          associate( seg => cg%po_tgt%seg )
          do g = lbound(seg(:), dim=1), ubound(seg(:), dim=1)
@@ -1048,7 +1048,7 @@ contains
       cgl => fine%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:1051")
 
          if (allocated(cg%pi_tgt%seg) .and. .not. cg%ignore_prolongation) then
 
@@ -1205,7 +1205,7 @@ contains
       ! be ready to receive everything into right buffers
       cgl => this%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_level_connected.F90:1208")
 
          associate ( seg => cgl%cg%pib_tgt%seg )
          if (allocated(cgl%cg%pib_tgt%seg)) then
@@ -1230,7 +1230,7 @@ contains
       ! send coarse data
       cgl => coarse%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("cg_level_connected.F90:1233")
 
          associate( seg => cgl%cg%pob_tgt%seg )
          if (allocated(cgl%cg%pob_tgt%seg)) then
@@ -1268,7 +1268,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:1271")
 
          associate ( seg => cg%pib_tgt%seg )
          if (allocated(cg%pib_tgt%seg)) then
@@ -1527,7 +1527,7 @@ contains
       cgl => coarse%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:1530")
 
          if (allocated(cg%ri_tgt%seg)) then
             do g = lbound(cg%ri_tgt%seg(:), dim=1), ubound(cg%ri_tgt%seg(:), dim=1)
@@ -1553,7 +1553,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:1556")
 
          do g = lbound(cg%ro_tgt%seg(:), dim=1), ubound(cg%ro_tgt%seg(:), dim=1)
 
@@ -1659,7 +1659,7 @@ contains
       cgl => coarse%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_level_connected.F90:1662")
 
          if (allocated(cg%ri_tgt%seg)) then
 

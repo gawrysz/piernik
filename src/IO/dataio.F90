@@ -1047,7 +1047,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("dataio.F90:1050")
 
          pu => cg%w(wna%fi)%span(cg%ijkse)
          if (wna%bi > INVALID) pb => cg%w(wna%bi)%span(cg%ijkse)
@@ -1313,7 +1313,7 @@ contains
       pr => fl%snap
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1316")
 
          cgl%cg%wa = cgl%cg%u(fl%idn,:,:,:)
 
@@ -1325,7 +1325,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1328")
 
          where (cgl%cg%u(fl%idn,:, :, :) > 0.0)
             cgl%cg%wa = abs(cgl%cg%u(fl%imx,:, :, :)/cgl%cg%u(fl%idn,:, :, :))
@@ -1342,7 +1342,7 @@ contains
       if (is_multicg) then
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1345")
 
             cgl%cg%wa = cfl * cgl%cg%dx / (cgl%cg%wa + small)
 
@@ -1357,7 +1357,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1360")
 
          if (use_fargo) then
             do i = cgl%cg%is, cgl%cg%ie
@@ -1390,7 +1390,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1393")
 
          if (is_multicg) cgl%cg%wa = cfl * cgl%cg%dy / (cgl%cg%wa + small)
          if (use_fargo) then
@@ -1415,7 +1415,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1418")
 
          where (cgl%cg%u(fl%idn,:, :, :) > 0.0)
             cgl%cg%wa = abs(cgl%cg%u(fl%imz,:, :, :)/cgl%cg%u(fl%idn,:, :, :))
@@ -1432,7 +1432,7 @@ contains
       if (use_fargo) then
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1435")
 
             do i = cgl%cg%is, cgl%cg%ie
                cgl%cg%wa(i, : ,:) = &
@@ -1452,7 +1452,7 @@ contains
       if (is_multicg) then
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1455")
 
             cgl%cg%wa = cfl * cgl%cg%dz / (cgl%cg%wa + small)
 
@@ -1488,7 +1488,7 @@ contains
       pr%dtcs_min%val    = huge(1.)
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1491")
 
          pr%dtcs_min%val   = min(pr%dtcs_min%val,   (cfl * cgl%cg%dxmn) / (max(fl%cs, maxval(cgl%cg%cs_iso2(cgl%cg%is:cgl%cg%ie, cgl%cg%js:cgl%cg%je, cgl%cg%ks:cgl%cg%ke), mask=cgl%cg%leafmap)) + small))
          pr%dtcs_min%assoc = max(pr%dtcs_min%assoc, max(fl%cs, maxval(cgl%cg%cs_iso2(cgl%cg%is:cgl%cg%ie, cgl%cg%js:cgl%cg%je, cgl%cg%ks:cgl%cg%ke), mask=cgl%cg%leafmap)))
@@ -1508,7 +1508,7 @@ contains
       if (fl%tag /= DST) then
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1511")
 
             cgl%cg%wa(:,:,:) = cgl%cg%u(fl%ien,:,:,:) - ekin(cgl%cg%u(fl%imx,:,:,:), cgl%cg%u(fl%imy,:,:,:), cgl%cg%u(fl%imz,:,:,:), cgl%cg%u(fl%idn,:,:,:)) ! eint
 #ifdef MAGNETIC
@@ -1524,7 +1524,7 @@ contains
 
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1527")
 
             cgl%cg%wa(:,:,:) = fl%gam*cgl%cg%wa(:,:,:)/cgl%cg%u(fl%idn,:,:,:) ! sound speed squared
 
@@ -1537,7 +1537,7 @@ contains
 
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1540")
 
             if (cgl%cg%dxmn >= sqrt(huge(1.0))) then
                dxmn_safe = sqrt(huge(1.0))
@@ -1554,7 +1554,7 @@ contains
 
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1557")
 
             cgl%cg%wa(:,:,:) = (mH * cgl%cg%wa(:,:,:))/ (kboltz * fl%gam) ! temperature
 
@@ -1675,7 +1675,7 @@ contains
       dxmn_safe = sqrt(huge(1.0))
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1678")
 
          dxmn_safe = min(dxmn_safe, cgl%cg%dxmn)
          cgl%cg%wa(:,:,:) = sqrt(sq_sum3(cgl%cg%b(xdim,:,:,:), cgl%cg%b(ydim,:,:,:), cgl%cg%b(zdim,:,:,:)))
@@ -1693,7 +1693,7 @@ contains
       if (has_ion) then
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1696")
 
             cgl%cg%wa(:,:,:)  = cgl%cg%wa(:,:,:) / sqrt(cgl%cg%u(flind%ion%idn,:,:,:))
 
@@ -1714,7 +1714,7 @@ contains
       var_i = qna%ind(gpot_n)
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1717")
 
          p => cgl%cg%q(qna%wai)%span(cgl%cg%ijkse)
          p = abs((cgl%cg%q(var_i)%span(cgl%cg%ijkse+D(xdim,:,:)) - cgl%cg%q(var_i)%span(cgl%cg%ijkse))*cgl%cg%idx)
@@ -1726,7 +1726,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1729")
 
          p => cgl%cg%q(qna%wai)%span(cgl%cg%ijkse)
          p = abs((cgl%cg%q(var_i)%span(cgl%cg%ijkse+D(ydim,:,:)) - cgl%cg%q(var_i)%span(cgl%cg%ijkse))*cgl%cg%idy)
@@ -1738,7 +1738,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1741")
 
          p => cgl%cg%q(qna%wai)%span(cgl%cg%ijkse)
          p = abs((cgl%cg%q(var_i)%span(cgl%cg%ijkse+D(zdim,:,:)) - cgl%cg%q(var_i)%span(cgl%cg%ijkse))*cgl%cg%idz)
@@ -1752,7 +1752,7 @@ contains
 #ifdef MAGNETIC
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1755")
 
          p => cgl%cg%q(qna%wai)%span(cgl%cg%ijkse)
          p = (cgl%cg%w(wna%bi)%span(xdim,cgl%cg%ijkse+D(xdim,:,:)) - cgl%cg%w(wna%bi)%span(xdim,cgl%cg%ijkse))*cgl%cg%dy*cgl%cg%dz &
@@ -1776,7 +1776,7 @@ contains
 #ifdef COSM_RAYS
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1779")
 
 #ifdef COSM_RAY_ELECTRONS
          cgl%cg%wa        = sum(cgl%cg%u(iarr_all_crn,:,:,:),1)
@@ -1794,7 +1794,7 @@ contains
 #ifdef COSM_RAY_ELECTRONS
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1797")
 
          cgl%cg%wa = sum(cgl%cg%u(iarr_cre_n,:,:,:),1)
 
@@ -1806,7 +1806,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1809")
 
          cgl%cg%wa = sum(cgl%cg%u(iarr_cre_e,:,:,:),1)
 
@@ -1820,7 +1820,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("dataio.F90:1823")
 
          p => cgl%cg%q(qna%wai)%span(cgl%cg%ijkse)
          p =   (cgl%cg%u(flind%ion%imx, cgl%cg%is+dom%D_x:cgl%cg%ie+dom%D_x, cgl%cg%js        :cgl%cg%je,         cgl%cg%ks        :cgl%cg%ke        ) / &
@@ -1853,7 +1853,7 @@ contains
       if (has_interactions) then
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("dataio.F90:1856")
 
             cgl%cg%wa = L2norm(cgl%cg%u(flind%dst%imx,:,:,:),cgl%cg%u(flind%dst%imy,:,:,:),cgl%cg%u(flind%dst%imz,:,:,:),cgl%cg%u(flind%neu%imx,:,:,:),cgl%cg%u(flind%neu%imy,:,:,:),cgl%cg%u(flind%neu%imz,:,:,:) ) * cgl%cg%u(flind%dst%idn,:,:,:)
 

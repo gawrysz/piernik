@@ -129,7 +129,7 @@ contains
       cgl => cg_llst%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigrid_Laplace4M.F90:132")
 
          Lxy = 0. ; if (dom%has_dir(xdim) .and. dom%has_dir(ydim)) Lxy = (cg%idx2 + cg%idy2) / 12.
          Lxz = 0. ; if (dom%has_dir(xdim) .and. dom%has_dir(zdim)) Lxz = (cg%idx2 + cg%idz2) / 12.
@@ -250,7 +250,7 @@ contains
          cgl => curl%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("multigrid_Laplace4M.F90:253")
 
             Lxy = 0. ; if (dom%has_dir(xdim) .and. dom%has_dir(ydim)) Lxy = (cg%idx2 + cg%idy2) / 12.
             Lxz = 0. ; if (dom%has_dir(xdim) .and. dom%has_dir(zdim)) Lxz = (cg%idx2 + cg%idz2) / 12.

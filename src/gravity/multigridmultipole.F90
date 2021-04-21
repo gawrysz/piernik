@@ -317,7 +317,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigridmultipole.F90:320")
 
          associate( &
             bnd_x => cg%mg%bnd_x, &
@@ -414,7 +414,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigridmultipole.F90:417")
 
          if (any(cg%ext_bnd(xdim, :))) then
             if (dom%geometry_type == GEO_RPZ) geofac(:) = [ cg%fbnd(xdim, LO), cg%fbnd(xdim, HI) ]
@@ -525,7 +525,7 @@ contains
 
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigridmultipole.F90:528")
 
          if (cg%l%id <= level%l%id) then
             do k = cg%ks, cg%ke
@@ -573,7 +573,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigridmultipole.F90:576")
 
          pset => cg%pset%first
          do while (associated(pset))
@@ -635,7 +635,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("multigridmultipole.F90:638")
 
          if (any(cg%ext_bnd(xdim, :))) then
             do j = cg%js, cg%je
@@ -743,7 +743,7 @@ contains
          ! an ELEMENTAL implementation of moments2pot would allow simplifications of this routine.
          ! At least the loop over i may be worth stripping.
          associate (cg => cgl%cg)
-            call cg%costs%start
+            call cg%costs%start("multigridmultipole.F90:746")
 
             do k = cg%ks, cg%ke
                do j = cg%js, cg%je

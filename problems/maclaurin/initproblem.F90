@@ -273,7 +273,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("initproblem.F90:276")
 
          if (a1 > 0.) then
             do k = cg%ks, cg%ke

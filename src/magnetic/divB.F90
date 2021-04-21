@@ -234,7 +234,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("divB.F90:237")
 
          cgl%cg%q(idivB)%arr(                                cgl%cg%is:cgl%cg%ie, cgl%cg%js:cgl%cg%je, cgl%cg%ks:cgl%cg%ke) = sixpoint(cgl%cg, coeff(I_ONE), I_ONE, ccB)
          do i = I_TWO, max_c

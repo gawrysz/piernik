@@ -214,7 +214,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("resistivity.F90:217")
 
          eta => cg%q(qna%ind(eta_n))%arr
          dbx => cg%q(qna%ind(dbx_n))%arr
@@ -341,7 +341,7 @@ contains
          cgl => leaves%first
          do while (associated(cgl))
             cg => cgl%cg
-            call cg%costs%start
+            call cg%costs%start("resistivity.F90:344")
 
             dt_eta = min(dt_eta, cfl_resist * cg%dxmn**2 / (2. * etamax%val))
 #ifndef ISO
@@ -464,7 +464,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("resistivity.F90:467")
 
          wcu_i = qna%ind(wcu_n)
          eta_i = qna%ind(eta_n)
@@ -488,7 +488,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cg%costs%start
+         call cg%costs%start("resistivity.F90:491")
 
          do dir = xdim, zdim
             emf = idm(etadir,dir) + 2_INT4

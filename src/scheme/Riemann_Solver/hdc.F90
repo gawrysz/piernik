@@ -113,7 +113,7 @@ contains
 
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("hdc.F90:116")
 
          if (ch_grid) then
             ! Rely only on grid properties. Psi is an artificial field and psi waves have to propagate as fast as stability permits.
@@ -160,7 +160,7 @@ contains
      if (dom%geometry_type /= GEO_XYZ) call die("[hdc:update_chspeed] non-cartesian geometry not implemented yet.")
      cgl => leaves%first
      do while (associated(cgl))
-        call cgl%cg%costs%start
+        call cgl%cg%costs%start("hdc.F90:163")
 
         if (ch_grid) then
            ! Rely only on grid properties. Psi is an artificial field and psi waves have to propagate as fast as stability permits.
@@ -307,7 +307,7 @@ contains
         fac = 0.
         cgl => leaves%first
         do while (associated(cgl))
-           call cgl%cg%costs%start
+           call cgl%cg%costs%start("hdc.F90:310")
 
            fac = max(fac, glm_alpha*chspeed/(minval(cgl%cg%dl, mask=dom%has_dir)/dt))
 
@@ -319,7 +319,7 @@ contains
 
         cgl => leaves%first
         do while (associated(cgl))
-           call cgl%cg%costs%start
+           call cgl%cg%costs%start("hdc.F90:322")
 
            cgl%cg%q(qna%ind(psi_n))%arr =  cgl%cg%q(qna%ind(psi_n))%arr * fac
 

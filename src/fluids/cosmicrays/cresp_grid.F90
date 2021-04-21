@@ -135,7 +135,7 @@ module cresp_grid
 
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cresp_grid.F90:138")
 
          do k = cg%ks, cg%ke
             do j = cg%js, cg%je
@@ -193,7 +193,7 @@ module cresp_grid
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cresp_grid.F90:196")
 
          do k = cg%ks, cg%ke
             do j = cg%js, cg%je

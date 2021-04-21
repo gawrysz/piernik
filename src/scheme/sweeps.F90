@@ -81,7 +81,7 @@ contains
       nr = 0
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("sweeps.F90:84")
 
          cgl%cg%processed = .false.
          cgl%cg%finebnd(cdim, LO)%uflx(:, :, :) = 0. !> \warning overkill
@@ -411,7 +411,7 @@ contains
             call ppp_main%start(solve_cgs_label)
             do while (associated(cgl))
                cg => cgl%cg
-               call cg%costs%start
+               call cg%costs%start("sweeps.F90:414")
 
                if (.not. cg%processed) then
                   call recv_cg_finebnd(cdim, cg, all_received)
@@ -423,13 +423,13 @@ contains
                      ! The tricky part is that we need to fit all the switching inside the conditional part
                      ! adn don't mess pairing and don't let them to nest.
 
-                     call cg%costs%start
+                     call cg%costs%start("sweeps.F90:426")
                      call solve_cg(cg, cdim, istep, fargo_vel)
                      call cg%costs%stop(I_MHD)
 
                      call ppp_main%stop(cg_label, PPP_CG)
 
-                     call cg%costs%start
+                     call cg%costs%start("sweeps.F90:432")
                      call send_cg_coarsebnd(cdim, cg, nr)
                      blocks_done = blocks_done + 1
                   else

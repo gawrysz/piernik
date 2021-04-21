@@ -218,7 +218,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("initproblem.F90:221")
 
          call cg%set_constant_b_field([bx0, by0, bz0])  ! this acts only inside cg%ijkse box
          cg%u(fl%idn,:,:,:) = d0
@@ -309,7 +309,7 @@ contains
          maxv = - huge(1.)
          cgl => leaves%first
          do while (associated(cgl))
-            call cgl%cg%costs%start
+            call cgl%cg%costs%start("initproblem.F90:312")
 
             maxv = max(maxv, maxval(cgl%cg%u(iarr_crs(icr),:,:,:)))
 

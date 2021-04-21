@@ -281,7 +281,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("ct.F90:284")
 
          if (any([allocated(vv), allocated(vv0)])) call die("[ct:advectb] vv or vv0 already allocated")
          allocate(vv(cg%n_(vdir)), vv0(cg%n_(vdir)))
@@ -360,7 +360,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("ct.F90:363")
 
 #ifdef RESISTIVE
 ! DIFFUSION FULL STEP

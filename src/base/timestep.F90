@@ -152,7 +152,7 @@ contains
       cgl => leaves%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("timestep.F90:155")
 
          do ifl = lbound(flind%all_fluids, dim=1), ubound(flind%all_fluids, dim=1)
             call timestep_fluid(cg, flind%all_fluids(ifl)%fl, dt_, c_)

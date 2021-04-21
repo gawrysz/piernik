@@ -164,7 +164,7 @@ contains
       no_hist_count = 0
       cgl => leaves%first
       do while (associated(cgl))
-         call cgl%cg%costs%start
+         call cgl%cg%costs%start("timestep_retry.F90:167")
          ! No need to take care of any cgl%cg%q arrays as long as gravity is extrapolated from the previous timestep.
 
          ! error checking should've been done in restart_arrays, called few lines earlier

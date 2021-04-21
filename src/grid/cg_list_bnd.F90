@@ -243,7 +243,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_bnd.F90:246")
 
          do d = lbound(cg%i_bnd, dim=1), ubound(cg%i_bnd, dim=1)
             if (dmask(d) .and. is_active(cg, ind, tgt3d)) then
@@ -488,7 +488,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_bnd.F90:491")
 
          ! exclude non-multigrid variables below base level
          if (tgt3d) then
@@ -560,7 +560,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_bnd.F90:563")
 
          do d = lbound(cg%i_bnd, dim=1), ubound(cg%i_bnd, dim=1)
             if (dmask(d) .and. is_active(cg, ind, tgt3d)) then
@@ -697,7 +697,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_bnd.F90:700")
 
          if (ind > ubound(cg%q(:), dim=1) .or. ind < lbound(cg%q(:), dim=1)) call die("[cg_list_bnd:external_boundaries] wrong 3d index")
          pa3d => cg%q(ind)%arr
@@ -823,7 +823,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_bnd.F90:826")
 
          l = cg%lhn ; r = l
          do side = LO, HI
@@ -1026,7 +1026,7 @@ contains
       cgl => this%first
       do while (associated(cgl))
          cg => cgl%cg
-         call cg%costs%start
+         call cg%costs%start("cg_list_bnd.F90:1029")
 
          l = cg%lhn ; r = l
 
