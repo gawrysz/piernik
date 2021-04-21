@@ -30,6 +30,8 @@
 
 module cg_cost
 
+   use constants, only: fnamelen
+
    implicit none
 
    private
@@ -54,7 +56,8 @@ module cg_cost
    end type cg_cost_data_t
 
    type, extends(cg_cost_data_t) :: cg_cost_t
-      real, private :: wstart                           ! start value of the timer
+      real, private :: wstart                    ! start value of the timer
+      character(len=fnamelen), private :: label  ! used for debugging
    contains
       procedure :: reset  !< Set all counters to 0.
       procedure :: total  !< Return accumulated cost
@@ -64,6 +67,7 @@ module cg_cost
    end type cg_cost_t
 
    real, parameter :: T_INVALID = -huge(1.)
+   character(len=*), parameter :: invalid_label = "__INVALID__"
 
 contains
 
@@ -77,6 +81,7 @@ contains
 
       this%wtime = 0.
       this%wstart = T_INVALID
+      this%label = invalid_label
 
    end subroutine reset
 
@@ -92,22 +97,31 @@ contains
 
    end function total
 
-!> \brief Remember start time
+!>
+!! \brief Remember start time
+!!
+!! Labels can be set up in the code with a shell script like:
+!!     for i in `git grep -l costs%start ` ; do for j in `grep -n costs%start $i | sed 's/:.*//' ` ; do sed -i $j's/costs%start/costs%start("'`basename $i`":$j"'")/' $i ; done ; done
+!!
+!<
 
-   subroutine start(this)
+   subroutine start(this, label)
 
       use dataio_pub, only: msg, warn
       use MPIF,       only: MPI_Wtime
 
       implicit none
 
-      class(cg_cost_t), intent(inout) :: this
+      class(cg_cost_t),           intent(inout) :: this
+      character(len=*), optional, intent(in)    :: label
 
       real :: t
 
+      if (present(label)) this%label = trim(label)
       t = MPI_Wtime()
       if (this%wstart > T_INVALID) then
-         write(msg, '(2(a,f18.6))')"[cg_cost:start] Some counting has already begin at ", this%wstart, ". Resetting to ", t
+         write(msg, '(2(a,f18.6))')"[cg_cost:start] Some counting has already begin by '" // trim(this%label) // "' at ", &
+              this%wstart, ". Resetting to ", t
          call warn(msg)
       endif
       this%wstart = t
@@ -141,6 +155,7 @@ contains
       endif
 
       this%wstart = T_INVALID
+      this%label = invalid_label
 
    end subroutine stop
 
