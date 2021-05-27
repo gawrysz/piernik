@@ -54,6 +54,11 @@ contains
       use MPIF,      only: MPI_STATUSES_IGNORE
       use MPIFUN,    only: MPI_Waitall
       use ppp,       only: ppp_main
+#ifdef DEBUG_MPI
+      use constants, only: INVALID
+      use MPIF,      only: MPI_Wtime, MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE, MPI_COMM_WORLD, MPI_Abort, MPI_Request_get_status
+      use mpisetup,  only: proc
+#endif /* DEBUG_MPI */
 
       implicit none
 
@@ -65,11 +70,60 @@ contains
       character(len=*), parameter :: mpiw = "MPI_Waitall:"
       integer(kind=4) :: mask
       logical :: r2
-
+#ifdef DEBUG_MPI
+      real :: wt0
+      logical :: flag
+      integer :: i
+      integer(kind=4) :: tcnt, cnt_prev
+      integer(kind=4), allocatable, dimension(:) :: flags
+      real, parameter :: timeout = 10., indecent_time = 0.1 * timeout
+      integer(kind=4), parameter :: timeout_code = 17
+      logical, parameter :: crash_on_timeout = .false., use_request_get_status = .false.
+#endif /* DEBUG_MPI */
       if (nr > 0) then
 
          mask = PPP_MPI
          if (present(x_mask)) mask = mask + x_mask
+
+#ifdef DEBUG_MPI
+         wt0 = MPI_Wtime()
+         allocate(flags(nr))
+         flags(:) = INVALID
+         tcnt = 0
+         do while (tcnt < nr)
+            cnt_prev = tcnt
+
+            tcnt = 0
+            if (use_request_get_status) then
+               do i = 1, nr
+                  call MPI_Request_get_status(req(i), flag, MPI_STATUS_IGNORE, err_mpi)
+                  ! For unknown reasons for OpenMPI 2.1.1-8 (Ubuntu 18.04) the flag is always .false.
+                  ! In Ubuntu 20.04 (OpenMPI 4.0.3) it doesn't work too.
+                  if (flag) tcnt = tcnt + 1
+               enddo
+            else
+               ! This is less sterile than use of MPI_Request_get_status but may release some internal buffers while waiting for late requests to complete
+               call MPI_Testsome(nr, req(:nr), tcnt, flags(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
+               tcnt = cnt_prev + tcnt
+            endif
+            if (tcnt /= cnt_prev .and. MPI_Wtime() - wt0 > indecent_time) &
+                 write(*,*)".@", proc, ppp_label, " : ", tcnt, " out of ", nr, " requests completed in ", MPI_Wtime() - wt0, "s (and counting)"  ! QA_WARN debug
+
+            if (MPI_Wtime() - wt0 > timeout) then
+               write(*,*)"-@", proc, ppp_label, " : only ", tcnt, " out of ", nr, " requests completed in ", MPI_Wtime() - wt0, "s (timeout)"  ! QA_WARN debug
+               if (crash_on_timeout) then
+                  call MPI_Abort(MPI_COMM_WORLD, timeout_code, err_mpi)
+               else
+                  exit
+               endif
+            endif
+
+         enddo
+
+         ! write(*,*)"+@", proc, ppp_label, " : ", nr, " requests completed in ", MPI_Wtime() - wt0, "s"  ! QA_WARN debug
+         deallocate(flags)
+#endif /* DEBUG_MPI */
+
          call ppp_main%start(mpiw // ppp_label, mask)
 
          r2 = .false.
