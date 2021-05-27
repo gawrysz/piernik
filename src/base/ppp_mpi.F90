@@ -46,6 +46,7 @@ contains
 !! This may result in differing count of associated PPP timer on different processes.
 !<
 
+#define DEBUG_MPI
 
    subroutine piernik_Waitall(nr, ppp_label, x_mask, use_req2)
 
