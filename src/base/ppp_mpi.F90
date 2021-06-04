@@ -77,9 +77,10 @@ contains
       integer :: i
       integer(kind=4) :: tcnt, cnt_prev
       integer(kind=4), allocatable, dimension(:) :: flags
-      real, parameter :: timeout = 10., indecent_time = 0.1 * timeout
+      real, parameter :: timeout = 60., indecent_time = 0.5 * timeout
       integer(kind=4), parameter :: timeout_code = 17
       logical, parameter :: crash_on_timeout = .false., use_request_get_status = .false.
+      logical :: warned
 #endif /* DEBUG_MPI */
       if (nr > 0) then
 
@@ -91,6 +92,7 @@ contains
          allocate(flags(nr))
          flags(:) = INVALID
          tcnt = 0
+         warned = .false.
          do while (tcnt < nr)
             cnt_prev = tcnt
 
@@ -107,8 +109,10 @@ contains
                call MPI_Testsome(nr, req(:nr), tcnt, flags(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
                tcnt = cnt_prev + tcnt
             endif
-            if (tcnt /= cnt_prev .and. MPI_Wtime() - wt0 > indecent_time) &
-                 write(*,*)".@", proc, ppp_label, " : ", tcnt, " out of ", nr, " requests completed in ", MPI_Wtime() - wt0, "s (and counting)"  ! QA_WARN debug
+            if (tcnt /= nr .and. (MPI_Wtime() - wt0 > indecent_time) .and. .not. warned) then
+               write(*,*)".@", proc, ppp_label, " : ", tcnt, " out of ", nr, " requests completed in ", MPI_Wtime() - wt0, "s (and counting)"  ! QA_WARN debug
+               warned = .true.
+            endif
 
             if (MPI_Wtime() - wt0 > timeout) then
                write(*,*)"-@", proc, ppp_label, " : only ", tcnt, " out of ", nr, " requests completed in ", MPI_Wtime() - wt0, "s (timeout)"  ! QA_WARN debug
