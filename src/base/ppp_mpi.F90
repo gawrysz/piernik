@@ -87,6 +87,9 @@ contains
          mask = PPP_MPI
          if (present(x_mask)) mask = mask + x_mask
 
+         r2 = .false.
+         if (present(use_req2)) r2 = use_req2
+
 #ifdef DEBUG_MPI
          wt0 = MPI_Wtime()
          allocate(flags(nr))
@@ -99,14 +102,22 @@ contains
             tcnt = 0
             if (use_request_get_status) then
                do i = 1, nr
-                  call MPI_Request_get_status(req(i), flag, MPI_STATUS_IGNORE, err_mpi)
+                  if (r2) then
+                     call MPI_Request_get_status(req2(i), flag, MPI_STATUS_IGNORE, err_mpi)
+                  else
+                     call MPI_Request_get_status(req(i), flag, MPI_STATUS_IGNORE, err_mpi)
+                  endif
                   ! For unknown reasons for OpenMPI 2.1.1-8 (Ubuntu 18.04) the flag is always .false.
                   ! In Ubuntu 20.04 (OpenMPI 4.0.3) it doesn't work too.
                   if (flag) tcnt = tcnt + 1
                enddo
             else
                ! This is less sterile than use of MPI_Request_get_status but may release some internal buffers while waiting for late requests to complete
-               call MPI_Testsome(nr, req(:nr), tcnt, flags(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
+               if (r2) then
+                  call MPI_Testsome(nr, req2(:nr), tcnt, flags(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
+               else
+                  call MPI_Testsome(nr, req(:nr), tcnt, flags(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
+               endif
                tcnt = cnt_prev + tcnt
             endif
             if (tcnt /= nr .and. (MPI_Wtime() - wt0 > indecent_time) .and. .not. warned) then
@@ -131,8 +142,6 @@ contains
 
          call ppp_main%start(mpiw // ppp_label, mask)
 
-         r2 = .false.
-         if (present(use_req2)) r2 = use_req2
          if (r2) then
             call MPI_Waitall(nr, req2(:nr), MPI_STATUSES_IGNORE, err_mpi)
          else
