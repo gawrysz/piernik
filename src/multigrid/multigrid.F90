@@ -216,8 +216,6 @@ contains
       if (code_progress < PIERNIK_INIT_GRID) call die("[multigrid:init_multigrid] grid, geometry, constants or arrays not initialized")
       ! This check is too weak (geometry), arrays are required only for multigrid_gravity
 
-      base%init_multigrid => init_multigrid
-
       if (level_depth <= 0) then
          if (master) call warn("[multigrid:init_multigrid] level_depth < 1: solving on a single grid may be extremely slow")
          level_depth = 0
@@ -357,7 +355,8 @@ contains
 
       use constants,           only: I_ONE
       use dataio_pub,          only: msg, printinfo
-      use MPIF,                only: MPI_DOUBLE_PRECISION, MPI_COMM_WORLD, MPI_Gather
+      use MPIF,                only: MPI_DOUBLE_PRECISION, MPI_COMM_WORLD
+      use MPIFUN,              only: MPI_Gather
       use mpisetup,            only: master, nproc, FIRST, LAST, err_mpi
       use multigridvars,       only: tot_ts
 #ifdef SELF_GRAV

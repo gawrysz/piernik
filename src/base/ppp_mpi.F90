@@ -52,7 +52,8 @@ contains
 
       use constants, only: PPP_MPI
       use mpisetup,  only: err_mpi, req, req2
-      use MPIF,      only: MPI_STATUSES_IGNORE, MPI_Waitall
+      use MPIF,      only: MPI_STATUSES_IGNORE
+      use MPIFUN,    only: MPI_Waitall
       use ppp,       only: ppp_main
 #ifdef DEBUG_MPI
       use constants, only: INVALID
