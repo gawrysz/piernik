@@ -57,7 +57,7 @@ contains
       use ppp,       only: ppp_main
 #ifdef DEBUG_MPI
       use constants, only: INVALID
-      use MPIF,      only: MPI_Wtime, MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE, MPI_COMM_WORLD, MPI_Abort, MPI_Request_get_status
+      use MPIF,      only: MPI_Wtime, MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE, MPI_COMM_WORLD, MPI_UNDEFINED, MPI_Abort, MPI_Request_get_status
       use mpisetup,  only: proc
 #endif /* DEBUG_MPI */
 
@@ -118,7 +118,11 @@ contains
                else
                   call MPI_Testsome(nr, req(:nr), tcnt, flags(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
                endif
-               tcnt = cnt_prev + tcnt
+               if (tcnt == MPI_UNDEFINED) then
+                  tcnt = nr
+               else
+                  tcnt = cnt_prev + tcnt
+               endif
             endif
             if (tcnt /= nr .and. (MPI_Wtime() - wt0 > indecent_time) .and. .not. warned) then
                write(*,*)".@", proc, ppp_label, " : ", tcnt, " out of ", nr, " requests completed in ", MPI_Wtime() - wt0, "s (and counting)"  ! QA_WARN debug
