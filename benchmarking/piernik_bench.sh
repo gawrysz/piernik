@@ -114,6 +114,28 @@ if [ $DO_MAKE == 1 ] ; then
 fi
 
 #
+# Trying to find best approximation of cuboid of given volume and integer edges
+#
+
+weak_cube() {
+i=$1
+
+f1=`echo $i | awk '{eps=1+1e-10; x=$1; x3=(eps*x)**(1./3.); i1=1; for (i=x; i>int(x3); i--) if (x-i*int(x/i) == 0) i1=i; xx=x/i1; x2=(eps*xx)**(1./2.); i2=1; for (i=xx; i>int(x2); i--) if (xx-i*int(xx/i) == 0) i2=i; i3=xx/i2; print i1, i2, i3}'`
+
+f2=`echo $i | awk '{eps=1+1e-10; x=$1; x3=(eps*x)**(1./3.); for (i=1; i<=int(x3); i++) if (x-i*int(x/i) == 0) i1=i; xx=x/i1; x2=(eps*xx)**(1./2.); for (i=1; i<=int(x2); i++) if (xx-i*int(xx/i) == 0) i2=i; i3=xx/i2; print i1, i2, i3}'`
+
+if [ `factor $i | wc -w` -gt 4 ] ; then
+    f3=`factor $i | awk '{if (NF <= 4) print $0; else if (NF==5) print $2*$3, $4, $5 ; else if (NF==6) print $2*$5, $3*$4, $6; else if (NF==7) print $2*$7, $3*$6, $4*$5; else {ii[0]=1; ii[1]=1; ii[2]=1; for (i=2; i<=NF; i++) ii[(i-2)%3] *= $i; print ii[0], ii[1], ii[2]} }'`
+else
+    f3=`factor $i | awk '{f1=1; f2=1; f3=1; if (NF>=2) f1=$2; if (NF>=3) f2=$3; if (NF==4) f3=$4; print f1, f2, f3}'`
+fi
+
+for f in "$f1" "$f2" "$f3" ; do
+    echo $f
+done | awk '{surf[NR]=$2*$3+$2*$1+$3*$1; f[NR]=$0} END {mn=4*'$i'; ff=-1; for (i=1;i<=NR;i++) if (surf[i]<mn) {mn=surf[i]; ff=i} print f[ff]}'
+}
+
+#
 # Benchmarking: Piernik
 #
 
@@ -141,6 +163,12 @@ for p in $B_PROBLEM_LIST ; do
 			cp piernik problem.par $j
 		    fi
 		done
+
+		f=$( weak_cube $i )
+		f1=$( echo $f | awk '{print $1}' )
+		f2=$( echo $f | awk '{print $2}' )
+		f3=$( echo $f | awk '{print $3}' )
+
 		case $p in
 		    sedov)
 			NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
@@ -160,7 +188,7 @@ for p in $B_PROBLEM_LIST ; do
 			    echo -n $i
 			    case $t in
 				weak)
-				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 1 ))' xmax = '$(( $i * 1 ))'/' 2> /dev/null ;;
+				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $f1 * $NX ))', '$(( $f2 * $NX ))', '$(( $f3 * $NX ))'  xmin = -'$(( $f1 * 1 ))' xmax = '$(( $f1 * 1 ))' ymin = -'$(( $f2 * 1 ))' ymax = '$(( $f2 * 1 ))' zmin = -'$(( $f3 * 1 ))' zmax = '$(( $f3 * 1 ))' /' 2> /dev/null ;;
 				strong)
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
 			    esac | grep "dWallClock" | awk 'BEGIN {t=0; n=0;} {if ($12 != 0.) {printf("%7.2f ", $12); t+=$12; n++;} } END {printf("%7.3f ", t/n)}'
@@ -185,7 +213,7 @@ for p in $B_PROBLEM_LIST ; do
 			    echo -n $i
 			    case $t in
 				weak)
-				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 512 ))' xmax = '$(( $i * 512 ))'/' 2> /dev/null ;;
+				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $f1 * $NX ))', '$(( $f2 * $NX ))', '$(( $f3 * $NX ))'  xmin = -'$(( $f1 * 512 ))' xmax = '$(( $f1 * 512 ))' ymin = -'$(( $f2 * 512 ))' ymax = '$(( $f2 * 512 ))' zmin = -'$(( $f3 * 512 ))' zmax = '$(( $f3 * 512 ))' /' 2> /dev/null ;;
 				strong)
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
 			    esac | grep "C1-cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
@@ -215,7 +243,7 @@ for p in $B_PROBLEM_LIST ; do
 			    case $t in
 				weak)
 				    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
-			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
+			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $f1 * $NX ))', '$(( $f2 * $NX ))', '$(( $f3 * $NX ))'  xmin = -'$(( $f1 * 2 ))' xmax = '$(( $f1 * 2 ))' ymin = -'$(( $f2 * 2 ))' ymax = '$(( $f2 * 2 ))' zmin = -'$(( $f3 * 2 ))' zmax = '$(( $f3 * 2 ))' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
 				strong)
 				    NX=$( echo 128 $SCALE | awk '{print int($1*$2)}')
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
