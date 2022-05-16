@@ -114,7 +114,10 @@ if [ $DO_MAKE == 1 ] ; then
 fi
 
 #
-# Trying to find best approximation of cuboid of given volume and integer edges
+# Trying to find best approximation of cuboid of given volume and integer edges.
+# Call:
+#     weak_cube number_of_work_units
+# Tries to find a good decomposition of number_of_work_units into three factors.
 #
 
 weak_cube() {
@@ -133,6 +136,45 @@ fi
 for f in "$f1" "$f2" "$f3" ; do
     echo $f
 done | awk '{surf[NR]=$2*$3+$2*$1+$3*$1; f[NR]=$0} END {mn=4*'$i'; ff=-1; for (i=1;i<=NR;i++) if (surf[i]<mn) {mn=surf[i]; ff=i} print f[ff]}'
+}
+
+#
+# Second approach to find best approximation of cuboid of given volume and integer edges.
+# Call:
+#     weak_cube2 number_of_work_units domain_size_1D
+# Tries to find a good decomposition of number_of_work_units*domain_size_1D^3 into three factors that allow for 16^3 block decompositions.
+# For some prime numbers of number_of_work_units choose a good enough approximation.
+#
+
+weak_cube2() {
+[ $(( ( $2 / 16 ) * 16 - $2 )) == 0 ] || exit 1
+echo $1 $2 | awk 'function min(x,y) {return (x<y)?x:y} \
+     function abs(x) {return (x>0)?x:-x} {\
+     rsave = 10.; \
+     isave = 0; \
+     n = $1; \
+     b = ($2/16)^3; \
+     nb = int((n*b)^(1./3.)); \
+     for (i=1; i<=3*nb; i++) \
+         for (j=1; j<=min(3*nb, n*b/i+1); j++) \
+             for (k=1; k<=min(3*nb, (n*b)/(i*j)+1); k++) {\
+                 ijk=i*j*k; \
+		 r= ijk/(1.*n*b); \
+		 if (abs(r-1.) < abs(rsave-1.)) { \
+		    rsave = r; \
+		    isave = 0; \
+		 } \
+		 if (r == rsave) {\
+		    isave++;
+		    ai[isave] = i; \
+		    aj[isave] = j; \
+		    ak[isave] = k; \
+		 } \
+	     } \
+     if (isave > 0) \
+        for (i=1; i<=isave; i++) \
+	    print ai[i], aj[i], ak[i], ai[i]+aj[i]+ak[i], ai[i]*aj[i] + ai[i]*ak[i] + aj[i]*ak[i], rsave; \
+     }' | sort -n -k 5 | head -n 1 | awk '{print $1, $2, $3}'
 }
 
 #
@@ -164,10 +206,27 @@ for p in $B_PROBLEM_LIST ; do
 		    fi
 		done
 
-		f=$( weak_cube $i )
-		f1=$( echo $f | awk '{print $1}' )
-		f2=$( echo $f | awk '{print $2}' )
-		f3=$( echo $f | awk '{print $3}' )
+		case $p in
+		    sedov)
+			NX=$( echo 64 $SCALE | awk '{print int($1*$2)}') ;;
+		    crtest)
+			NX=$( echo 32 $SCALE | awk '{print int($1*$2)}') ;;
+		    maclaurin)
+			if [ $t == flood ] ; then
+			    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
+			else
+			    case $t in
+				weak)
+				    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}') ;;
+				strong)
+				    NX=$( echo 128 $SCALE | awk '{print int($1*$2)}') ;;
+			    esac
+			fi ;;
+	        esac
+		f=$( weak_cube2 $i $NX )
+		f1=$( echo $f | awk '{print $1 * 16}' )
+		f2=$( echo $f | awk '{print $2 * 16}' )
+		f3=$( echo $f | awk '{print $3 * 16}' )
 
 		case $p in
 		    sedov)
@@ -188,7 +247,10 @@ for p in $B_PROBLEM_LIST ; do
 			    echo -n $i
 			    case $t in
 				weak)
-				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $f1 * $NX ))', '$(( $f2 * $NX ))', '$(( $f3 * $NX ))'  xmin = -'$(( $f1 * 1 ))' xmax = '$(( $f1 * 1 ))' ymin = -'$(( $f2 * 1 ))' ymax = '$(( $f2 * 1 ))' zmin = -'$(( $f3 * 1 ))' zmax = '$(( $f3 * 1 ))' /' 2> /dev/null ;;
+				    xm=$( echo $f1 $NX | awk '{print $1/(1.0 * $2)}')
+				    ym=$( echo $f2 $NX | awk '{print $1/(1.0 * $2)}')
+				    zm=$( echo $f3 $NX | awk '{print $1/(1.0 * $2)}')
+				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$f1', '$f2', '$f3' xmin = -'$xm' xmax = '$xm' ymin = -'$ym' ymax = '$ym' zmin = -'$zm' zmax = '$zm' /' 2> /dev/null ;;
 				strong)
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
 			    esac | grep "dWallClock" | awk 'BEGIN {t=0; n=0;} {if ($12 != 0.) {printf("%7.2f ", $12); t+=$12; n++;} } END {printf("%7.3f ", t/n)}'
@@ -213,7 +275,10 @@ for p in $B_PROBLEM_LIST ; do
 			    echo -n $i
 			    case $t in
 				weak)
-				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $f1 * $NX ))', '$(( $f2 * $NX ))', '$(( $f3 * $NX ))'  xmin = -'$(( $f1 * 512 ))' xmax = '$(( $f1 * 512 ))' ymin = -'$(( $f2 * 512 ))' ymax = '$(( $f2 * 512 ))' zmin = -'$(( $f3 * 512 ))' zmax = '$(( $f3 * 512 ))' /' 2> /dev/null ;;
+				    xm=$( echo $f1 $NX | awk '{print 512. * $1/(1.0 * $2)}')
+				    ym=$( echo $f2 $NX | awk '{print 512. * $1/(1.0 * $2)}')
+				    zm=$( echo $f3 $NX | awk '{print 512. * $1/(1.0 * $2)}')
+				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$f1', '$f2', '$f3' xmin = -'$xm' xmax = '$xm' ymin = -'$ym' ymax = '$ym' zmin = -'$zm' zmax = '$zm' /' 2> /dev/null ;;
 				strong)
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
 			    esac | grep "C1-cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
@@ -243,7 +308,10 @@ for p in $B_PROBLEM_LIST ; do
 			    case $t in
 				weak)
 				    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
-			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $f1 * $NX ))', '$(( $f2 * $NX ))', '$(( $f3 * $NX ))'  xmin = -'$(( $f1 * 2 ))' xmax = '$(( $f1 * 2 ))' ymin = -'$(( $f2 * 2 ))' ymax = '$(( $f2 * 2 ))' zmin = -'$(( $f3 * 2 ))' zmax = '$(( $f3 * 2 ))' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
+				    xm=$( echo $f1 $NX | awk '{print 2. * $1/(1.0 * $2)}')
+				    ym=$( echo $f2 $NX | awk '{print 2. * $1/(1.0 * $2)}')
+				    zm=$( echo $f3 $NX | awk '{print 2. * $1/(1.0 * $2)}')
+			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$f1', '$f2', '$f3' xmin = -'$xm' xmax = '$xm' ymin = -'$ym' ymax = '$ym' zmin = -'$zm' zmax = '$zm' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
 				strong)
 				    NX=$( echo 128 $SCALE | awk '{print int($1*$2)}')
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
