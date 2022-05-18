@@ -57,7 +57,7 @@ awkfor() {
 }
 
 # some cleanup
-PROBLEM_LIST="maclaurin advection_test crtest jeans tearing sedov otvortex 3body"
+PROBLEM_LIST="maclaurin advection_test crtest jeans tearing sedov otvortex 3body_orig"
 
 if [ $DO_MAKE == 1 ] ; then
     touch Makefile
@@ -178,7 +178,7 @@ for p in $B_PROBLEM_LIST ; do
 			    wait
 			    sleep 1
 			    for j in $( seq $i ) ; do
-				grep "C1-cycles" $j/_stdout_ | awk '{if (NR==1) printf("%d %7.3f %7.3f ", '$i', $5, $8)}'
+				grep "C01cycles" $j/_stdout_ | awk '{if (NR==1) printf("%d %7.3f %7.3f ", '$i', $5, $8)}'
 				awk '/Spent/ { printf("%s\n",$5) }' $j/*log
 			    done
 			else
@@ -188,7 +188,7 @@ for p in $B_PROBLEM_LIST ; do
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 512 ))' xmax = '$(( $i * 512 ))'/' 2> /dev/null ;;
 				strong)
 				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' /' 2> /dev/null ;;
-			    esac | grep "C1-cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
+			    esac | grep "C01cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
 			    awk '/Spent/ { printf("%s ",$5) }' *log
 			fi
 			echo ;;
@@ -206,7 +206,7 @@ for p in $B_PROBLEM_LIST ; do
 			    wait
 			    sleep 1
 			    [ $SKIP == 0 ] && for j in $( seq $i ) ; do
-				grep cycles $j/_stdout_ | awk 'BEGIN {printf("%d", '$i');} {printf("%7.3f %7.3f ", $5, $8)}'
+				grep cycles $j/_stdout_ | tail -n 2 | awk 'BEGIN {printf("%d", '$i');} {printf("%7.3f %7.3f ", $5, $8)}'
 				grep -q cycles $j/_stdout_ || echo ""
 				awk '/Spent/ { printf("%s\n",$5) }' $j/*log
 			    done
@@ -215,10 +215,10 @@ for p in $B_PROBLEM_LIST ; do
 			    case $t in
 				weak)
 				    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
-			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &AMR bsize = 3*32 / &MEMORY max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
+			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &AMR bsize = 3*32 / &MEMORY max_mem = '$max_mem'/' 2> /dev/null | grep cycles | tail -n 2 | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
 				strong)
 				    NX=$( echo 128 $SCALE | awk '{print int($1*$2)}')
-				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &AMR bsize = 3*32 / &MEMORY max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
+				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &AMR bsize = 3*32 / &MEMORY max_mem = '$max_mem'/' 2> /dev/null | grep cycles | tail -n 2 | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
 			    esac
 			    [ $SKIP == 0 ] && awk '/Spent/ { printf("%s ", $5) }' *log
 			fi

@@ -4,7 +4,8 @@
 #
 
 PROG     = piernik
-F90      = h5pfc  -I/usr/lib64/gfortran/modules/openmpi/ -fallow-argument-mismatch
+F90      = h5pfc  -I/usr/lib64/gfortran/modules/$(subst _,,$(MPI_SUFFIX)) -fallow-argument-mismatch
+F90FLAGS += -fno-inline-small-functions -fno-tree-pre
 
 F90FLAGS  = -fdefault-real-8 -ffree-form -std=gnu -fimplicit-none -ffree-line-length-none
 F90FLAGS += -O3 -funroll-loops -fno-stack-arrays -w

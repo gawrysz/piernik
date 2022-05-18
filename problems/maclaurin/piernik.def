@@ -9,4 +9,8 @@
 #undef  MAGNETIC
 
 #define SELF_GRAV
-#define NBODY
+
+#if !defined(BENCHMARKING_HACK)
+/* we prefer to have the results comparable to old data */
+#  define NBODY
+#endif /* !BENCHMARKING_HACK */
