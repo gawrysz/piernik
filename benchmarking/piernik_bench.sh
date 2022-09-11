@@ -200,7 +200,7 @@ for p in $B_PROBLEM_LIST ; do
 				{
 				    cd $j
 				    rm *log 2> /dev/null
-				    ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' > _stdout_ ;
+				    ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &NUMERICAL_SETUP max_mem = '$max_mem'/' > _stdout_ ;
 			        } 2> /dev/null &
 			    done
 			    wait
@@ -215,10 +215,10 @@ for p in $B_PROBLEM_LIST ; do
 			    case $t in
 				weak)
 				    NX=$( echo 64 $SCALE | awk '{print int($1*$2)}')
-			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
+			            $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = '$(( $i * $NX ))', 2*'$NX' xmin = -'$(( $i * 2 ))' xmax = '$(( $i * 2 ))' / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
 				strong)
 				    NX=$( echo 128 $SCALE | awk '{print int($1*$2)}')
-				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &MPI_BLOCKS AMR_bsize = 3*32 / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
+				    $MPIRUN -np $i ./piernik -n '&BASE_DOMAIN n_d = 3*'$NX' / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null | grep cycles | awk '{printf("%7.3f %7.3f ", $5, $8)}' ;;
 			    esac
 			    [ $SKIP == 0 ] && awk '/Spent/ { printf("%s ", $5) }' *log
 			fi
