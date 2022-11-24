@@ -35,7 +35,9 @@ module common_hdf5
 ! pulled by HDF5
 
    use constants, only: singlechar, ndims, dsetnamelen
+#ifdef CRESP
    use cr_data,   only: icr_spc
+#endif /* CRESP */
    use hdf5,      only: HID_T
 
    implicit none
