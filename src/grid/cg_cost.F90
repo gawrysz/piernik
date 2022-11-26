@@ -103,6 +103,10 @@ contains
 !! Labels can be set up in the code with a shell script like:
 !!     for i in `git grep -l costs%start ` ; do for j in `grep -n costs%start $i | sed 's/:.*//' ` ; do sed -i $j's/costs%start/costs%start("'`basename $i`":$j"'")/' $i ; done ; done
 !!
+!! I'm afraid that static inclusion of the labels into an often-called routine such as this one may impact the performance.
+!! Since it is a debug feature, not required for normal operation, one may consider including it through a precompiler, where necessary.
+!! Or create a branch taht will auto-generate the labels but won't nclude them into master.
+!!
 !<
 
    subroutine start(this, label)
