@@ -16,7 +16,7 @@ and try again to install the pacages mentioned above. You may use `libhdf5-openm
 
 ## Fedora 32 and newer
 
-For Fedora try:
+For Fedora up to 31 try:
 
     sudo dnf install make hdf5-openmpi-devel fftw-devel python environment-modules python3-pycodestyle python2-numpy python3-h5py python3-requests
 
@@ -70,6 +70,18 @@ On other systems you need to find your own way (and you may choose to describe i
 * hdf5 1.8.8 or newer with high-level library, Fortran 2003 interface and MPI support (--enable-shared --enable-fortran --enable-fortran2003 --enable-parallel) – it allows you to use a wrapper ‘h5pfc’ as a compiler
 * Python (unfortunately we still have some 2.7-based scripts), including packages such as h5py, numpy
 * There are optional tasks that depend on gnuplot, parallel, graphviz and yt
+
+### Fedora 32
+
+There are few important changes that happened in Fedora 32:
+
+* The PEP8 package is obsolete, intsall `python3-pycodestyle` instead.
+* `redhat-rpm-config` is no longer missing.
+* Old approach to the Fortran MPI interface is now strongly disfavoured and Piernik does not compile by default. Use `-fallow-argument-mismatch` to turn MPI-related errors into warnings.
+* h5pfc from OpenMPI requires to set `-I/usr/lib64/gfortran/modules/openmpi/`.
+* `-frecursive` is suggested to be safer than the default in few places by the MPICH wrapper.
+* MPICH seems to have random bugs that manifest e.g by crashing at `MPI_Waitall` in `cg_list_bnd::internal_boundaries_MPI_1by1`.
+* OpenMPI refuses to run on all threads of a CPU with SMT/HT. Override with `--use-hwthread-cpus` or `--oversubscribe` (only when necessary).
 
 ## Piernik
 
