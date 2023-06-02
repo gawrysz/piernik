@@ -4,13 +4,16 @@
 DO_MAKE=1  # measure the compilation time scaling
 COMPILER_CONFIG="benchmarking"  # for the setup script it means "./compilers/../benchmarking/${COMPILER_CONFIG}.in"
 N_PROC_LIST=""
+N=$( awk 'BEGIN {c=0} /processor/ {if ($NF > c) c=$NF} END {print c+1}' /proc/cpuinfo )
+SPARSE_PROC_LIST=$( echo $N | awk '{split("2 3 5", a); print 1; for (i=1;2*i<$1;i*=2) for (j in a) if (a[j]*i < $1) print a[j]*i; print $1}' | sort -n | uniq )
 
 usage() {
     echo "Usage:   $0 [options] [n_threads_1 [n_threads_2 ...]]"
     echo "         -h | --help : this message"
     echo "         -f | --fast : skip compilation test if possible"
     echo "         -c | --config file : use ./benchmarking/\${file}.in as the compiler config (default: ./benchmarking/benchmarking.in)"
-    echo "default: $0 \$( seq number_of_logical_CPUs )"
+    echo "         -t | --allthreads : use all possible number of threads: $0 \$( seq $N )"
+    echo "default: $0 "$( echo $SPARSE_PROC_LIST | tr '\n' ' ' )" (2ⁿ ∪ 3·2ⁿ ∪ 5·2ⁿ threads)"
     exit 1
 }
 
@@ -22,6 +25,7 @@ for i in "$@" ; do
 	"-f" | "--fast") DO_MAKE=0 ;;  # are we allowed to skip making and want to just run existing piernik
 	"-h" | "--help") usage ;;
 	"-c" | "--config") COMPILER_CONFIG=${*:$j:1} ; skip=1 ;;
+	"-t" | "--allthreads") N_PROC_LIST=$( seq $N ) ;;
 	*) N_PROC_LIST="${N_PROC_LIST} $i"
     esac || skip=0
 done
@@ -44,8 +48,7 @@ echo "## Memory : $MEMG GB"
 
 # create list of thread count to be tested
 if [ ${#N_PROC_LIST} == 0 ] ; then
-    N=$( awk 'BEGIN {c=0} /processor/ {if ($NF > c) c=$NF} END {print c+1}' /proc/cpuinfo )
-    N_PROC_LIST=$( seq $N )
+    N_PROC_LIST=$SPARSE_PROC_LIST
 else
     N_PROC_LIST=$( echo $N_PROC_LIST | awk '{for (i=1; i<=NF; i++) printf("%d\n",1*$i); print ""}' | sort -n | uniq )
 fi
