@@ -85,7 +85,9 @@ contains
 
       implicit none
 
-      problem_post_IC  => compute_mpole
+      problem_post_IC  => grav_pot_dens
+      ! originally in maclaurin it was compute_mpole but it is nothing critical more research/debugging than anything else
+
       finalize_problem => finalize_problem_maclaurin
 #ifdef HDF5
       user_attrs_wr    => problem_initial_conditions_attrs
@@ -296,7 +298,6 @@ contains
       use domain,            only: dom
       use fluidindex,        only: iarr_all_dn, iarr_all_mx, iarr_all_my, iarr_all_mz
       use global,            only: dirty_debug, no_dirty_checks
-      use gravity,           only: grav_pot_3d
       use grid_cont,         only: grid_container
       use named_array_list,  only: qna
       use mpisetup,          only: master
@@ -311,7 +312,6 @@ contains
       type(grid_container),  pointer :: cg
 
       call compute_analytical_potential
-      grav_pot_3d => grav_pot_dens
 
       cgl => leaves%first
       do while (associated(cgl))
@@ -438,6 +438,24 @@ contains
          ! Is n_res ~ sqrt(cg%dvol) ?
          if (master) call printinfo(msg)
       endif
+
+      ! Prepare a density in the cg%q field to compute special potential (just a demonstration)
+      cgl => leaves%first
+      do while (associated(cgl))
+         cg => cgl%cg
+         do k = cg%ks, cg%ke
+            zz = ((cg%z(k) + z0)/a3)**2
+            do j = cg%js, cg%je
+               yy = ((cg%y(j) + y0)/a1)**2
+               do i = cg%is, cg%ie
+                  xx = ((cg%x(i) + x0)/a1)**2
+                  rr = xx + yy + zz
+                  cg%q(qna%ind(asrc_n))%arr(i, j, k) = merge(d0*rr, d1, rr <= 1.)
+               enddo
+            enddo
+         enddo
+         cgl => cgl%nxt
+      enddo
 
    end subroutine problem_initial_conditions
 
@@ -750,16 +768,16 @@ contains
 
 !> \brief Compute multipole potential field
 
-   subroutine compute_mpole
-
-      use multipole,        only: compute_mpole_potential
-      use named_array_list, only: qna
-
-      implicit none
-
-      call compute_mpole_potential(qna%ind(mpole_n))
-
-   end subroutine compute_mpole
+!!$   subroutine compute_mpole
+!!$
+!!$      use multipole,        only: compute_mpole_potential
+!!$      use named_array_list, only: qna
+!!$
+!!$      implicit none
+!!$
+!!$      call compute_mpole_potential(qna%ind(mpole_n))
+!!$
+!!$   end subroutine compute_mpole
 
 !>
 !! \brief This routine provides the "errp", "errm", "relerr" and "relerrm" values to be dumped to the .h5 file
@@ -897,43 +915,27 @@ contains
          cgl => cgl%nxt
       enddo
 
-    end subroutine maclaurin2bnd_potential
+   end subroutine maclaurin2bnd_potential
 
-    subroutine grav_pot_dens
+   subroutine grav_pot_dens
 
-      use axes_M,            only: axes
-      use constants,         only: sgp_n, gp_n
-      use cg_leaves,         only: leaves
-      use cg_list,           only: cg_list_element
-      use fluidindex,        only: iarr_all_dn
-      use grid_cont,         only: grid_container
-      use multigrid_gravity, only: multigrid_solve_grav,  multigrid_solve_grav_dens
+      use constants,         only: gp_n
+      use gravity,           only: compute_h_gpot
+      use multigrid_gravity, only: multigrid_solve_grav
       use named_array_list,  only: qna
-      use multipole,         only: multipole_solver
 
       implicit none
 
-      type(axes)                                          :: ax
-      type(cg_list_element), pointer                      :: cgl
-      type(grid_container),  pointer                      :: cg
+      integer, dimension(0) :: u_indices  ! cannot pass an empty array just as []
 
-      call multigrid_solve_grav_dens(iarr_all_dn, .false.)
+      ! This still cannot be associated to grav_pot_3d because when refinement update calls it
+      ! the newly created blocks aren't yet initialized unless you do it here.
 
-      cgl => leaves%first
-      do while (associated(cgl))
-         cg => cgl%cg
+      call multigrid_solve_grav(u_indices, [qna%ind(asrc_n)], potential = qna%ind(gp_n), use_particles = .false.)
 
-         call ax%allocate_axes(cg%lhn)
-         ax%x = cg%x
-         ax%y = cg%y
-         ax%z = cg%z
-         !call multigrid_solve_grav_dens(iarr_all_dn, .false.)
-         !cg%q(qna%ind(apot_n))%arr = cg%q(qna%ind(gp_n))%arr
-         cg%gp = cg%q(qna%ind(gp_n))%arr
-         call ax%deallocate_axes
-         cgl => cgl%nxt
-      enddo
+      ! Since it is not associated to grav_pot_3d we have to update gpot and hgpot manually
+      call compute_h_gpot
 
-    end subroutine grav_pot_dens
+   end subroutine grav_pot_dens
 
 end module initproblem
