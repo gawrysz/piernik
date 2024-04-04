@@ -79,6 +79,7 @@ contains
       real, allocatable, dimension(:, :) :: send_stats
       integer, parameter :: N_STATS = size(stat_labels) + I_ONE
       character(len=*), parameter :: lbpc_label = "load_balance:print_costs"
+      integer(kind=4), parameter :: h_l = len("host")
 
       call ppp_main%start(lbpc_label, PPP_AMR)
 
@@ -224,6 +225,7 @@ contains
       subroutine log_detailed
 
          use cg_cost_stats, only: I_AVG, I_SIGMA
+         use constants,     only: I_ZERO
          use dataio_pub,    only: printinfo
          use procnames,     only: pnames
 
@@ -231,7 +233,7 @@ contains
 
          integer :: p
 
-         write(msg, '(2a,a5,a)')" host", repeat(" ", pnames%maxnamelen - 4), "rank", " :"
+         write(msg, '(2a,a5,a)')" host", repeat(" ", max(I_ZERO, pnames%maxnamelen - h_l)), "rank", " :"
          do i = lbound(cost_labels, 1), ubound(cost_labels, 1)
             if (any(all_proc_stats(I_AVG, i - lbound(cost_labels, 1) + I_ONE, :) > 0.)) then
                write(msg(len_trim(msg)+1:), '(a24)') "avg(" // trim(cost_labels(i)) // ") ± σ"
@@ -241,7 +243,7 @@ contains
          call printinfo(msg)
 
          do p = FIRST, LAST
-            write(msg, '(2a,i5,a)')"@", pnames%procnames(p)(:pnames%maxnamelen), p, " :"
+            write(msg, '(2a,i5,a)')"@", pnames%procnames(p)(:max(h_l, pnames%maxnamelen)), p, " :"
             do i = lbound(cost_labels, 1), ubound(cost_labels, 1)
                if (any(all_proc_stats(I_AVG, i - lbound(cost_labels, 1) + I_ONE, :) > 0.)) then
                   if (all_proc_stats(I_AVG,   i - lbound(cost_labels, 1) + I_ONE, p) > 0.) then
@@ -263,6 +265,7 @@ contains
 
          use cg_cost_data,  only: cg_cost_data_t
          use cg_cost_stats, only: I_AVG, I_SUM, I_SUM2
+         use constants,     only: I_ZERO
          use dataio_pub,    only: printinfo
          use procnames,     only: pnames
 
@@ -271,7 +274,7 @@ contains
          integer :: host, p1, i
          type(cg_cost_data_t) :: n, sum, sum2
 
-         write(msg, '(2a,a5,a)')" host", repeat(" ", pnames%maxnamelen - 4), " ", " :"
+         write(msg, '(2a,a5,a)')" host", repeat(" ", max(I_ZERO, pnames%maxnamelen - h_l)), " ", " :"
          do i = lbound(cost_labels, 1), ubound(cost_labels, 1)
             if (any(all_proc_stats(I_AVG, i - lbound(cost_labels, 1) + I_ONE, :) > 0.)) then
                write(msg(len_trim(msg)+1:), '(a24)') "avg(" // trim(cost_labels(i)) // ") ± σ"
@@ -295,7 +298,7 @@ contains
                      endwhere
                   end associate
                enddo
-               write(msg, '(3a)')"@", ph%nodename(:pnames%maxnamelen), "      :"
+               write(msg, '(3a)')"@", ph%nodename(:max(h_l, pnames%maxnamelen)), "      :"
                do i = lbound(cost_labels, 1), ubound(cost_labels, 1)
                   if (any(all_proc_stats(I_AVG, i - lbound(cost_labels, 1) + I_ONE, :) > 0.)) then
                      if (sum%wtime(i) > 0.) then
@@ -323,6 +326,7 @@ contains
          integer :: p, host, lines, per_line, l
          real :: dt_wall
          integer, parameter :: max_one_line = 8, max_per_line = 12
+         integer, parameter :: s_ind = I_ONE  ! can be anything within size(cost_labels) because all values are the same
 
          if (prev_time >= 0.) then
             dt_wall = MPI_Wtime() - prev_time
@@ -337,16 +341,16 @@ contains
 
                   if (size(ph%proc) <= max_one_line) then
                      do p = lbound(ph%proc, 1), ubound(ph%proc, 1)
-                        if (all_proc_stats(N_STATS, I_ONE, ph%proc(p)) > 0.) then
-                           write(msg(len_trim(msg)+1:), '(f11.3)') mul*all_proc_stats(N_STATS, I_ONE, ph%proc(p))
+                        if (all_proc_stats(N_STATS, s_ind, ph%proc(p)) > 0.) then
+                           write(msg(len_trim(msg)+1:), '(f11.3)') mul*all_proc_stats(N_STATS, s_ind, ph%proc(p))
                         else
                            write(msg(len_trim(msg)+1:), '(a11)') "-"
                         endif
                      enddo
                      write(msg(len_trim(msg)+1:), '(a)') " | "
                      do p = lbound(ph%proc, 1), ubound(ph%proc, 1)
-                        if (all_proc_stats(N_STATS, I_ONE, ph%proc(p)) > 0.) then
-                           write(msg(len_trim(msg)+1:), '(f6.1,a)') all_proc_stats(N_STATS, I_ONE, ph%proc(p))/dt_wall * 100., "%"
+                        if (all_proc_stats(N_STATS, s_ind, ph%proc(p)) > 0.) then
+                           write(msg(len_trim(msg)+1:), '(f6.1,a)') all_proc_stats(N_STATS, s_ind, ph%proc(p))/dt_wall * 100., "%"
                         else
                            write(msg(len_trim(msg)+1:), '(a7)') "-"
                         endif
@@ -360,8 +364,8 @@ contains
                         do p =   lbound(ph%proc, 1) + per_line * (l - 1), &
                              min(lbound(ph%proc, 1) + per_line *  l - 1 , &
                              &   ubound(ph%proc, 1))
-                           if (all_proc_stats(N_STATS, I_ONE, ph%proc(p)) > 0.) then
-                              write(msg(len_trim(msg)+1:), '(f11.3)') mul*all_proc_stats(N_STATS, I_ONE, ph%proc(p))
+                           if (all_proc_stats(N_STATS, s_ind, ph%proc(p)) > 0.) then
+                              write(msg(len_trim(msg)+1:), '(f11.3)') mul*all_proc_stats(N_STATS, s_ind, ph%proc(p))
                            else
                               write(msg(len_trim(msg)+1:), '(a11)') "-"
                            endif
@@ -373,8 +377,8 @@ contains
                         do p =   lbound(ph%proc, 1) + per_line * (l - 1), &
                              min(lbound(ph%proc, 1) + per_line *  l - 1 , &
                              &   ubound(ph%proc, 1))
-                           if (all_proc_stats(N_STATS, I_ONE, ph%proc(p)) > 0.) then
-                              write(msg(len_trim(msg)+1:), '(f10.1,a)') all_proc_stats(N_STATS, I_ONE, ph%proc(p))/dt_wall * 100., "%"
+                           if (all_proc_stats(N_STATS, s_ind, ph%proc(p)) > 0.) then
+                              write(msg(len_trim(msg)+1:), '(f10.1,a)') all_proc_stats(N_STATS, s_ind, ph%proc(p))/dt_wall * 100., "%"
                            else
                               write(msg(len_trim(msg)+1:), '(a11)') "-"
                            endif
