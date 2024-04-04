@@ -30,7 +30,7 @@ parser = OptionParser(
     "Usage: %prog FILE [options] [args] or %prog [options] [args] -F FILENAME")
 parser.add_option("-F", "--file", dest="filename",
                   default="None", help=u"File to use", type="str")
-parser.add_option("-v", "--var", dest="var_name", default="n",
+parser.add_option("-v", "--var", dest="var_name", default="e",
                   help=u"Variable to plot the spectrum (default: n)")
 parser.add_option("-f", "--field", dest="fieldname", default="",
                   help=u"DS fieldname to image (default:cree_tot)")
@@ -102,7 +102,7 @@ spc_e_lab = "cr_" + spc_label + "e"  # -> "cr_e-e" default
 if (options.crspecies[0:3] != "cr_"):
     options.crspecies = "cr_" + options.crspecies
 plot_field = options.fieldname if len(
-    options.fieldname) > 1 else options.crspecies + "n_tot"  # DEFAULT cr_e-e_tot
+    options.fieldname) > 1 else options.crspecies + "e_tot"  # DEFAULT cr_e-e_tot
 
 # plot_var = options.var_name
 plot_vel = options.plot_vel
@@ -192,7 +192,7 @@ def BC_ratio(field, data):  # Boron to Carbon
             if ("cr_B11n" + str(ind).zfill(2) == str(element1[1])):
                 for element2 in h5ds.field_list:
                     if ("cr_C12n" + str(ind).zfill(2) == str(element2[1])):
-                        Bn_data = data["cr_B11n" + str(ind).zfill(2)]
+                        Bn_data = data["cr_B11n" + str(ind).zfill(2)] + data["cr_B10n" + str(ind).zfill(2)]
                         Cn_data = data["cr_C12n" + str(ind).zfill(2)]
                         BC_ratio.append(Bn_data / Cn_data)
 
@@ -543,9 +543,9 @@ if f_run is True:
                                    'color': 'white', "lw": 2.0})
 
     if (plot_vel):
-        yt_data_plot.annotate_velocity(factor=32, scale=3e7)
+        yt_data_plot.annotate_velocity(factor=15, scale=15)
     if (plot_mag):
-        yt_data_plot.annotate_magnetic_field(factor=32, scale=40)
+        yt_data_plot.annotate_magnetic_field(factor=15, scale=15)
 
     yt_data_plot.set_cmap(field=frbuffer_plot_field, cmap=colormap_my)
     yt_data_plot.set_zlim(frbuffer_plot_field, plot_min, plot_max)
@@ -604,7 +604,7 @@ if f_run is True:
         print('Here it comes : ')
         print(plot_field)
 
-        if (plot_field == "cr_B11n_tot"):  # Plot B to C ratio rather than spectra
+        if (plot_field == "cr_B11e_tot"):  # Plot B to C ratio rather than spectra
 
             BC_ratio = []
 
@@ -615,16 +615,35 @@ if f_run is True:
                         for element2 in h5ds.field_list:
                             if ("cr_C12n" + str(ind).zfill(2) == str(element2[1])):
                                 Bn_data = position["cr_B11n" +
+                                                   str(ind).zfill(2)] + position["cr_B10n" +
                                                    str(ind).zfill(2)]
                                 Cn_data = position["cr_C12n" +
                                                    str(ind).zfill(2)]
                                 BC_ratio.append(Bn_data / Cn_data)
 
             BC_ratio = np_array(BC_ratio)
-            print('BC_ratio : ')
+            print('secondary to primary ratio B/C: ')
             print(BC_ratio)
-            print('shape :')
-            print(shape(BC_ratio))
+
+        elif (plot_field == "cr_Be10e_tot"):  # Plot Be isotope ratio rather than spectra
+
+            Isotope_ratio = []
+
+            for ind in range(1, ncrb + 1):
+
+                for element1 in h5ds.field_list:
+                    if ("cr_Be9n" + str(ind).zfill(2) == str(element1[1])):
+                        for element2 in h5ds.field_list:
+                            if ("cr_Be9n" + str(ind).zfill(2) == str(element2[1])):
+                                Be9_data = position["cr_Be9n" +
+                                                   str(ind).zfill(2)]
+                                Be10_data = position["cr_Be10n" +
+                                                   str(ind).zfill(2)]
+                                Isotope_ratio.append(Be10_data / Be9_data)
+
+            Isotope_ratio = np_array(Isotope_ratio)
+            print('Beryllium isotope ratio Be10/Be9: ')
+            print(Isotope_ratio)
 
         else:
 
@@ -635,10 +654,11 @@ if f_run is True:
                 plot_max = h5ds.find_max(
                     "cre" + plot_var + str(plot_field_click[-2:]))[0]
 
-        btot = (position["mag_field_x"].v**2 + position["mag_field_y"].v **
-                2 + position["mag_field_z"].v**2)**0.5
-        btot_uG = 2.85 * btot  # WARNING magic number @btot - conversion factor
-        prtinfo("B_tot = %f = %f (uG)" % (btot, btot_uG))
+            btot = (position["mag_field_x"].v**2 + position["mag_field_y"].v **
+                    2 + position["mag_field_z"].v**2)**0.5
+            btot_uG = 2.85 * btot  # WARNING magic number @btot - conversion factor
+            prtinfo("B_tot = %f = %f (uG)" % (btot, btot_uG))
+
         if (True):   # TODO DEPRECATED save_fqp
             ecrs = []
             ncrs = []
