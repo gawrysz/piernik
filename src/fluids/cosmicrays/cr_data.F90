@@ -141,7 +141,8 @@ module cr_data
 
    real, parameter :: sigma_O16_Li7  = 9.5 !< mbarn
    real, parameter :: sigma_O16_Be9  = 4.5 !< mbarn
-   real, parameter :: sigma_O16_Be10 = 2   !< mbarn
+   real, parameter :: sigma_O16_Be10 = 2.   !< mbarn
+   real, parameter :: sigma_O16_B10  = 0.  !< mbarn
    real, parameter :: sigma_O16_B11  = 0.  !< mbarn
 
    real, parameter :: sigma_P_P      = 25. !< mbarn
@@ -428,7 +429,7 @@ contains
          if (eCRSP(icr_Li7 )) cr_sigma(cr_table(icr_O16), cr_table(icr_Li7 )) = sigma_O16_Li7
          if (eCRSP(icr_Be9 )) cr_sigma(cr_table(icr_O16), cr_table(icr_Be9 )) = sigma_O16_Be9
          if (eCRSP(icr_Be10)) cr_sigma(cr_table(icr_O16), cr_table(icr_Be10)) = sigma_O16_Be10
-         if (eCRSP(icr_B10)) cr_sigma(cr_table(icr_O16), cr_table(icr_B10)) = sigma_O16_Be10
+         if (eCRSP(icr_B10)) cr_sigma(cr_table(icr_O16), cr_table(icr_B10)) = sigma_O16_B10
          if (eCRSP(icr_B11)) cr_sigma(cr_table(icr_O16), cr_table(icr_B11)) = sigma_O16_B11
       endif
       cr_sigma = cr_sigma * mbarn
