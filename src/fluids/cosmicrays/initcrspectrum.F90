@@ -643,9 +643,6 @@ contains
         !print *, 'K_cresp_paral(',j,'):',  K_cresp_paral(j, 1:ncrb)
         !print *, 'K_cr_paral(',icr_spc(j),'):', K_cr_paral(icr_spc(j))
         !print *, 'K_cr_paral(',j,'):', K_cr_paral(j)
-        do k = 1, ncrb
-            if (K_cresp_paral(j,k) .lt. K_cr_paral(j)) K_cresp_paral(j, k) = K_cr_paral(j)
-        enddo
         K_cresp_perp(j,  1:ncrb) = K_cr_perp(j)  * (cr_mass(icr_spc(j))*p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j)
 
 
