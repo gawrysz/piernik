@@ -188,37 +188,37 @@ contains
       endif
 
       ! do the external boundaries
-      cgl => leaves%up_to_level(min(diff_max_lev, finest%level%l%id))%p
-      do while (associated(cgl))
-         cg => cgl%cg
-         call cg%costs%start
-
-         wcr => cg%w(wcri)%arr
-         if (.not. associated(wcr)) call die("[crdiffusion:all_wcr_boundaries] cannot get wcr")
-
-         do d = xdim, zdim
-            if (dom%has_dir(d)) then
-               l = cg%lhn ; r = l
-               do lh = LO, HI
-                  select case (cg%bnd(d, lh))
-                     case (BND_PER)
-                     case (BND_MPI) !, BND_MPI_FC)
-                     case (BND_FC, BND_MPI_FC)
-                     case default ! Set gradient == 0 on the external boundaries
-                        r(d,:) = cg%ijkse(d,lh)
-                        do i = 1, dom%nb
-                           l(d,:) = r(d,:) + (I_TWO*lh-I_THREE)*i
-                           wcr(:,l(xdim,LO):l(xdim,HI),l(ydim,LO):l(ydim,HI),l(zdim,LO):l(zdim,HI)) = smallecr !wcr(:,r(xdim,LO):r(xdim,HI),r(ydim,LO):r(ydim,HI),r(zdim,LO):r(zdim,HI))
-                        enddo
-                  end select
-
-               enddo
-            endif
-         enddo
-
-         call cg%costs%stop(I_DIFFUSE)
-         cgl => cgl%nxt
-      enddo
+      !cgl => leaves%up_to_level(min(diff_max_lev, finest%level%l%id))%p
+      !do while (associated(cgl))
+      !   cg => cgl%cg
+      !   call cg%costs%start
+      !
+      !   wcr => cg%w(wcri)%arr
+      !   if (.not. associated(wcr)) call die("[crdiffusion:all_wcr_boundaries] cannot get wcr")
+      !
+      !   do d = xdim, zdim
+      !      if (dom%has_dir(d)) then
+      !         l = cg%lhn ; r = l
+      !         do lh = LO, HI
+      !            select case (cg%bnd(d, lh))
+      !               case (BND_PER)
+      !               case (BND_MPI) !, BND_MPI_FC)
+      !               case (BND_FC, BND_MPI_FC)
+      !               case default ! Set gradient == 0 on the external boundaries
+      !                  r(d,:) = cg%ijkse(d,lh)
+      !                  do i = 1, dom%nb
+      !                     l(d,:) = r(d,:) + (I_TWO*lh-I_THREE)*i
+      !                     wcr(:,l(xdim,LO):l(xdim,HI),l(ydim,LO):l(ydim,HI),l(zdim,LO):l(zdim,HI)) = smallecr !wcr(:,r(xdim,LO):r(xdim,HI),r(ydim,LO):r(ydim,HI),r(zdim,LO):r(zdim,HI))
+      !                  enddo
+      !            end select
+      !
+      !         enddo
+      !      endif
+      !   enddo
+      !
+      !   call cg%costs%stop(I_DIFFUSE)
+      !   cgl => cgl%nxt
+      !enddo
 
       call ppp_main%stop(awb_label, PPP_CR)
 
