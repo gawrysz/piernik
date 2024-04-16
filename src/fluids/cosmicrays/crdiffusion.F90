@@ -137,14 +137,15 @@ contains
 !<
    subroutine all_wcr_boundaries(crdim)
 
-      use cg_cost_data,       only: I_DIFFUSE
+      !use cg_cost_data,       only: I_DIFFUSE
       use cg_leaves,          only: leaves
       use cg_level_connected, only: cg_level_connected_t
       use cg_level_finest,    only: finest
       use cg_list,            only: cg_list_element
-      use constants,          only: ndims, xdim, ydim, zdim, LO, HI, BND_PER, BND_MPI, BND_FC, BND_MPI_FC, I_TWO, I_THREE, wcr_n, PPP_CR
+      use constants,          only: wcr_n, PPP_CR
+      !use constants,          only: ndims, xdim, ydim, zdim, LO, HI, BND_PER, BND_MPI, BND_FC, BND_MPI_FC, I_TWO, I_THRE
       use dataio_pub,         only: die
-      use domain,             only: dom
+      !use domain,             only: dom
       use grid_cont,          only: grid_container
       use initcosmicrays,     only: diff_max_lev, smallecr
       use named_array_list,   only: wna
@@ -153,12 +154,12 @@ contains
       implicit none
 
       integer(kind=4), intent(in)             :: crdim
-
-      integer(kind=4)                         :: i, d, lh, wcri
-      integer(kind=4), dimension(ndims,LO:HI) :: l, r
-      real, dimension(:,:,:,:), pointer       :: wcr
-      type(cg_list_element),    pointer       :: cgl
-      type(grid_container),     pointer       :: cg
+      integer(kind=4)                         :: wcri
+      !integer(kind=4)                         :: i, d, lh
+      !integer(kind=4), dimension(ndims,LO:HI) :: l, r
+      !real, dimension(:,:,:,:), pointer       :: wcr
+      !type(cg_list_element),    pointer       :: cgl
+      !type(grid_container),     pointer       :: cg
       type(cg_level_connected_t), pointer     :: diffl, curl
       character(len=*), parameter :: awb_label = "all_wcr_boundaries"
 
