@@ -427,10 +427,10 @@ contains
       if (eCRSP(icr_N14)) then
          cr_primary(cr_table(icr_N14)) = primary_N14
          if (eCRSP(icr_Li7 )) cr_sigma(cr_table(icr_N14), cr_table(icr_Li7 )) = sigma_N14_Li7
-         if (eCRSP(icr_Li7 )) cr_sigma(cr_table(icr_N14), cr_table(icr_Be9 )) = sigma_N14_Be9
-         if (eCRSP(icr_Li7 )) cr_sigma(cr_table(icr_N14), cr_table(icr_Be10)) = sigma_N14_Be10
-         if (eCRSP(icr_Li7 )) cr_sigma(cr_table(icr_N14), cr_table(icr_B10 )) = sigma_N14_B10
-         if (eCRSP(icr_Li7 )) cr_sigma(cr_table(icr_N14), cr_table(icr_B11 )) = sigma_N14_B11
+         if (eCRSP(icr_Be9 )) cr_sigma(cr_table(icr_N14), cr_table(icr_Be9 )) = sigma_N14_Be9
+         if (eCRSP(icr_Be10 )) cr_sigma(cr_table(icr_N14), cr_table(icr_Be10)) = sigma_N14_Be10
+         if (eCRSP(icr_B10 )) cr_sigma(cr_table(icr_N14), cr_table(icr_B10 )) = sigma_N14_B10
+         if (eCRSP(icr_B11 )) cr_sigma(cr_table(icr_N14), cr_table(icr_B11 )) = sigma_N14_B11
       endif
       if (eCRSP(icr_O16)) then
          cr_primary(cr_table(icr_O16)) = primary_O16
