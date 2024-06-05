@@ -639,11 +639,11 @@ contains
         print *, 'j : ',j, 'icr_spc(j): ', icr_spc(j) , 'mass : ', cr_mass(icr_spc(j)), 'Z : ', cr_Z(icr_spc(j))
 
 
-        K_cresp_paral(j, 1:ncrb) = K_cr_paral(j) * (cr_mass(icr_spc(j))*p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j) ! Scale diffusion of all species to protons.
+        K_cresp_paral(j, 1:ncrb) = K_cr_paral(j) * (p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j) ! Scale diffusion of all species to protons.
         !print *, 'K_cresp_paral(',j,'):',  K_cresp_paral(j, 1:ncrb)
         !print *, 'K_cr_paral(',icr_spc(j),'):', K_cr_paral(icr_spc(j))
         !print *, 'K_cr_paral(',j,'):', K_cr_paral(j)
-        K_cresp_perp(j,  1:ncrb) = K_cr_perp(j)  * (cr_mass(icr_spc(j))*p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j)
+        K_cresp_perp(j,  1:ncrb) = K_cr_perp(j)  * (p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j)
 
 
 
