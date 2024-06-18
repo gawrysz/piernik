@@ -679,8 +679,76 @@ contains
       curl => finest%level
       do while (associated(curl))
          call curl%sort_SFC
+
          curl => curl%coarser
       enddo
+
+#if 1
+      call print_cg_by_level  ! useful for debugging and fine-tuning
+
+   contains
+
+      subroutine print_cg_by_level
+
+         use constants,  only: base_level_id
+         use MPIF,       only: MPI_COMM_WORLD, MPI_INTEGER
+         use MPIFUN,     only: MPI_Gather
+         use mpisetup,   only: FIRST, LAST
+
+         implicit none
+
+         integer(kind=4), dimension(FIRST:LAST) :: cnt_cg, cnt_all_cg
+
+         cnt_all_cg = 0
+         curl => finest%level
+         do while (associated(curl))
+
+            call MPI_Gather(curl%cnt, I_ONE, MPI_INTEGER, cnt_cg, I_ONE, MPI_INTEGER, FIRST, MPI_COMM_WORLD, err_mpi)
+            if (master) then
+               cnt_all_cg = cnt_all_cg + cnt_cg
+               call print_cg_cnt(cnt_cg, curl%l%id)
+            endif
+            curl => curl%coarser
+         enddo
+
+         if (finest%level%l%id > base_level_id) call print_cg_cnt(cnt_all_cg)
+
+      end subroutine print_cg_by_level
+
+      subroutine print_cg_cnt(cnt_arr, lev)
+
+         use dataio_pub, only: msg, printinfo
+         use mpisetup,   only: FIRST, LAST, nproc
+
+         implicit none
+
+         integer(kind=4), dimension(FIRST:LAST), intent(in) :: cnt_arr
+         integer, optional,                      intent(in) :: lev
+
+         integer :: l, p
+         integer, parameter :: max_per_line = 16
+
+         if (master) then
+            do l = 0, (nproc - 1) / max_per_line
+               if (l == 0) then
+                  if (present(lev)) then
+                     write(msg, '(a,i4,a)')"cnt_cg^", lev, " : "
+                  else
+                     write(msg, '(a)')"sum(cnt_cg) : "
+                  endif
+               else
+                  msg = "            : "
+               endif
+               do p = FIRST + l * max_per_line, min(LAST, FIRST + (l + 1) * max_per_line - 1)
+                  write(msg(len_trim(msg)+1:), '(i7)')cnt_arr(p)
+               enddo
+               call printinfo(msg, .true.)
+            enddo
+         endif
+
+      end subroutine print_cg_cnt
+
+#endif
 
    end subroutine reshuffle
 
