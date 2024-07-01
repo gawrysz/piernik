@@ -319,7 +319,7 @@ contains
 
       do i_spc = 1, nspc
 
-         if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) then
+         if (i_spc==cr_table(icr_Be10) - count(.not. cr_spectral) .AND. eCRSP(icr_Be10)) then
 
             u_cell(iarr_crspc2_n(i_spc,:)) = u_cell(iarr_crspc2_n(i_spc,:)) + dt_doubled*(usrc_cell(iarr_crspc2_n(i_spc,:)) - u_cell(iarr_crspc2_n(i_spc,:)) / (sqrt(1+(p_mid_fix/cr_mass(i_spc))**2)*cr_tau(i_spc)))
             u_cell(iarr_crspc2_e(i_spc,:)) = u_cell(iarr_crspc2_e(i_spc,:)) + dt_doubled*(usrc_cell(iarr_crspc2_e(i_spc,:)) - u_cell(iarr_crspc2_e(i_spc,:)) / (sqrt(1+(p_mid_fix/cr_mass(i_spc))**2)*cr_tau(i_spc)))
