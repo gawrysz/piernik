@@ -38,7 +38,7 @@ module cresp_crspectrum
 
    private ! most of it
    public :: cresp_update_cell, cresp_init_state, cresp_get_scaled_init_spectrum, cleanup_cresp, cresp_allocate_all, &
-      &      src_gpcresp, p_rch_init, detect_clean_spectrum, cresp_find_prepare_spectrum, cresp_detect_negative_content, fq_to_e, fq_to_n, q
+      &      src_gpcresp, p_rch_init, detect_clean_spectrum, cresp_find_prepare_spectrum, cresp_detect_negative_content, fq_to_e, fq_to_n, q, decay_loss
 
    integer, dimension(1:2)            :: fail_count_NR_2dim, fail_count_interpol
    integer(kind=4), allocatable, dimension(:) :: fail_count_comp_q
@@ -69,6 +69,7 @@ module cresp_crspectrum
 
    real, allocatable, dimension(:) :: r                                   !> r term for energy losses (Miniati 2001, eqn. 25)
    real, allocatable, dimension(:) :: q                                   !> power-law exponent array
+   real, allocatable, dimension(:) :: decay_loss                          !> radioactive decay loss term for number density
 
 ! power-law
    real,    dimension(LO:HI)       :: p_cut_next, p_cut
@@ -105,6 +106,7 @@ contains
    subroutine cresp_update_cell(dt, n_inout, e_inout, sptab, cfl_cresp_violation, q1, i_spc, substeps, p_out)
 
       use constants,      only: zero, one, I_ZERO, I_ONE
+      use cr_data,        only: cr_table, icr_Be10, eCRSP
 #ifdef CRESP_VERBOSED
       use dataio_pub,     only: msg, printinfo
 #endif /* CRESP_VERBOSED */
@@ -127,6 +129,8 @@ contains
       integer                                       :: i_sub, n_substep
       real, dimension(ncrb), intent(out)            :: q1
 
+      !print *, 'in cresp_update_cell: '
+
       e = zero; n = zero; edt = zero; ndt = zero
       solve_fail_lo = .false.
       solve_fail_up = .false.
@@ -141,6 +145,7 @@ contains
       r = zero
       f = zero
       q = zero
+      decay_loss = zero
 
       if (present(substeps)) then
          n_substep = substeps
@@ -179,11 +184,11 @@ contains
 ! We pass values of external n_inout and e_inout to n and e after these've been preprocessed
       n = n_inout     ! number density of electrons passed to cresp module by the external module / grid
       e = e_inout     ! energy density of electrons passed to cresp module by the external module / grid
-      !print *, 'n_inout : ', n_inout
-      !print *, 'e_inout : ', e_inout
+      !!print *, 'n_inout : ', n_inout
+      !!print *, 'e_inout : ', e_inout
 
-      !print *, 'n : ', n
-      !print *, 'e : ', e
+      !!print *, 'n : ', n
+      !!print *, 'e : ', e
       if (approx_p(HI) > 0) then
          if (i_cut(HI) > 1 .and. p_bnd=='mov') then
             call get_fqp_cutoff(HI, i_spc, solve_fail_up)
@@ -261,6 +266,9 @@ contains
 ! Compute fluxes through fixed edges in time period [t,t+dt], using f, q, p_cut(LO) and p_cut(HI) at [t]
 ! Note that new [t+dt] values of p_cut(LO) and p_cut(HI) in case new fixed edges appear or disappear.
 ! fill new bins
+
+         !!print *, 'i_spc: ', i_spc
+
          call cresp_compute_fluxes(cooling_edges_next,heating_edges_next, i_spc)
 
 ! Computing e and n at [t+dt]
@@ -312,8 +320,8 @@ contains
                   return
                endif
             endif
-            !print *, 'n(before neq):', n
-            !print *, 'e(before neq):', e
+            !!print *, 'n(before neq):', n
+            !!print *, 'e(before neq):', e
 
 
             call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
@@ -321,6 +329,8 @@ contains
          endif
 
       enddo
+
+      if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_decay_loss(p, active_bins, i_spc)
 
       approx_p = e_small_approx_p         !< restore approximation after momenta computed
 
@@ -344,6 +354,7 @@ contains
       write (msg, '(A5, 50E18.9)') "  edt", edt        ; call printinfo(msg)
 
       write (msg, '(A5, 50E18.9)') "    r", r          ; call printinfo(msg)
+      write (msg, '(A5, 50E18.9)') "decay_loss", decay_loss ; call printinfo(msg)
       write (msg, '(A5, 50E18.9)') "    q", q          ; call printinfo(msg)
       write (msg, '(A5, 50E18.9)') "    f", f          ; call printinfo(msg)
 
@@ -372,7 +383,7 @@ contains
       n_tot = sum(n)
       e_tot = sum(e)
 
-      !print *, 'dfpq dump : ', dfpq%any_dump
+      !!print *, 'dfpq dump : ', dfpq%any_dump
       !stop
 ! --- saving the data to output arrays
       !if (dfpq%any_dump) then
@@ -384,7 +395,7 @@ contains
       !crel%i_cut = i_cut
       !endif
       q1=q
-      !print *, 'q : ', q1
+      !!print *, 'q : ', q1
       !stop
       n_inout = n  ! number density of electrons per bin passed back to the external module
       e_inout = e  ! energy density of electrons per bin passed back to the external module
@@ -715,7 +726,7 @@ contains
       real                        :: f_one, q_one, q_1m3, p_l, p_r, e_amplitude_l, e_amplitude_r, alpha
       logical                     :: exit_code
 
-      !print *, "salut tout l'monde ! "
+      !!print *, "salut tout l'monde ! "
 
       assert_active_bin_via_nei = .false.
 
@@ -861,8 +872,8 @@ contains
 
       endif
 
-      !print *, 'p_cut : ', p_cut
-      !print *, 'p_cut_next : ', p_cut_next
+      !!print *, 'p_cut : ', p_cut
+      !!print *, 'p_cut_next : ', p_cut_next
 
 
 
@@ -963,7 +974,7 @@ contains
       real                                     :: c
       logical                                  :: exit_code
 
-      print *, 'In init_state'
+      !print *, 'In init_state'
 
       max_ic = [I_ZERO, ncrb]
       fail_count_interpol = 0
@@ -976,15 +987,15 @@ contains
       init_e = zero
       init_n = zero
 
-      print *, 'p_init: ', p_init
+      !print *, 'p_init: ', p_init
 
       do i_spc = 1, nspc
-         print *, 'i_spc (in init_state): ', i_spc
+         !print *, 'i_spc (in init_state): ', i_spc
         f = zero ; q = zero ; p = zero ; n = zero ; e = zero
 
 ! reading initial values of p_cut
-        print *, 'p_cut: ', p_cut
-        !print *, 'p_init: ', p_i
+        !print *, 'p_cut: ', p_cut
+        !!print *, 'p_init: ', p_i
         p_cut = p_init(:,i_spc)
 
       p         = p_fix       ! actual array of p including free edges, p_fix shared via initcrspectrum
@@ -1007,7 +1018,7 @@ contains
 
         i_cut = get_i_cut(p_cut)
 
-        print *, 'i_spc, p_cut, i_cut =', i_spc, p_cut, i_cut
+        !print *, 'i_spc, p_cut, i_cut =', i_spc, p_cut, i_cut
 
         do co = LO, HI
             if (abs(p_init(co,i_spc) - p_fix(i_cut(co)+oz(co)-1)) <= eps ) then
@@ -1028,9 +1039,9 @@ contains
         q = q_init(i_spc)
         f = f_init(i_spc) * (p/p_init(LO, i_spc))**(-q_init(i_spc))
 
-        print *, 'p_init : ', p_init
-        print *, 'f_init : ', f_init
-        print *, 'q_init : ', q_init
+        !print *, 'p_init : ', p_init
+        !print *, 'f_init : ', f_init
+        !print *, 'q_init : ', q_init
 
         select case (initial_spectrum)
             case ('powl')
@@ -1064,7 +1075,7 @@ contains
                   p_cut(co)     = p_fix(i_cut(co))
                   p(i_cut(co))  = p_fix(i_cut(co))
                 endif
-                print *, 'p_cut(',co,') : ', p_cut(co)
+                !print *, 'p_cut(',co,') : ', p_cut(co)
             enddo
             !stop
 
@@ -1077,7 +1088,7 @@ contains
                 f(i_ch(LO)) = e_small_to_f(p_cut(LO))
                 f(i_ch(HI)) = e_small_to_f(p_cut(HI))
 
-                print *, 'if allow source spectrum break selected'
+                !print *, 'if allow source spectrum break selected'
 
                 do i = i_ch(LO)+1, i_cut(LO)
                 p(i) = p_fix(i)
@@ -1128,23 +1139,23 @@ contains
         init_e(i_spc,:) = e(:)
 
 
-        print *, 'call check_init_spectrum + the end !'
-        print *, 'act.bins: ', active_bins
-        print *, 'i_cut : ', i_cut
-        print *, 'p     : ', p
-        print *, 'q     : ', q
-        print *, 'n     : ', n
-        print *, 'e     : ', e
-        print *, 'n_tot0 =', n_tot0
-        print *, 'e_tot0 =', e_tot0
+        !print *, 'call check_init_spectrum + the end !'
+        !print *, 'act.bins: ', active_bins
+        !print *, 'i_cut : ', i_cut
+        !print *, 'p     : ', p
+        !print *, 'q     : ', q
+        !print *, 'n     : ', n
+        !print *, 'e     : ', e
+        !print *, 'n_tot0 =', n_tot0
+        !print *, 'e_tot0 =', e_tot0
 
         ! Test for consistency of conversion (f,q) <--> (n,e)
         ! Compute power indexes for each bin at [t], from n and ekin
         call ne_to_q(n, e, q, active_bins, i_spc)
         ! Compute f on left bin faces at [t]
         f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
-        print *, 'test f =',  f
-        print *, 'test q =',  q
+        !print *, 'test f =',  f
+        !print *, 'test q =',  q
 
 
         total_init_cree(i_spc) = sum(e) !< total_init_cree value is used for initial spectrum scaling when spectrum is injected by source.
@@ -1193,7 +1204,7 @@ contains
       p_range_add(ic(LO):ic(HI)) = p_fix(ic(LO):ic(HI))
       p_range_add(ic(LO)) = p_init(LO, i_spc)
       p_range_add(ic(HI)) = p_init(HI, i_spc)
-      !print *, 'p_range_add : ', p_range_add
+      !!print *, 'p_range_add : ', p_range_add
       if (.not.allocated(act_edges)) allocate(act_edges(ic(HI) - ic(LO)  ))
       if (.not.allocated(act_bins )) allocate( act_bins(ic(HI) - ic(LO)+1))
       act_edges = cresp_all_edges(ic(LO)  :ic(HI))
@@ -1445,7 +1456,7 @@ contains
       integer(kind=4)                    :: side
 
       do side = LO, HI
-         !print *, 'side : ', side, 'pc(side) : ', pc(side), 'p_fix(1) : ', p_fix(1)
+         !!print *, 'side : ', side, 'pc(side) : ', pc(side), 'p_fix(1) : ', p_fix(1)
 
          gic(side) = int(floor(log10(pc(side)/p_fix(1))/w), kind=4) + side
          gic(side) = max(gic(side), side - I_ONE   )
@@ -1476,10 +1487,10 @@ contains
       real,    dimension(1:ncrb)        :: fq_to_e
 
       fq_to_e = zero
-      !print *, 'g_l(bins) : ', g_l(bins)
-      !print *, 'p_l(bins) : ', p_l(bins)
-      !print *, 'three_p_s(bins) : ', three_ps(i_spc,bins)
-      !print *, 'q(bins)   : ', q(bins)
+      !!print *, 'g_l(bins) : ', g_l(bins)
+      !!print *, 'p_l(bins) : ', p_l(bins)
+      !!print *, 'three_p_s(bins) : ', three_ps(i_spc,bins)
+      !!print *, 'q(bins)   : ', q(bins)
       e_bins = fpcc * f_l(bins) * g_l(bins) * p_l(bins)**three
       where (abs(q(bins) - three_ps(i_spc,bins)) > eps)
          e_bins = e_bins*((p_r(bins)/p_l(bins))**(three_ps(i_spc,bins) - q(bins)) - one)/(three_ps(i_spc,bins) - q(bins))
@@ -1489,9 +1500,9 @@ contains
 
       fq_to_e(bins) = e_bins
 
-      !print *, 'Hello ! '
+      !!print *, 'Hello ! '
 
-      !print *, 'fq_to_e : ', fq_to_e(bins)
+      !!print *, 'fq_to_e : ', fq_to_e(bins)
 
    end function fq_to_e
 !-------------------------------------------------------------------------------------------------
@@ -1702,6 +1713,100 @@ contains
 
    end subroutine cresp_compute_fluxes
 
+   !function decay_loss(p_l, p_r, f_l, g_l, q, bins, i_spc) ! Computation of radioactive decay loss for number density
+   !
+   !   use constants,      only: zero, one, three
+   !   use initcosmicrays, only: ncrb
+   !   use initcrspectrum, only: g_fix, s, three_ps, one_ps, eps
+   !
+   !   implicit none
+   !
+   !   real,            dimension(:), intent(in) :: p_l, p_r, f_l, g_l, q
+   !   integer(kind=4), dimension(:), intent(in) :: bins
+   !   integer(kind=4)              , intent(in) :: i_spc
+   !   real, dimension(size(bins))               :: decay_loss, decay_loss_num, decay_loss_den
+   !
+   !   decay_loss = zero
+   !
+   !   ! Found here an FPE occurring in mcrwind/mcrwind_cresp
+   !   ! bins = [ 11, 12, 13, 14, 15 ]
+   !   ! q = [ 0, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, -30, 4.922038984459582, -30 ]
+   !   ! five-q(bins) = 35, that seems to be a bit high power to apply carelessly
+   !
+   !   where (abs(q(bins) - one_ps(i_spc,bins)) > eps)
+   !      decay_loss_num = p_l(bins)**(-2)*((p_r(bins)/p_l(bins))**(one_ps(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)-q(bins))
+   !   elsewhere
+   !      decay_loss_num = log(p_r(bins)/p_l(bins))
+   !   endwhere
+   !
+   !   where (abs((q(bins) - three)) > eps)
+   !      decay_loss_den = ((p_r(bins)/p_l(bins))**(three-q(bins))-one)/(three-q(bins))
+   !   elsewhere
+   !      decay_loss_den = log(p_r(bins)/p_l(bins))
+   !   endwhere
+   !
+   !   where (abs(decay_loss_num) > zero .and. abs(decay_loss_den) > zero)
+   !      decay_loss(bins) = s(i_spc,bins)*g_l(bins)*(decay_loss_num/decay_loss_den)
+   !   endwhere
+   !
+   !end function decay_loss
+
+   subroutine cresp_compute_decay_loss(p, bins, i_spc) ! Computation of radioactive decay loss for number density
+
+      use constants,      only: zero, one, three
+      use cr_data,        only: cr_mass
+      use initcosmicrays, only: ncrb
+      use initcrspectrum, only: g_fix, s, three_ps, one_ps, eps, p_mid_fix
+
+      implicit none
+
+      real,            dimension(0:ncrb), intent(in) :: p
+      integer(kind=4), dimension(:),      intent(in) :: bins
+      integer(kind=4)              ,      intent(in) :: i_spc
+      real, dimension(size(bins))                    :: decay_loss_num, decay_loss_den
+
+      decay_loss = zero
+      decay_loss_num = zero
+      decay_loss_den = zero
+      !print *, 'bins: ', bins
+      !print *, 'q: ', q
+      !print *, 'one_ps(',i_spc,'): ', one_ps(i_spc,:)
+      !print *, 'eps: ', eps
+      !print *, 'abs(q(bins) - one_ps(i_spc,bins)): ', abs(q(bins) - one_ps(i_spc,bins))
+      !print *, 'p(bins): ', p(bins)
+
+      where (abs(q(bins) - one_ps(i_spc,bins)) > eps)
+         !!print *, 'one'
+         decay_loss_num = ((p(bins)/p(bins-1))**(one_ps(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)-q(bins))
+      elsewhere
+         !!print *, 'two'
+         decay_loss_num = log(p(bins)/p(bins-1))
+      endwhere
+
+      where (abs((q(bins) - three)) > eps)
+         !!print *, 'three'
+         decay_loss_den = ((p(bins)/p(bins-1))**(three-q(bins))-one)/(three-q(bins))
+      elsewhere
+         !!print *, 'four'
+         decay_loss_den = log(p(bins)/p(bins-1))
+      endwhere
+
+      where (abs(decay_loss_num) > zero .and. abs(decay_loss_den) > zero)
+         decay_loss(bins) = (p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins)*decay_loss_num/decay_loss_den
+      endwhere
+
+
+      !print *, 'decay_loss_num: ', decay_loss_num
+      !print *, 'decay_loss_den: ', decay_loss_den
+      !print *, 'decay_loss_num/decay_loss_den: ', decay_loss_num/decay_loss_den
+      !print *, '(p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins): ', (p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins)
+      !print *, 'i_spc: ', i_spc
+      !print *, 'decay_loss: ', decay_loss
+      !print *, '1/gamma(p_mid_fix): ', 1/sqrt(1+(p_mid_fix/cr_mass(i_spc))**2)
+      !stop
+
+   end subroutine cresp_compute_decay_loss
+
 !-------------------------------------------------------------------------------------------------
 !
 ! compute R (eq. 25)
@@ -1741,7 +1846,7 @@ contains
       endwhere
 
       where (abs(r_num) > zero .and. abs(r_den) > zero)                  !< BEWARE - regression: comparisons against
-         r(bins) = s(i_spc,bins)*u_d + u_b * r_num/r_den !all cooling effects will come here   !< eps and epsilon result in bad results;
+         r(bins) = s(i_spc,bins)*(u_d + u_b * r_num/r_den) !all cooling effects will come here   !< eps and epsilon result in bad results;
       endwhere                                                                  !< range of values ofr_num and r_den is very wide
 
    end subroutine cresp_compute_r
@@ -1774,15 +1879,15 @@ contains
 
       q = zero
       j = one
-      !print *, 'i_spc : ', i_spc
+      !!print *, 'i_spc : ', i_spc
       do i_active = 1 + approx_p(LO), size(bins) - approx_p(HI)
          exit_code = .false.
          i = bins(i_active)
          three_p_s = three_ps(i_spc,i)
          base = p(i)/p(i-1)
-         !print *, 'i = ', i
+         !!print *, 'i = ', i
          if (e(i) > e_small .and. p(i-1) > zero) then
-            !print *, 'e(i) > e_small'
+            !!print *, 'e(i) > e_small'
             exit_code = .true.
             if (abs(n(i)) < 1e-300) call warn("[cresp_crspectrum:ne_to_q] 1/|n(i)| > 1e300")
             ! n(i) of order 1e-100 does happen sometimes, but extreme values like 4.2346894890376292e-312 tend to create FPE in the line below
@@ -1795,15 +1900,15 @@ contains
                   q(i) = compute_q(alpha_in, three_p_s, exit_code)
                endif
             else
-               !print *, 'alpha : ', alpha_q_tab
+               !!print *, 'alpha : ', alpha_q_tab
                j = minloc(abs(alpha_in - alpha_q_tab(:,i_spc,i)), dim=1)
-               !print *, 'j : ', j
-               !print *, 'alpha : ', alpha_in
-               !print *, 'alpha_q_tab(j) : ', alpha_q_tab(j,i_spc,i)
-               !print *, 'alpha_q_tab(j-1) : ', alpha_q_tab(j-1,i_spc,i)
-               !print *, 'alpha_q_tab(j+1) : ', alpha_q_tab(j+1,i_spc,i)
-               !print *, 'q_tab(j) : ',   q_tab(j)
-               !print *, 'q_tab(j+1) : ', q_tab(j+1)
+               !!print *, 'j : ', j
+               !!print *, 'alpha : ', alpha_in
+               !!print *, 'alpha_q_tab(j) : ', alpha_q_tab(j,i_spc,i)
+               !!print *, 'alpha_q_tab(j-1) : ', alpha_q_tab(j-1,i_spc,i)
+               !!print *, 'alpha_q_tab(j+1) : ', alpha_q_tab(j+1,i_spc,i)
+               !!print *, 'q_tab(j) : ',   q_tab(j)
+               !!print *, 'q_tab(j+1) : ', q_tab(j+1)
 
                if (j .ne. arr_dim_q) then
                   if(j .ne. 1) then
@@ -1817,16 +1922,16 @@ contains
                endif
 
             endif
-            !print *, 'q : ', q(i)
-            !print *, 'q_NR : ', q_NR(i)
-            !print *, 'Test difference : Delta q = ', abs(q(i) - q_NR(i))
+            !!print *, 'q : ', q(i)
+            !!print *, 'q_NR : ', q_NR(i)
+            !!print *, 'Test difference : Delta q = ', abs(q(i) - q_NR(i))
          else
             q(i) = zero
          endif
          if (exit_code) fail_count_comp_q(i) = fail_count_comp_q(i) + I_ONE
       enddo
 
-      !print *, 'q : ', q
+      !!print *, 'q : ', q
 
    end subroutine ne_to_q
 
@@ -1963,11 +2068,11 @@ contains
       call assoc_pointers(cutoff)
 
       alpha = e(qi)/(n(qi) * g_fix(i_spc,ipfix))
-      !print *, 'alpha: ', alpha
+      !!print *, 'alpha: ', alpha
       n_in  = n(qi)
-      !print *, 'n_in:', n_in
+      !!print *, 'n_in:', n_in
       x_NR = intpol_pf_from_NR_grids(cutoff, alpha, n_in, interpolated)
-      !print *, 'x_NR:', x_NR
+      !!print *, 'x_NR:', x_NR
       if (.not. interpolated) then
          exit_code = .true.
          fail_count_interpol(cutoff) = fail_count_interpol(cutoff) + 1
@@ -2005,9 +2110,9 @@ contains
       p(i_cut(cutoff)) = p_cut(cutoff)
       q(qi)            = q_ratios(x_NR(I_TWO), x_NR(I_ONE))
 
-      !print *, 'in get_cutoff: '
-      !print *, 'p: ', p(i_cut(cutoff))
-      !print *, 'q: ', q(qi)
+      !!print *, 'in get_cutoff: '
+      !!print *, 'p: ', p(i_cut(cutoff))
+      !!print *, 'q: ', q(qi)
 
       if (abs(q(qi)) > q_big) q(qi) = sign(one, q(qi)) * q_big
 #ifdef CRESP_VERBOSED
@@ -2107,6 +2212,7 @@ contains
       call my_allocate_with_index(e_amplitudes_l,ma1d, I_ONE)   !:: n, e, r
       call my_allocate_with_index(e_amplitudes_r,ma1d, I_ONE)
       call my_allocate_with_index(r,ma1d, I_ONE)
+      call my_allocate_with_index(decay_loss,ma1d, I_ONE)
       call my_allocate_with_index(q,ma1d, I_ONE)
 
       call my_allocate_with_index(f,ma1d, I_ZERO)
@@ -2146,6 +2252,7 @@ contains
       call my_deallocate(e_amplitudes_l)
       call my_deallocate(e_amplitudes_r)
       call my_deallocate(r)
+      call my_deallocate(decay_loss)
       call my_deallocate(q)
       call my_deallocate(f)
       call my_deallocate(p)
