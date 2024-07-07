@@ -42,7 +42,7 @@ module initcrspectrum
            & smallcren, smallcree, max_p_ratio, NR_iter_limit, force_init_NR, NR_run_refine_pf, NR_refine_solution_q, NR_refine_pf, nullify_empty_bins, synch_active, adiab_active,                 &
            & icomp_active, allow_source_spectrum_break, cre_active, tol_f, tol_x, tol_f_1D, tol_x_1D, arr_dim_a, arr_dim_n, arr_dim_q, eps, eps_det, w, p_fix, p_mid_fix, total_init_cree, p_fix_ratio,           &
            & spec_mod_trms, cresp_all_edges, cresp_all_bins, norm_init_spectrum_n, norm_init_spectrum_e, cresp, crel, dfpq, f_synchIC, init_cresp, cleanup_cresp_sp, check_if_dump_fpq, cleanup_cresp_work_arrays, q_eps,     &
-           & u_b_max, def_dtsynchIC, def_dtadiab, NR_smap_file, NR_allow_old_smaps, cresp_substep, n_substeps_max, allow_unnatural_transfer, K_cresp_paral, K_cresp_perp, p_min_fix, p_max_fix, redshift, g_fix, s, three_ps, four_ps, bin_old
+           & u_b_max, def_dtsynchIC, def_dtadiab, NR_smap_file, NR_allow_old_smaps, cresp_substep, n_substeps_max, allow_unnatural_transfer, K_cresp_paral, K_cresp_perp, p_min_fix, p_max_fix, redshift, g_fix, s, one_ps, three_ps, four_ps, bin_old
 
 ! contains routines reading namelist in problem.par file dedicated to cosmic ray electron spectrum and initializes types used.
 ! available via namelist COSMIC_RAY_SPECTRUM
@@ -64,7 +64,7 @@ module initcrspectrum
    real, dimension(:), allocatable :: cfl_cre                     !< CFL parameter  for CR spectrally resolved components! TODO FIXME RENAME ME PLEASE!!!!
    real, dimension(:), allocatable :: cre_eff                     !< fraction of energy passed to CR spectrally resolved components by nucleons (mainly protons)! TODO wat do with cr_eff now?! TODO FIXME RENAME ME PLEASE!!!!
    real, allocatable, dimension(:,:) :: g_fix, g_mid_fix                                  !> kinetic energy arrays
-   real, allocatable, dimension(:,:) :: s, three_ps, four_ps                !> power-law exponent arrays for transrelativistic limit
+   real, allocatable, dimension(:,:) :: s, one_ps, three_ps, four_ps                !> power-law exponent arrays for transrelativistic limit
    real, dimension(:,:), allocatable :: K_cresp_paral !< array containing parallel diffusion coefficients of all CR CRESP components (number density and energy density)
    real, dimension(:,:), allocatable :: K_cresp_perp  !< array containing perpendicular diffusion coefficients of all CR CRESP components (number density and energy density)
    real, dimension(:), allocatable :: K_cre_pow   !< exponent for power law-like diffusion-energy dependence ! TODO FIXME RENAME ME PLEASE!!!!
@@ -510,6 +510,7 @@ contains
       call my_allocate_with_index(g_fix,       nspc, ncrb, I_ONE, I_ZERO )
       call my_allocate_with_index(g_mid_fix,   nspc, ncrb, I_ONE, I_ONE )
       call my_allocate_with_index(s,           nspc, ncrb, I_ONE, I_ONE )
+      call my_allocate_with_index(one_ps,      nspc, ncrb, I_ONE, I_ONE )
       call my_allocate_with_index(three_ps,    nspc, ncrb, I_ONE, I_ONE )
       call my_allocate_with_index(four_ps,     nspc, ncrb, I_ONE, I_ONE )
 
@@ -790,7 +791,7 @@ contains
 
       use cresp_variables, only: clight_cresp
       use cr_data,         only: transrelativistic, cr_mass, icr_spc
-      use constants,       only: zero, three, four
+      use constants,       only: zero, one, three, four
       use initcosmicrays,  only: ncrb, nspc
 
       implicit none
@@ -798,6 +799,7 @@ contains
       integer(kind=4) :: i_spc
 
       s = zero
+      one_ps = zero
       three_ps = zero
       four_ps = zero
 
@@ -834,6 +836,7 @@ contains
       enddo
       !stop
 
+      one_ps   = one + s
       three_ps = three + s
       four_ps  = four + s
 
@@ -901,6 +904,7 @@ contains
       if (allocated(p_fix)) call my_deallocate(p_fix)
       if (allocated(g_fix)) call my_deallocate(g_fix)
       if (allocated(s)) call my_deallocate(s)
+      if (allocated(one_ps)) call my_deallocate(one_ps)
       if (allocated(three_ps)) call my_deallocate(three_ps)
       if (allocated(four_ps)) call my_deallocate(four_ps)
       if (allocated(p_mid_fix)) call my_deallocate(p_mid_fix)
