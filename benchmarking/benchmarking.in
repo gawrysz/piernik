@@ -8,5 +8,5 @@ F90      = h5pfc  -I/usr/lib64/gfortran/modules/openmpi/ -fallow-argument-mismat
 
 F90FLAGS  = -fdefault-real-8 -ffree-form -std=gnu -fimplicit-none -ffree-line-length-none
 F90FLAGS += -O3 -funroll-loops -fno-stack-arrays -w
-LDFLAGS   = -Wl,--as-needed -Wl,-O1
+LDFLAGS   = -Wl,-O1
 F90FLAGS += -I/usr/include

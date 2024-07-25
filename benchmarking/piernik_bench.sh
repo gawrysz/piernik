@@ -11,8 +11,9 @@ fi
 
 SCALE=${BIG:=1}
 
-MEMG=$( LC_ALL=C free -m | awk '/Mem/ {print $2/1024.}' )
-MEMM=$( LC_ALL=C free -m | awk '/Mem/ {print $2}' )
+#assume 8GB RAM, availabe half of it
+MEMG=4. #$( LC_ALL=C free -m | awk '/Mem/ {print $2/1024.}' )
+MEMM=4096 #$( LC_ALL=C free -m | awk '/Mem/ {print $2}' )
 # alternatively (should give value closer to the amount of physical RAM installed):
 #MEMG=0
 #for mem in /sys/devices/system/memory/memory*; do
@@ -20,7 +21,7 @@ MEMM=$( LC_ALL=C free -m | awk '/Mem/ {print $2}' )
 #done
 #MEMG=$( echo $MEMG | awk '{print $1 / 1024.^3 }' )
 
-echo "## "$( cat /proc/cpuinfo  | grep "model name" | uniq )
+echo "## "$( sysctl -n machdep.cpu.brand_string )
 echo "## Memory : $MEMG GB"
 
 
@@ -28,7 +29,7 @@ echo "## Memory : $MEMG GB"
 
 # create list of thread count to be tested
 if [ $# -lt 1 ] ; then
-    N=$( awk 'BEGIN {c=0} /processor/ {if ($NF > c) c=$NF} END {print c+1}' /proc/cpuinfo )
+    N=$( sysctl -n machdep.cpu.thread_count )
     N_PROC_LIST=$( seq $N ) 
 else
     N_PROC_LIST=$( echo $* | awk '{for (i=1; i<=NF; i++) printf("%d ",1*$i); print ""}' )
@@ -86,29 +87,29 @@ if [ $DO_MAKE == 1 ] ; then
 	OBJ_LIST=$( get_n_problems 1 )
 
 	echo -n "Single-thread make object        "
-	( time $MAKE $OBJ_LIST > /dev/null ) 2>&1 | awkfor
+	( time $MAKE $OBJ_LIST > /dev/null 2>&1 ) | awkfor
 	$MAKE $OBJ_LIST CL=1 > /dev/null
 
 	echo -n "Multi-thread make object         "
-	( time $MAKE -j $OBJ_LIST > /dev/null ) 2>&1 | awkfor
+	( time $MAKE -j $OBJ_LIST > /dev/null 2>&1 ) | awkfor
 	$MAKE $OBJ_LIST CL=1 > /dev/null
 
 	OBJ_LIST=$( get_n_problems 2 )
 
 	echo -n "Multi-thread make two objects    "
-	( time $MAKE -j $OBJ_LIST > /dev/null ) 2>&1 | awkfor
+	( time $MAKE -j $OBJ_LIST > /dev/null 2>&1 ) | awkfor
 	$MAKE $OBJ_LIST CL=1 > /dev/null
 
 	OBJ_LIST=$( get_n_problems 4 )
 
 	echo -n "Multi-thread make four objects   "
-	( time $MAKE -j $OBJ_LIST > /dev/null ) 2>&1 | awkfor
+	( time $MAKE -j $OBJ_LIST > /dev/null 2>&1 ) | awkfor
 	$MAKE $OBJ_LIST CL=1 > /dev/null
 
 	OBJ_LIST=$( get_n_problems 8 )
 
 	echo -n "Multi-thread make eight objects  "
-	( time $MAKE -j $OBJ_LIST > /dev/null ) 2>&1 | awkfor
+	( time $MAKE -j $OBJ_LIST > /dev/null 2>&1 ) | awkfor
     }
     echo
 fi
