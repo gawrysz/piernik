@@ -89,7 +89,7 @@ module cr_data
    logical, dimension(PRES:PRIM)                           :: eO16               !< presence and grad_pcr essentiality of O16 isotope
    logical,                                dimension(nicr) :: eCRSP              !< table of all isotopes presences
    logical,                                dimension(nicr) :: ePRIM              !< table of all PRIMARY presences
-   logical, parameter                                      :: transrelativistic = .false. !< Logical for transrelativistic limit of momentum in CRESP
+   logical, parameter                                      :: transrelativistic = .true. !< Logical for transrelativistic limit of momentum in CRESP
    integer, parameter                                      :: specieslen = 6     !< length of species names
    character(len=specieslen), allocatable, dimension(:)    :: cr_names           !< table of species names
    !character(len=idlen), parameter                         :: p_bnd =  'fix'  !, 'fixed'! impose momentum boundaries to be fixed along time, or able to move  ! BEWARE: src/fluids/cosmicrays/initcrspectrum.F90 also exports some variable named "p_bnd"
@@ -131,23 +131,45 @@ module cr_data
 
 !<====Cross sections for spallation from Garcia-Munoz 1987 (see also Longair)====>
 
-   real, parameter :: sigma_C12_Li7  = 10.   !< mbarn
-   real, parameter :: sigma_C12_Be9  = 6.   !< mbarn
-   real, parameter :: sigma_C12_Be10 = 3.5   !< mbarn
-   real, parameter :: sigma_C12_B11  = 31.5 !3.5 !< mbarn
-   real, parameter :: sigma_C12_B10  = 17.3 !3.5 !< mbarn
+!   real, parameter :: sigma_C12_Li7  = 10.   !< mbarn
+!   real, parameter :: sigma_C12_Be9  = 6.   !< mbarn
+!   real, parameter :: sigma_C12_Be10 = 3.5   !< mbarn
+!   real, parameter :: sigma_C12_B11  = 31.5 !3.5 !< mbarn
+!   real, parameter :: sigma_C12_B10  = 17.3 !3.5 !< mbarn
+!
+!   real, parameter :: sigma_N14_Li7  = 9.5 !< mbarn
+!   real, parameter :: sigma_N14_Be9  = 4.5!< mbarn
+!   real, parameter :: sigma_N14_Be10  = 2.0 !< mbarn
+!   real, parameter :: sigma_N14_B10  = 16.0 !< mbarn
+!   real, parameter :: sigma_N14_B11  = 15.0 !< mbarn
+!
+!   real, parameter :: sigma_O16_Li7  = 9.5 !< mbarn
+!   real, parameter :: sigma_O16_Be9  = 4.5 !< mbarn
+!   real, parameter :: sigma_O16_Be10 = 2.   !< mbarn
+!   real, parameter :: sigma_O16_B10  = 8.3  !< mbarn
+!   real, parameter :: sigma_O16_B11  = 13.9  !< mbarn
 
-   real, parameter :: sigma_N14_Li7  = 9.5 !< mbarn
-   real, parameter :: sigma_N14_Be9  = 4.5!< mbarn
-   real, parameter :: sigma_N14_Be10  = 2.0 !< mbarn
-   real, parameter :: sigma_N14_B10  = 16.0 !< mbarn
-   real, parameter :: sigma_N14_B11  = 15.0 !< mbarn
+!<====Cross sections for spallation from Génolini et al., 2018 ====>
 
-   real, parameter :: sigma_O16_Li7  = 9.5 !< mbarn
-   real, parameter :: sigma_O16_Be9  = 4.5 !< mbarn
-   real, parameter :: sigma_O16_Be10 = 2.   !< mbarn
-   real, parameter :: sigma_O16_B10  = 8.3  !< mbarn
-   real, parameter :: sigma_O16_B11  = 13.9  !< mbarn
+   real, parameter :: sigma_C12_Li7  = 6.8   !< mbarn
+   real, parameter :: sigma_C12_Be9  = 6.8   !< mbarn
+   real, parameter :: sigma_C12_Be10 = 4.  !< mbarn
+   real, parameter :: sigma_C12_B11  = 30. !3.5 !< mbarn
+   real, parameter :: sigma_C12_B10  = 12.3 !3.5 !< mbarn
+
+   real, parameter :: sigma_N14_Li7  = 9.3 !< mbarn
+   real, parameter :: sigma_N14_Be9  = 2.1!< mbarn
+   real, parameter :: sigma_N14_Be10 = 0. !< mbarn
+   real, parameter :: sigma_N14_B10  = 10.3 !< mbarn
+   real, parameter :: sigma_N14_B11  = 17.3 !< mbarn
+
+   real, parameter :: sigma_O16_Li7  = 11.2 !< mbarn
+   real, parameter :: sigma_O16_Be9  = 3.7 !< mbarn
+   real, parameter :: sigma_O16_Be10 = 2.2   !< mbarn
+   real, parameter :: sigma_O16_B10  = 10.9  !< mbarn
+   real, parameter :: sigma_O16_B11  = 18.2  !< mbarn
+
+!<====Cross sections for pion production and gamma ray emission from Esslin & Pfrommer, 2004 ====>
 
    real, parameter :: sigma_P_P      = 25. !< mbarn
 
