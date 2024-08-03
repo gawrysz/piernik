@@ -263,8 +263,8 @@ contains
    subroutine check_blocky(this)
 
       use constants,  only: ndims, LO, HI, pLAND, I_ONE
-      use mpi,        only: MPI_INTEGER, MPI_REQUEST_NULL
-      use mpisetup,   only: proc, req, status, comm, mpi_err, LAST, inflate_req, slave, piernik_MPI_Allreduce
+      use mpi,        only: MPI_INTEGER, MPI_REQUEST_NULL, MPI_STATUS_IGNORE
+      use mpisetup,   only: nproc, proc, comm, piernik_MPI_Allreduce
 
       implicit none
 
@@ -272,10 +272,10 @@ contains
 
       integer(kind=4), dimension(ndims) :: shape, shape1
       integer(kind=4), parameter :: sh_tag = 7
-      integer, parameter :: nr = 2
+      integer(kind=8) :: req
+      integer(kind=4) :: mpi_err
       integer :: i
 
-      call inflate_req(nr)
       this%is_blocky = .true.
       shape = 0
       shape1 = 0
@@ -290,10 +290,17 @@ contains
             enddo
          endif
       endif
-      req = MPI_REQUEST_NULL
-      if (slave)     call MPI_Irecv(shape1, size(shape1), MPI_INTEGER, proc-I_ONE, sh_tag, comm, req(1 ), mpi_err)
-      if (proc<LAST) call MPI_Isend(shape,  size(shape),  MPI_INTEGER, proc+I_ONE, sh_tag, comm, req(nr), mpi_err)
-      call MPI_Waitall(nr, req(:nr), status(:, :nr), mpi_err)
+
+      ! There's something really fishy about gfortran 14.1.1 here.
+      ! Previous version of the code was not correctly evaluated because shape1 was assumed == 0 and this%is_blocky was not set to .false. .
+      ! The situation changed when I've added "write(*,*) shape1" after MPI_Wait* – it suddenly got evaluated correctly.
+      ! It was also evaluated correctly, when compiled with -O1. This time I wasn't able to find which option implied by -O2 was the guilty one.
+      ! Apparently there are some options which "gfortan -Q" is silent about.
+      ! The rearrangement below seems to work but it req should not be an 64-bit integer. That may be peculiar to OpenMPI 5.0.2 .
+
+      call MPI_Isend(shape,  size(shape),  MPI_INTEGER, mod(nproc+proc+I_ONE, nproc), sh_tag, comm, req, mpi_err)
+      call MPI_Recv (shape1, size(shape1), MPI_INTEGER, mod(nproc+proc-I_ONE, nproc), sh_tag, comm, mpi_err)
+      call MPI_Wait(req, MPI_STATUS_IGNORE, mpi_err)
       if (any(shape /= 0) .and. any(shape1 /= 0)) then
          if (any(shape /= shape1)) this%is_blocky = .false.
       endif
