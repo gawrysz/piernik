@@ -211,11 +211,11 @@ contains
 
    subroutine waitall_wrapper(this, ind, label)
 
-      use constants,  only: LONG
-      use dataio_pub, only: warn, msg
+      use constants,  only: LONG, I_ONE
+      use dataio_pub, only: warn, msg, die!, printinfo
       use global,     only: waitall_timeout
-      use MPIF,       only: MPI_STATUSES_IGNORE, MPI_Wtime
-      use MPIFUN,     only: MPI_Waitall
+      use MPIF,       only: MPI_STATUSES_IGNORE, MPI_STATUS_IGNORE, MPI_INTEGER_KIND, MPI_UNDEFINED, MPI_Wtime
+      use MPIFUN,     only: MPI_Waitall, MPI_Testsome, MPI_Test
 
       implicit none
 
@@ -225,6 +225,10 @@ contains
 
       logical, save :: firstcall = .true.
       real :: t0, dtw
+      integer(kind=MPI_INTEGER_KIND), dimension(:), allocatable :: inds
+      integer(kind=MPI_INTEGER_KIND) :: tcnt, cnt_prev
+      integer :: i
+      logical(kind=4) :: flag
 
       if (firstcall) then
          call init_wall
@@ -234,10 +238,45 @@ contains
       if (this%n > 0) then
 
          call req_wall%add(int([ind]), int(this%n, kind=LONG))
-         if (waitall_timeout > 0.) then
-         endif
          t0 = MPI_Wtime()
-         call MPI_Waitall(this%n, this%r(:this%n), MPI_STATUSES_IGNORE, err_mpi)
+         if (waitall_timeout > 0.) then
+            allocate(inds(this%n))
+            inds(:) = -1
+            tcnt = 0
+            do i = 1, this%n
+               call MPI_Test(this%r(i), flag, MPI_STATUS_IGNORE, err_mpi)
+               if (flag) tcnt = tcnt + I_ONE
+            enddo
+!!$            write(msg, '(a,3(" ",i0),a)')"[req_array:waitall_wrapper] MPI_Test beginning", tcnt, this%n, err_mpi, " '" // trim(label) // "'"
+!!$            call printinfo(msg)
+            do while (tcnt < this%n)
+
+               if (tcnt /= MPI_UNDEFINED) cnt_prev = tcnt
+               tcnt = MPI_UNDEFINED
+               call MPI_Testsome(this%n, this%r(:this%n), tcnt, inds(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
+
+               if ((tcnt < 0 .and. tcnt /= MPI_UNDEFINED) .or. cnt_prev < 0. .or. err_mpi /= 0) then
+                  write(msg, '(a,4(" ",i0),a)')"[req_array:waitall_wrapper] MPI_Testsome failing?", tcnt, cnt_prev, this%n, err_mpi, " '" // trim(label) // "'"
+                  call die(msg)
+!!$               else
+!!$                  write(msg, '(a,4(" ",i0),a)')"[req_array:waitall_wrapper] MPI_Testsome progressing", tcnt, cnt_prev, this%n, err_mpi, " '" // trim(label) // "'"
+!!$                  call printinfo(msg)
+               endif
+
+               if (tcnt /= MPI_UNDEFINED) tcnt = cnt_prev + tcnt
+
+               dtw = MPI_Wtime() - t0
+               if ((tcnt == MPI_UNDEFINED .or. tcnt < this%n) .and. dtw > waitall_timeout) then
+                  write(msg, '(3(a,i0),a,g0.2,a)')"[req_array:waitall_wrapper] only ", cnt_prev, " or ", tcnt, " out of ", this%n, &
+                       " requests completed in ", MPI_Wtime() - t0, "s (timeout, '" // trim(label) // "')"
+                  call die(msg)
+               endif
+
+            enddo
+            deallocate(inds)
+         else
+            call MPI_Waitall(this%n, this%r(:this%n), MPI_STATUSES_IGNORE, err_mpi)
+         endif
          dtw = MPI_Wtime() - t0
          call tbins_wall%put(dtw)
          if (dtw > longest_wall) longest_wall = dtw
