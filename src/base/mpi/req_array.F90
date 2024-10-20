@@ -76,6 +76,8 @@ module req_array
       enumerator :: C_REQA = 1, C_REQS  ! for both req% waitall methods
    end enum
 
+   real :: longest_wall  ! find the extreme Waital completion time
+
    integer(kind=4) :: err_mpi  !< error status
 
 contains
@@ -93,6 +95,8 @@ contains
       integer :: nbins
       real :: mx_b
 
+      longest_wall = 0.
+
       call req_wall%init(int([C_REQS]))
 
       ! assume sane values of min_bin, def_max_bin, binwidth and waitall_timeout
@@ -106,15 +110,24 @@ contains
 
    subroutine cleanup_wall
 
-      use constants,    only: V_DEBUG
+      use constants,    only: V_DEBUG, I_ONE
+      use dataio_pub,   only: printinfo, msg
       use mpi_wrappers, only: MPI_wrapper_stats
       use mpisetup,     only: master
+      use MPIF,         only: MPI_IN_PLACE, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD
+      use MPIFUN,       only: MPI_Allreduce
 
       implicit none
 
-      if (master .and. MPI_wrapper_stats) then
-         call req_wall%print("Waitall requests(calls). Columns: req_all%, req_some%.", V_DEBUG)
-         call tbins_wall%print("Waitall execution times (bin boundaries in seconds)", V_DEBUG)
+      if (MPI_wrapper_stats) then
+         call MPI_Allreduce(MPI_IN_PLACE, longest_wall, I_ONE, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, err_mpi)
+
+         if (master) then
+            call req_wall%print("Waitall requests(calls). Columns: req_all%, req_some%.", V_DEBUG)
+            call tbins_wall%print("Waitall execution times (bin boundaries in seconds)", V_DEBUG)
+            write(msg, '(a,g0.2,a)')"Longest completion of MPI_Waitall took ", longest_wall, " s (max over all processes)"
+            call printinfo(msg, V_DEBUG)
+         endif
       endif
 
       call req_wall%cleanup
@@ -198,10 +211,11 @@ contains
 
    subroutine waitall_wrapper(this, ind, label)
 
-      use constants, only: LONG
-      use global,    only: waitall_timeout
-      use MPIF,      only: MPI_STATUSES_IGNORE, MPI_Wtime
-      use MPIFUN,    only: MPI_Waitall
+      use constants,  only: LONG
+      use dataio_pub, only: warn, msg
+      use global,     only: waitall_timeout
+      use MPIF,       only: MPI_STATUSES_IGNORE, MPI_Wtime
+      use MPIFUN,     only: MPI_Waitall
 
       implicit none
 
@@ -226,6 +240,13 @@ contains
          call MPI_Waitall(this%n, this%r(:this%n), MPI_STATUSES_IGNORE, err_mpi)
          dtw = MPI_Wtime() - t0
          call tbins_wall%put(dtw)
+         if (dtw > longest_wall) longest_wall = dtw
+         if (waitall_timeout > 0.) then
+            if (dtw > waitall_timeout) then
+               write(msg, '(a,i0,a,f0.6,a)')"[req_array:waitall_wrapper] Completing ", this%n, " requests took ", dtw, " s" // " '" // trim(label) // "'"
+               call warn(msg)
+            endif
+         endif
          this%n = 0
 
       endif
