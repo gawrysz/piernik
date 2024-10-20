@@ -202,17 +202,24 @@ contains
 
       class(req_arr), intent(inout) :: this  !< an object invoking the type-bound procedure
 
-      call this%waitall_wrapper(C_REQS, "???")
+      call this%waitall_wrapper(C_REQS, "_" // trim(this%tags%label) // "_")
       call this%cleanup
 
    end subroutine waitall_on_some
 
-!> \brief Code common for waitall_on_some and req_ppp::waitall_ppp
+!>
+!! \brief Code common for waitall_on_some and req_ppp::waitall_ppp
+!!
+!! \details Use positive waitall_timeout if you experienced deadlocks in your runs.
+!! With waitall_timeout > 0. this routine won't call MPI_Waitall, which is blocking
+!! but will use nonblocking MPI_Test* calls instead. Chances are that some useful hints
+!! will be printed on the stdout instead of going into silent deadlock.
+!<
 
    subroutine waitall_wrapper(this, ind, label)
 
-      use constants,  only: LONG, I_ONE
-      use dataio_pub, only: warn, msg, die!, printinfo
+      use constants,  only: LONG, I_ONE, V_ESSENTIAL
+      use dataio_pub, only: warn, msg, die, printinfo
       use global,     only: waitall_timeout
       use MPIF,       only: MPI_STATUSES_IGNORE, MPI_STATUS_IGNORE, MPI_INTEGER_KIND, MPI_UNDEFINED, MPI_Wtime
       use MPIFUN,     only: MPI_Waitall, MPI_Testsome, MPI_Test
@@ -227,9 +234,10 @@ contains
       real :: t0, dtw
       integer(kind=MPI_INTEGER_KIND), dimension(:), allocatable :: inds
       integer(kind=MPI_INTEGER_KIND) :: tcnt, cnt_prev
-      integer :: i
-      logical(kind=4) :: flag
+      integer(kind=4) :: i
+      logical(kind=4) :: flag, warn10
 
+      ! The initialization had to be delayed because waitall_timeout is initialized in module global, which is a bit late.
       if (firstcall) then
          call init_wall
          firstcall = .false.
@@ -237,55 +245,64 @@ contains
 
       if (this%n > 0) then
 
+         warn10 = .false.
          call req_wall%add(int([ind]), int(this%n, kind=LONG))
          t0 = MPI_Wtime()
-         if (waitall_timeout > 0.) then
+         if (waitall_timeout > 0.) then  ! complete requests in a non-blocking way, print somediagnostics if completion is slow
             allocate(inds(this%n))
             inds(:) = -1
+
+            ! First quickly check if there are already completed requests
             tcnt = 0
             do i = 1, this%n
                call MPI_Test(this%r(i), flag, MPI_STATUS_IGNORE, err_mpi)
-               if (flag) tcnt = tcnt + I_ONE
+               if (flag) then
+                  tcnt = tcnt + I_ONE
+                  inds(tcnt) = i
+               endif
             enddo
-!!$            write(msg, '(a,3(" ",i0),a)')"[req_array:waitall_wrapper] MPI_Test beginning", tcnt, this%n, err_mpi, " '" // trim(label) // "'"
-!!$            call printinfo(msg)
+
+            ! Look for remaining requests
             do while (tcnt < this%n)
 
                if (tcnt /= MPI_UNDEFINED) cnt_prev = tcnt
                tcnt = MPI_UNDEFINED
-               call MPI_Testsome(this%n, this%r(:this%n), tcnt, inds(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
 
+               ! If we're exceeding 0.1 * waitall_timeout then is starts to be fishy: either too short waitall_timeout was set or we're going to to get a deadlock
+               dtw = MPI_Wtime() - t0
+               if (dtw > 0.1 * waitall_timeout .and. .not. warn10) then
+                  write(msg, '(2(a,i0),a)')"[req_array:waitall_wrapper] MPI_Testsome progress at 1/10 timeout: ", cnt_prev, " out of ", this%n, " '" // trim(label) // "'"
+                  call printinfo(msg, V_ESSENTIAL)
+                  warn10 = .true.
+               endif
+
+               ! Test remaining requests
+               call MPI_Testsome(this%n, this%r(:this%n), tcnt, inds(cnt_prev+1:), MPI_STATUSES_IGNORE, err_mpi)
                if ((tcnt < 0 .and. tcnt /= MPI_UNDEFINED) .or. cnt_prev < 0. .or. err_mpi /= 0) then
                   write(msg, '(a,4(" ",i0),a)')"[req_array:waitall_wrapper] MPI_Testsome failing?", tcnt, cnt_prev, this%n, err_mpi, " '" // trim(label) // "'"
                   call die(msg)
-!!$               else
-!!$                  write(msg, '(a,4(" ",i0),a)')"[req_array:waitall_wrapper] MPI_Testsome progressing", tcnt, cnt_prev, this%n, err_mpi, " '" // trim(label) // "'"
-!!$                  call printinfo(msg)
                endif
 
                if (tcnt /= MPI_UNDEFINED) tcnt = cnt_prev + tcnt
 
-               dtw = MPI_Wtime() - t0
+               ! If waitall_timeout was exceeded then die with some meaningful messages
                if ((tcnt == MPI_UNDEFINED .or. tcnt < this%n) .and. dtw > waitall_timeout) then
-                  write(msg, '(3(a,i0),a,g0.2,a)')"[req_array:waitall_wrapper] only ", cnt_prev, " or ", tcnt, " out of ", this%n, &
-                       " requests completed in ", MPI_Wtime() - t0, "s (timeout, '" // trim(label) // "')"
+                  write(msg, '(2(a,i0),a,g0.2,a)')"[req_array:waitall_wrapper] only ", merge(tcnt, cnt_prev, tcnt /= MPI_UNDEFINED), " out of ", this%n, &
+                       " requests completed in ", dtw, "s (timeout, '" // trim(label) // "')"
+                  call sleep(3)  ! give the other processes a chance to print their state
                   call die(msg)
                endif
 
             enddo
             deallocate(inds)
          else
+            ! This is perhaps faster but gives no clue when deadlock occur
             call MPI_Waitall(this%n, this%r(:this%n), MPI_STATUSES_IGNORE, err_mpi)
          endif
          dtw = MPI_Wtime() - t0
          call tbins_wall%put(dtw)
          if (dtw > longest_wall) longest_wall = dtw
-         if (waitall_timeout > 0.) then
-            if (dtw > waitall_timeout) then
-               write(msg, '(a,i0,a,f0.6,a)')"[req_array:waitall_wrapper] Completing ", this%n, " requests took ", dtw, " s" // " '" // trim(label) // "'"
-               call warn(msg)
-            endif
-         endif
+
          this%n = 0
 
       endif
