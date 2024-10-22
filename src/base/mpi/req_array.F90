@@ -235,7 +235,8 @@ contains
       integer(kind=MPI_INTEGER_KIND), dimension(:), allocatable :: inds
       integer(kind=MPI_INTEGER_KIND) :: tcnt, cnt_prev
       integer(kind=4) :: i
-      logical(kind=4) :: flag, warn10
+      logical(kind=4) :: flag, warn10, fs, fr
+      logical, allocatable, dimension(:) :: tflag
 
       ! The initialization had to be delayed because waitall_timeout is initialized in module global, which is a bit late.
       if (firstcall) then
@@ -287,10 +288,27 @@ contains
 
                ! If waitall_timeout was exceeded then die with some meaningful messages
                if ((tcnt == MPI_UNDEFINED .or. tcnt < this%n) .and. dtw > waitall_timeout) then
-                  write(msg, '(2(a,i0),a,g0.2,a)')"[req_array:waitall_wrapper] only ", merge(tcnt, cnt_prev, tcnt /= MPI_UNDEFINED), " out of ", this%n, &
-                       " requests completed in ", dtw, "s (timeout, '" // trim(label) // "')"
-                  call sleep(3)  ! give the other processes a chance to print their state
-                  call die(msg)
+                  call set_tflag
+                  call sleep(1)
+                  fs = one_more_test(this%tags%ts)
+                  fr = one_more_test(this%tags%tr) ! make sure that both are executed
+                  if (fs .or. fr) then
+                     ! waitall_timeout was set too short
+                     write(msg, '(a,f0.3,a)')"[req_array:waitall_wrapper] Late completions detected. Increase waitall to at least ", max(1. + waitall_timeout, 2. * waitall_timeout), " s"
+                     call warn(msg)
+                  endif
+                  deallocate(tflag)
+
+                  if ((tcnt == MPI_UNDEFINED .or. tcnt < this%n) .and. dtw > waitall_timeout) then
+                     call set_tflag
+                     call print_details(this%tags%ts, "ISend ")
+                     call print_details(this%tags%tr, "IRecv ")
+                     deallocate(tflag)
+                     write(msg, '(2(a,i0),a,g0.2,a)')"[req_array:waitall_wrapper] only ", merge(tcnt, cnt_prev, tcnt /= MPI_UNDEFINED), " out of ", this%n, &
+                          " requests completed in ", dtw, "s (timeout, '" // trim(label) // "')"
+                     call sleep(3)  ! give the other processes a chance to print their state
+                     call die(msg)
+                  endif
                endif
 
             enddo
@@ -306,6 +324,87 @@ contains
          this%n = 0
 
       endif
+
+   contains
+
+      subroutine set_tflag
+
+         implicit none
+
+         allocate(tflag(this%n))
+         tflag = .false.
+         do i = 1, this%n
+            if (inds(i) > -1) then
+               if (inds(i) >= lbound(tflag, 1) .and. inds(i) <= ubound(tflag, 1)) &
+                    tflag(inds(i)) = .true.
+            endif
+         enddo
+
+      end subroutine set_tflag
+
+      subroutine print_details(ta, l)
+
+         use tag_array, only: tag_arr
+
+         implicit none
+
+         type(tag_arr),    intent(in) :: ta
+         character(len=*), intent(in) :: l
+
+         integer :: p
+
+         if (allocated(ta%t)) then
+            write(msg, '(2a,2(i0,a))') trim(l) // " '" // trim(this%tags%label), "', procs: [ ", lbound(ta%t), " : ", ubound(ta%t), " ] "
+            call printinfo(msg, V_ESSENTIAL)
+            do p = lbound(ta%t, 1), ubound(ta%t, 1)
+               if (allocated(ta%t(p)%list)) then
+                  write(msg, '(a,3(a,i0))') trim(l) // " '" // trim(this%tags%label), "', checking requests [ ", ta%t(p)%l_bound(), " : ", ta%t(p)%u_bound(), " ] for proc# ", p
+                  call printinfo(msg, V_ESSENTIAL)
+                  do i = ta%t(p)%l_bound(), ta%t(p)%u_bound()
+
+                     ! Print the unfinished requests
+                     if (.not. tflag(ta%t(p)%list(i)%ir)) then
+                        write(msg, '(2a,4(i0,a))') trim(l) // " '" // trim(this%tags%label), "', unfinished with proc ", p, " request ", i, " : ( tag: ", ta%t(p)%list(i)%tag, " , req# ", ta%t(p)%list(i)%ir, " )"
+                        call printinfo(msg, V_ESSENTIAL)
+                     endif
+
+                  enddo
+               endif
+            enddo
+         endif
+
+      end subroutine print_details
+
+      logical function one_more_test(ta)
+
+         use tag_array, only: tag_arr
+
+         implicit none
+
+         type(tag_arr),    intent(in) :: ta
+
+         integer :: p
+
+         one_more_test = .false.
+
+         if (allocated(ta%t)) then
+            do p = lbound(ta%t, 1), ubound(ta%t, 1)
+               if (allocated(ta%t(p)%list)) then
+                  do i = ta%t(p)%l_bound(), ta%t(p)%u_bound()
+                     ! Do one more test, just in case
+                     call MPI_Test(this%r(ta%t(p)%list(i)%ir), flag, MPI_STATUS_IGNORE, err_mpi)
+                     if (flag .neqv. tflag(ta%t(p)%list(i)%ir)) then
+                        one_more_test = .true.
+                        tcnt = tcnt + I_ONE
+                        inds(tcnt) = ta%t(p)%list(i)%ir
+                        ! we can return here, but let's go through remaining MPI_Test calls, just in case
+                     endif
+                  enddo
+               endif
+            enddo
+         endif
+
+      end function one_more_test
 
    end subroutine waitall_wrapper
 
