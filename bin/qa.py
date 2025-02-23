@@ -7,7 +7,7 @@ import numpy as np
 
 debug = False
 
-typ1 = np.dtype([('name', 'a50'), ('beg', 'i'), ('end', 'i'), ('type', 'a4')])
+typ1 = np.dtype([('name', 'S50'), ('beg', 'i'), ('end', 'i'), ('type', 'S4')])
 
 # starts with spaces or spaces and one of { 'end', 'pure', ... }
 # if function it can have a type next goes subroutine or function or type
