@@ -178,7 +178,8 @@ contains
    subroutine init_cresp
 
       use constants,       only: cbuff_len, I_ZERO, I_ONE, zero, one, three, ten, half, logten, LO, HI
-      use cr_data,         only: cr_mass, cr_sigma_N, cr_names, cr_Z, icr_spc, icr_H1, cr_spectral, cr_table, eCRSP
+      use cresp_variables, only: clight_cresp
+      use cr_data,         only: cr_mass, cr_sigma_N, cr_names, cr_Z, icr_spc, icr_H1, cr_spectral, cr_table, eCRSP, transrelativistic
       use dataio_pub,      only: printinfo, warn, msg, die, nh
       use diagnostics,     only: my_allocate_with_index, my_allocate, my_deallocate, ma1d, ma2d
       use global,          only: disallow_CRnegatives
@@ -641,16 +642,18 @@ contains
 
 
         K_cresp_paral(j, 1:ncrb) = K_cr_paral(j) * (p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j) ! Scale diffusion of all species to protons.
+        K_cresp_perp(j,  1:ncrb) = K_cr_perp(j) * (p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j)
+
         !print *, 'K_cresp_paral(',j,'):',  K_cresp_paral(j, 1:ncrb)
         !print *, 'K_cr_paral(',icr_spc(j),'):', K_cr_paral(icr_spc(j))
         !print *, 'K_cr_paral(',j,'):', K_cr_paral(j)
-        K_cresp_perp(j,  1:ncrb) = K_cr_perp(j)  * (p_mid_fix(1:ncrb) / (abs(cr_Z(icr_spc(j)))*p_diff(j)))**K_cre_pow(j)
 
+        if (transrelativistic) K_cresp_paral(j, 1:ncrb) = p_mid_fix(1:ncrb) / (sqrt(p_mid_fix(1:ncrb)**2+cr_mass(icr_spc(j))**2*clight_cresp**2)) * K_cresp_paral(j, 1:ncrb) ! Diffusion coefficient multiplied by beta=v/c (Schlickeiser, Cosmic Ray Astrophysics (2002), Strong et al, Review of Nuclear and Particle sciences (2007))
+        if (transrelativistic) K_cresp_perp(j,  1:ncrb) = p_mid_fix(1:ncrb) / (sqrt(p_mid_fix(1:ncrb)**2+cr_mass(icr_spc(j))**2*clight_cresp**2)) * K_cresp_perp(j,  1:ncrb)
 
-
-        print *, 'K_cresp_paral(',j,'):',  K_cresp_paral(j, 1:ncrb)
+        print *, 'beta K_cresp_paral(',j,'):',  K_cresp_paral(j, 1:ncrb)
         !print *, 'K_cr_paral(',icr_spc(j),'):', K_cr_paral(icr_spc(j))
-        print *, 'K_cr_paral(',j,'):', K_cr_paral(j)
+        print *, 'beta K_cr_paral(',j,'):', K_cr_paral(j)
 
 
         K_cresp_paral(j, ncrb+1:ncr2b) = K_cresp_paral(j, 1:ncrb)
@@ -660,7 +663,7 @@ contains
         K_crs_perp (ncrn + 1 + (j - 1) * ncr2b : ncrn + ncr2b * j) = K_cresp_perp (j, 1:ncr2b)
       enddo
 
-      !stop
+      stop
 
       call init_cresp_types
 
