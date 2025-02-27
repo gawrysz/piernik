@@ -663,8 +663,6 @@ contains
         K_crs_perp (ncrn + 1 + (j - 1) * ncr2b : ncrn + ncr2b * j) = K_cresp_perp (j, 1:ncr2b)
       enddo
 
-      stop
-
       call init_cresp_types
 
 #ifdef VERBOSE
