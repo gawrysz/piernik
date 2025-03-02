@@ -53,16 +53,20 @@ module global
    logical         :: ei_negative = .false.
    logical         :: cr_negative = .false.
    logical         :: disallow_negatives, disallow_CRnegatives
-   logical         :: repetitive_steps         !< repetitve fluid step if cfl condition is violated (significantly increases mem usage)
+   logical         :: repetitive_steps         !< repetitive fluid step if cfl condition is violated (significantly increases mem usage)
    logical         :: dirty_debug              !< Allow initializing arrays with some insane values and checking if these values can propagate
-   integer(kind=4) :: show_n_dirtys            !< use to limit the amount of printed messages on dirty values found
-   logical         :: do_ascii_dump            !< to dump, or not to dump: that is a question (ascii)
+   integer(kind=4) :: show_n_dirtys            !< Use to limit the amount of printed messages on dirty values found
+   logical         :: do_ascii_dump            !< To dump, or not to dump: that is a question (ascii)
    logical         :: no_dirty_checks          !< Temporarily disable dirty checks
    integer(kind=4) :: nstep, nstep_saved
-   real            :: t, dt, dt_old, dtm, t_saved
-   real            :: dt_full                  !< timestep value which is a subject of shrinking while repeating step
-   real            :: dt_cur_shrink            !< currently used dt and CFL number shrinking (used while redoing step)
-   integer         :: divB_0_method            !< encoded method of making div(B) = 0 (currently DIVB_CT or DIVB_HDC)
+   real            :: t,                       !< Current time
+   real            :: dt                       !< Current timestep value
+   real            :: dt_old                   !< Previous timestep value
+   real            :: dtm                      !< The timestep value between sweep sets
+   real            :: t_saved                  !< Saved time (used in timestep retry)
+   real            :: dt_full                  !< Timestep value which is a subject of shrinking while repeating step
+   real            :: dt_cur_shrink            !< Currently used dt and CFL number shrinking (used while redoing step)
+   integer         :: divB_0_method            !< Method of maintaining div(B)=0 constraint (currently DIVB_CT or DIVB_HDC)
    logical         :: cc_mag                   !< use cell-centered magnetic field
    integer(kind=4) :: psi_bnd                  !< BND_INVALID or enforce some other psi boundary
    integer         :: tstep_attempt            !< /= 0 when we retry timesteps
@@ -100,9 +104,9 @@ module global
    character(len=cbuff_len)      :: cflcontrol        !< type of cfl control just before/after each sweep (possibilities: 'none', 'warn', 'redo', 'flex', 'auto')
    character(len=cbuff_len)      :: interpol_str      !< type of interpolation
    character(len=cbuff_len)      :: divB_0            !< human-readable method of making div(B) = 0 (currently CT or HDC)
-   character(len=cbuff_len)      :: psi_bnd_str       !< "default" for general boundaries or override ith something special
+   character(len=cbuff_len)      :: psi_bnd_str       !< "default" for general boundaries or override with something special
    logical, dimension(xdim:zdim) :: skip_sweep        !< allows to skip sweep in chosen direction
-   logical                       :: sweeps_mgu        !< Mimimal Guardcell Update in sweeps
+   logical                       :: sweeps_mgu        !< Minimal Guardcell Update in sweeps
    logical                       :: use_fargo         !< use Fast Eulerian Transport for differentially rotating disks
    integer(kind=4)               :: print_divB        !< if >0 then print div(B) estimates each print_divB steps
    real                          :: glm_alpha         !< damping factor for the psi field
@@ -135,38 +139,52 @@ contains
 !! \n \n
 !! <table border="+1">
 !!   <tr><td width="150pt"><b>parameter</b></td><td width="135pt"><b>default value</b></td><td width="200pt"><b>possible values</b></td><td width="315pt"> <b>description</b></td></tr>
+!!   <!-- CFL and timestep control -->
 !!   <tr><td>cfl                  </td><td>0.7      </td><td>real value between 0.0 and 1.0       </td><td>\copydoc global::cfl                  </td></tr>
 !!   <tr><td>cfl_max              </td><td>0.9      </td><td>real value between cfl and 1.0       </td><td>\copydoc global::cfl_max              </td></tr>
-!!   <tr><td>cflcontrol           </td><td>redo     </td><td>string                               </td><td>\copydoc global::cflcontrol           </td></tr>
+!!   <tr><td>cfl_glm              </td><td>cfl      </td><td>real value                           </td><td>\copydoc global::cfl_glm              </td></tr>
+!!   <tr><td>cflcontrol           </td><td>"redo"   </td><td>string                               </td><td>\copydoc global::cflcontrol           </td></tr>
 !!   <tr><td>max_redostep_attempts</td><td>10       </td><td>integer                              </td><td>\copydoc global::max_redostep_attempts</td></tr>
-!!   <tr><td>smallp               </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smallp               </td></tr>
-!!   <tr><td>smalld               </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smalld               </td></tr>
-!!   <tr><td>use_smalld           </td><td>.true.   </td><td>logical value                        </td><td>\copydoc global::use_smalld           </td></tr>
-!!   <tr><td>smallei              </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smallei              </td></tr>
-!!   <tr><td>smallc               </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smallc               </td></tr>
-!!   <tr><td>integration_order    </td><td>2        </td><td>1 or 2                               </td><td>\copydoc global::integration_order    </td></tr>
-!!   <tr><td>cfr_smooth           </td><td>0.0      </td><td>real value                           </td><td>\copydoc global::cfr_smooth           </td></tr>
+!!   <!-- Timestep parameters -->
 !!   <tr><td>dt_initial           </td><td>-1.      </td><td>positive real value or -1. .. 0.     </td><td>\copydoc global::dt_initial           </td></tr>
 !!   <tr><td>dt_max_grow          </td><td>2.       </td><td>real value, should be > 1.           </td><td>\copydoc global::dt_max_grow          </td></tr>
 !!   <tr><td>dt_shrink            </td><td>0.5      </td><td>real value, should be < 1.           </td><td>\copydoc global::dt_shrink            </td></tr>
 !!   <tr><td>dt_min               </td><td>0.       </td><td>positive real value                  </td><td>\copydoc global::dt_min               </td></tr>
 !!   <tr><td>dt_max               </td><td>0.       </td><td>positive real value                  </td><td>\copydoc global::dt_max               </td></tr>
-!!   <tr><td>limiter              </td><td>vanleer  </td><td>string                               </td><td>\copydoc global::limiter              </td></tr>
-!!   <tr><td>limiter_b            </td><td>moncen   </td><td>string                               </td><td>\copydoc global::limiter_b            </td></tr>
-!!   <tr><td>relax_time           </td><td>0.0      </td><td>real value                           </td><td>\copydoc global::relax_time           </td></tr>
+!!   <!-- Small value limits -->
+!!   <tr><td>smallp               </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smallp               </td></tr>
+!!   <tr><td>smalld               </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smalld               </td></tr>
+!!   <tr><td>smallei              </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smallei              </td></tr>
+!!   <tr><td>smallc               </td><td>1.e-10   </td><td>real value                           </td><td>\copydoc global::smallc               </td></tr>
+!!   <tr><td>use_smalld           </td><td>.true.   </td><td>logical value                        </td><td>\copydoc global::use_smalld           </td></tr>
+!!   <tr><td>use_smallei          </td><td>.true.   </td><td>logical value                        </td><td>\copydoc global::use_smallei          </td></tr>
+!!   <!-- Solver configuration -->
+!!   <tr><td>solver_str           </td><td>"Riemann"</td><td>string                               </td><td>\copydoc global::solver_str           </td></tr>
+!!   <tr><td>integration_order    </td><td>2        </td><td>1 or 2                               </td><td>\copydoc global::integration_order    </td></tr>
+!!   <tr><td>limiter              </td><td>"vanleer"</td><td>string                               </td><td>\copydoc global::limiter              </td></tr>
+!!   <tr><td>limiter_b            </td><td>"moncen" </td><td>string                               </td><td>\copydoc global::limiter_b            </td></tr>
+!!   <tr><td>interpol_str         </td><td>"linear" </td><td>string                               </td><td>\copydoc global::interpol_str         </td></tr>
+!!   <!-- Magnetic field control -->
+!!   <tr><td>divB_0               </td><td>"CT"     </td><td>string                               </td><td>\copydoc global::divB_0               </td></tr>
+!!   <tr><td>glm_alpha            </td><td>0.1      </td><td>real value                           </td><td>\copydoc global::glm_alpha            </td></tr>
+!!   <tr><td>use_eglm             </td><td>.false.  </td><td>logical value                        </td><td>\copydoc global::use_eglm             </td></tr>
+!!   <tr><td>print_divB           </td><td>100      </td><td>integer value                        </td><td>\copydoc global::print_divB           </td></tr>
+!!   <tr><td>ch_grid              </td><td>.true.   </td><td>logical value                        </td><td>\copydoc global::ch_grid              </td></tr>
+!!   <!-- Boundary and geometry -->
+!!   <tr><td>psi_bnd_str          </td><td>"default"</td><td>string                               </td><td>\copydoc global::psi_bnd_str          </td></tr>
 !!   <tr><td>skip_sweep           </td><td>F, F, F  </td><td>logical array                        </td><td>\copydoc global::skip_sweep           </td></tr>
 !!   <tr><td>geometry25D          </td><td>F        </td><td>logical value                        </td><td>\copydoc global::geometry25d          </td></tr>
-!!   <tr><td>sweeps_mgu           </td><td>F        </td><td>logical value                        </td><td>\copydoc global::sweeps_mgu           </td></tr>
-!!   <tr><td>divB_0               </td><td>CT       </td><td>string                               </td><td>\copydoc global::divB_0               </td></tr>
-!!   <tr><td>glm_alpha            </td><td>0.1      </td><td>real value                           </td><td>\copydoc global::glm_alpha            </td></tr>
-!!   <tr><td>use_eglm             </td><td>false    </td><td>logical value                        </td><td>\copydoc global::use_eglm             </td></tr>
-!!   <tr><td>print_divB           </td><td>100      </td><td>integer value                        </td><td>\copydoc global::print_divB           </td></tr>
-!!   <tr><td>ch_grid              </td><td>true     </td><td>logical value                        </td><td>\copydoc global::ch_grid              </td></tr>
-!!   <tr><td>w_epsilon            </td><td>1e-10    </td><td>real                                 </td><td>\copydoc global::w_epsilon            </td></tr>
-!!   <tr><td>psi_bnd_str          </td><td>"default"</td><td>string                               </td><td>\copydoc global::psi_bnd_str          </td></tr>
+!!   <!-- AMR parameters -->
 !!   <tr><td>ord_mag_prolong      </td><td>2        </td><td>integer                              </td><td>\copydoc global::ord_mag_prolong      </td></tr>
 !!   <tr><td>ord_fluid_prolong    </td><td>0        </td><td>integer                              </td><td>\copydoc global::ord_fluid_prolong    </td></tr>
+!!   <!-- Other parameters -->
+!!   <tr><td>cfr_smooth           </td><td>0.0      </td><td>real value                           </td><td>\copydoc global::cfr_smooth           </td></tr>
+!!   <tr><td>relax_time           </td><td>0.0      </td><td>real value                           </td><td>\copydoc global::relax_time           </td></tr>
+!!   <tr><td>sweeps_mgu           </td><td>.false.  </td><td>logical value                        </td><td>\copydoc global::sweeps_mgu           </td></tr>
+!!   <tr><td>w_epsilon            </td><td>1e-10    </td><td>real                                 </td><td>\copydoc global::w_epsilon            </td></tr>
 !!   <tr><td>do_external_corners  </td><td>.false.  </td><td>logical                              </td><td>\copydoc global::do_external_corners  </td></tr>
+!!   <tr><td>disallow_negatives   </td><td>.true.   </td><td>logical value                        </td><td>\copydoc global::disallow_negatives   </td></tr>
+!!   <tr><td>disallow_CRnegatives </td><td>.false.  </td><td>logical value                        </td><td>\copydoc global::disallow_CRnegatives </td></tr>
 !! </table>
 !! \n \n
 !! \n \n
@@ -202,13 +220,11 @@ contains
 
       ! Begin processing of namelist parameters
 
-      which_solver      = RIEMANN_SPLIT
+      which_solver      = RIEMANN_SPLIT  ! default solver
       divB_0            = "HDC"  ! This is the default for the Riemann solver, for RTVD it will be changed to "CT" anyway
 
       ! For RIEMANN_SPLIT 'moncen' and 'vanleer' seem to be best for emag conservation with GLM for b_limiter
       ! Leave RTVD defaults as they were before the implementation of the Riemann HLLD solver
-      ! limiter_b   = 'moncen'
-      ! limiter     = limiter_b
       limiter     = 'vanleer'
       limiter_b   = limiter
 
@@ -578,7 +594,7 @@ contains
 
    end subroutine init_global
 
-!-----------------------------------------------------------------------------
+!> \brief Routine to clean up global properties of the simulation
 
    subroutine cleanup_global
 
@@ -586,11 +602,14 @@ contains
 
    end subroutine cleanup_global
 
-!-----------------------------------------------------------------------------
+!> \brief Routine to check if the grace period has passed
 
    logical function grace_period_passed()
+
       implicit none
+
       grace_period_passed = (t >= relax_time)
+
    end function grace_period_passed
 
 end module global
