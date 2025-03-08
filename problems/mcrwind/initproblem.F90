@@ -366,8 +366,8 @@ contains
 
       do k = lhn(zdim,LO), lhn(zdim,HI)
          gp(:,:,k) = -f1 * (s4 * sqrt(ax%z(k)**2+r22) - s5 * half * ax%z(k)**2 / kpc)
-         if (k == 5) print *, 'ax%z(k): ', ax%z(k)
-         if (k == 5) print *, 'abs(ax%z(k)): ', abs(ax%z(k))
+         !if (k == 5) print *, 'ax%z(k): ', ax%z(k)
+         !if (k == 5) print *, 'abs(ax%z(k)): ', abs(ax%z(k))
          if (abs(ax%z(k)) .gt. h) gp(:,:,k) = gp(:,:,k)/cosh(((abs(ax%z(k))-h)/h))**3.5 !In mcrwind_cresp with multispecies: smoothing the gravitational potential outside of z = +-h = 3kpc
       enddo
       return
