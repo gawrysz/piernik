@@ -1901,7 +1901,7 @@ contains
                endif
             else
                !!print *, 'alpha : ', alpha_q_tab
-               j = minloc(abs(alpha_in - alpha_q_tab(:,i_spc,i)), dim=1)
+               j = minloc(abs(alpha_in - alpha_q_tab(:,i_spc,i)), dim=1)  !AG: costly
                !!print *, 'j : ', j
                !!print *, 'alpha : ', alpha_in
                !!print *, 'alpha_q_tab(j) : ', alpha_q_tab(j,i_spc,i)
