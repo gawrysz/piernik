@@ -37,7 +37,7 @@ module multigrid_vstats
    private
    public :: vcycle_stats
 
-   integer, parameter :: prefix_len = 3              !< length of prefix for distinguishing V-cycles in the log
+   integer, parameter :: prefix_len = 5              !< length of prefix for distinguishing V-cycles in the log
 
    type :: vcycle_stats
       real, allocatable, dimension(:) :: factor      !< norm reduction factor

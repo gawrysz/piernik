@@ -339,7 +339,7 @@ contains
          call init_source(cr_id)
          if (vstat%norm_rhs .notequals. zero) then
             if (norm_was_zero(cr_id) .and. master) then
-               write(msg,'(a,i2.2,a)')"[multigrid_diffusion:multigrid_solve_diff] CR-fluid #", cr_id, " is now available in measurable quantities."
+               write(msg,'(a,i4.4,a)')"[multigrid_diffusion:multigrid_solve_diff] CR-fluid #", cr_id, " is now available in measurable quantities."
                call printinfo(msg)
             endif
             norm_was_zero(cr_id) = .false.
@@ -350,7 +350,7 @@ contains
             ! enddo
          else
             if (.not. norm_was_zero(cr_id) .and. master) then
-               write(msg,'(a,i2.2,a)')"[multigrid_diffusion:multigrid_solve_diff] Source norm of CR-fluid #", cr_id, " == 0., skipping."
+               write(msg,'(a,i4.4,a)')"[multigrid_diffusion:multigrid_solve_diff] Source norm of CR-fluid #", cr_id, " == 0., skipping."
                call warn(msg)
             endif
             norm_was_zero(cr_id) = .true.
@@ -397,7 +397,7 @@ contains
       call leaves%q_lin_comb( [ ind_val(qna%wai, (1. -1./diff_theta)) ], correction)
       call leaves%q_lin_comb( [ ind_val(qna%wai,     -1./diff_theta ) ], defect)
       call residual(defect, correction, source, cr_id)
-      write(dirty_label, '(a,i2.2)')"init source#", cr_id
+      write(dirty_label, '(a,i4.4)')"init source#", cr_id
       call leaves%check_dirty(source, dirty_label)
 
       vstat%norm_rhs = leaves%norm_sq(source)
@@ -544,8 +544,8 @@ contains
          endif
       endif
 
-      write(vstat%cprefix,'("C",i2.2)') cr_id
-      write(dirty_label, '("md_",i2.2,"_dump")')  cr_id
+      write(vstat%cprefix,'("C",i4.4)') cr_id
+      write(dirty_label, '("md_",i4.4,"_dump")')  cr_id
 
 #ifdef DEBUG
       inquire(file = "_dump_every_step_", EXIST=dump_every_step) ! use for debug only
