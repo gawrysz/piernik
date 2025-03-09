@@ -57,8 +57,10 @@ contains
       use grid_cont,        only: grid_container
       use initcosmicrays,   only: cfl_cr, iarr_crspc2_e, iarr_crspc2_n, nspc, diff_max_lev
       use initcrspectrum,   only: K_cresp_paral, K_cresp_perp, spec_mod_trms, synch_active, adiab_active, icomp_active, use_cresp_evol, cresp, f_synchIC, u_b_max, cresp_substep, n_substeps_max, redshift
-
       use mpisetup,         only: piernik_MPI_Allreduce
+#ifdef MULTIGRID
+      use multigrid_diffusion, only: diff_explicit, diff_tstep_fac
+#endif /* MULTIGRID */
 
       implicit none
 
@@ -120,6 +122,9 @@ contains
       K_cre_max_sum = maxval(K_cresp_paral(:, i_up_max) + K_cresp_perp(:, i_up_max)) ! assumes the same K for energy and number density
       if (K_cre_max_sum > zero) then                               ! K_cre dependent on momentum - maximal for highest bin number
          dt_aux = cfl_cr * half / K_cre_max_sum                    ! We use cfl_cr here (CFL number for diffusive CR transport), cfl_cre used only for spectrum evolution
+#ifdef MULTIGRID
+         if (.not. diff_explicit) dt_aux = dt_aux * diff_tstep_fac ! enlarge timestep for non-explicit diffusion
+#endif /* MULTIGRID */
          cgl => leaves%first
          do while (associated(cgl))
             if (cgl%cg%l%id <= diff_max_lev) dt_cre_K = min(dt_cre_K, dt_aux * cgl%cg%dxmn2)
