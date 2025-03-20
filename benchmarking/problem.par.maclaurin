@@ -38,12 +38,11 @@
 
  $OUTPUT_CONTROL
     problem_name ='maclaurin'
-    run_id =  'sph'
+    run_id =  'ben'
     dt_hdf  = 0.0
     dt_res  = 0.0
     dt_log  = 0.0
     dt_tsl  = 0.0
-    vars(1:) = 'dens', 'gpot', 'apot', 'errp'
  /
 
  $FLUID_DUST
@@ -58,9 +57,6 @@
  /
 
  $GRAVITY
- /
-
- $RESISTIVITY
  /
 
  $PROBLEM_CONTROL
@@ -80,9 +76,6 @@
  $MULTIGRID_GRAVITY
     grav_bnd_str  = "isolated"
     lmax = 64
- /
-
- $INTERACTIONS
  /
 
  $AMR
