@@ -136,7 +136,7 @@ run_piernik() {
                     ( grep "dWallClock" $j/_stdout_ || echo "" ) | awk 'BEGIN {t=0; n=0; printf("%3d",'$threads');} {if ($3 != 0) {printf("%7.2f ", $12); t+=$12; n++;}} END {printf("%7.3f\n", t/n)}'
                     ;;
                 crtest)
-                    grep "C01cycles" $j/_stdout_ | awk '{if (NR==1) printf("%d %7.3f %7.3f ", '$threads', $5, $8)}'
+                    grep "C1-cycles" $j/_stdout_ | awk '{if (NR==1) printf("%d %7.3f %7.3f ", '$threads', $5, $8)}'
                     awk '/Spent/ { printf("%s\n", $5) }' $j/*log
                     ;;
                 maclaurin)
@@ -154,7 +154,7 @@ run_piernik() {
                 ;;
             crtest)
                 local xmul=512
-                run_strong_weak_scaling $scaling $threads $nx "$mpirun_cmd" $max_mem $xmul | grep "C01cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
+                run_strong_weak_scaling $scaling $threads $nx "$mpirun_cmd" $max_mem $xmul | grep "C1-cycles" | awk '{if (NR==1) printf("%7.3f %7.3f ", $5, $8)}'
                 awk '/Spent/ { printf("%s ", $5) }' *log
                 ;;
             maclaurin)
@@ -239,7 +239,7 @@ MEMM=$( LC_ALL=C free -m | awk '/Mem/ {print $2}' )
 
 [ "$SCALE" != "1" ] && echo "# test domains are scaled by factor of $SCALE"
 
-PROBLEM_LIST=("maclaurin" "advection_test" "crtest" "jeans" "tearing" "sedov" "otvortex" "2body")
+PROBLEM_LIST=("maclaurin" "advection_test" "crtest" "jeans" "tearing" "sedov" "otvortex" "3body")
 B_PROBLEM_LIST=("sedov" "crtest" "maclaurin")
 
 # create list of thread count to be tested
