@@ -163,7 +163,7 @@ contains
 #endif /* GRAV */
 #ifdef COSM_RAYS
       use initcosmicrays,   only: use_CRdecay
-      use sourcecosmicrays, only: src_cr_spallation_and_decay
+      use sourcecosmicrays, only: src_cr_spallation_and_decay, src_cr_coulomb_hadronic_loss
 #ifdef IONIZED
       use sourcecosmicrays, only: src_gpcr
 #endif /* IONIZED */
@@ -232,6 +232,9 @@ contains
          call src_cr_spallation_and_decay(u, n, newsrc, coeffdt) ! n safe
          usrc(:,:) = usrc(:,:) + newsrc(:,:)
       endif
+
+      call src_cr_coulomb_hadronic_loss(u, n, newsrc, coeffdt)
+      usrc(:,:) = usrc(:,:) + newsrc(:,:)
 #endif /* COSM_RAYS */
 
 ! --------------------------------------------------

@@ -36,7 +36,7 @@ module sourcecosmicrays
    implicit none
 
    private
-   public :: src_gpcr, src_cr_spallation_and_decay
+   public :: src_gpcr, src_cr_spallation_and_decay, src_cr_coulomb_hadronic_loss
 #ifdef CRESP
    public :: cr_spallation_sources
 #endif /* CRESP */
@@ -180,6 +180,47 @@ contains
       enddo
 
    end subroutine src_cr_spallation_and_decay
+
+  subroutine src_cr_coulomb_hadronic_loss(uu, n, usrc, rk_coeff)
+
+      use cr_data,        only: eCRSP, cr_table, icr_H1, sigma_pp
+      use dataio_pub,     only: die
+      use domain,         only: dom
+      use fluids_pub,     only: has_ion, has_neu
+      use fluidindex,     only: flind
+      use initcosmicrays, only: iarr_crn
+      use units,          only: clight, mH, mp, Lambda_C, mbarn
+
+      implicit none
+
+      integer(kind=4),               intent(in)  :: n
+      real, dimension(n, flind%all), intent(in)  :: uu
+      real,                          intent(in)  :: rk_coeff   !< coefficient used in RK step, while computing source term
+      real, dimension(n, flind%all), intent(out) :: usrc       !< u array update component for sources
+
+! locals
+      real, dimension(n)                         :: dgas, dcr
+      integer                                    :: i, j
+
+      if (dom%eff_dim == 0) call die("[sourcecosmicrays:src_cr_coulomb_hadronic_loss] dom%eff_dim == 0 is not supported yet")
+
+      !print *, 'in src_cr_coulomb_hadronic_loss'
+
+      dgas = 0.0
+      if (has_ion) dgas = dgas + uu(:, flind%ion%idn) / mp
+      if (has_neu) dgas = dgas + uu(:, flind%neu%idn) / mH
+      dgas = dgas * clight / dom%eff_dim
+
+      usrc(:,:) = 0.0
+
+      i = cr_table(icr_H1) ; j = iarr_crn(i)
+
+      dcr = 0.5 * sigma_pp * mbarn * dgas * uu(:, j)     !Hadronic cooling
+      dcr = dcr + Lambda_C * dgas * uu(:, j)/clight      !Coulomb coouling
+      dcr = min(uu(:, iarr_crn(i))/rk_coeff, dcr)        ! Don't decay more elements than available
+      if (eCRSP(icr_H1)) usrc(:, j) = usrc(:, j) - dcr
+
+   end subroutine src_cr_coulomb_hadronic_loss
 #ifdef CRESP
    subroutine cr_spallation_sources(u_cell,dt_doubled, q_spc_all)
 

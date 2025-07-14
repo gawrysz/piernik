@@ -169,9 +169,9 @@ module cr_data
    real, parameter :: sigma_O16_B10  = 10.9  !< mbarn
    real, parameter :: sigma_O16_B11  = 18.2  !< mbarn
 
-!<====Cross sections for pion production and gamma ray emission from Esslin & Pfrommer, 2004 ====>
+!<====Cross sections for pion production and gamma ray emission from Esslin & Pfrommer, 2004 (see also Esslin et al, 2007) ====>
 
-   real, parameter :: sigma_P_P      = 25. !< mbarn
+   real, parameter :: sigma_pp     = 32. !< mbarn
 
 !<====Decay half live times from Garcia-Munoz 1987====>
 

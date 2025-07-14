@@ -153,6 +153,7 @@ module units
    real, protected :: Mearth                                !< mass of Earth
    real, protected :: earthradius                           !< radius of Earth
    real, protected :: TempHalo                              !< Initial temperature of the halo
+   real, protected :: Lambda_C                              !< Couling time of Coulomb loss for non-spectral protons
 
 contains
 !>
@@ -401,6 +402,7 @@ contains
       Mearth     = 5.977e27*gram            !< mass of Earth
       earthradius= 6378.17*km               !< radius of Earth
       TempHalo   = 1.0e6*kelvin             !< Initial mass of the halo in Kelvin
+      Lambda_C   = 1.65e-16*cm**3/sek       !< Couling time of Coulomb losses by non-spectral CR protons (Guo & Ho, 2008)
 
       ! Following physical constants are used in various modules.
       ! They need to have some sane values.
