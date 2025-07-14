@@ -404,7 +404,7 @@ contains
       earthradius= 6378.17*km               !< radius of Earth
       TempHalo   = 1.0e6*kelvin             !< Initial mass of the halo in Kelvin
       Lambda_C   = 1.65e-16*cm**3/sek       !< Couling term of Coulomb losses for non-spectral CR protons (Guo & Ho, 2008)
-      Lambda_Cc  = 1e-18*erg*cm**3/sek     !< Couling term of Coulomb losses for spectral CRs (Girichidis et al, 2020)
+      Lambda_Cc  = 1e-18*erg*cm**3/sek      !< Couling term of Coulomb losses for spectral CRs (Girichidis et al, 2020)
 
       ! Following physical constants are used in various modules.
       ! They need to have some sane values.
