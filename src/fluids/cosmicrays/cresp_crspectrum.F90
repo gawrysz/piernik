@@ -2194,9 +2194,11 @@ contains
    !print *, 'f_0 (before free-cooling): ', f_0
 
    !print *, 'in cresp_compute_free_cooling'
+   !print *, 'cr_Z: ', cr_Z(icr_spc(i_spc))
+   !print *, 'cr_mass: ', cr_mass(icr_spc(i_spc))
    !
    !print *, '(p_0)**(1-h): ', (p_0)**(1-h)
-   delta_p = delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*dgas/clight/(cr_mass(icr_spc(i_spc))*clight*mp)
+   delta_p = delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*dgas/clight/(cr_mass(icr_spc(i_spc))*clight*mp)**h
    !print *, 'delta_p: ', delta_p
    do i_bin = 0, last_bin
       !print *, 'i_bin: ', i_bin
