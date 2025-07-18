@@ -38,7 +38,7 @@ module cresp_crspectrum
 
    private ! most of it
    public :: cresp_update_cell, cresp_init_state, cresp_get_scaled_init_spectrum, cleanup_cresp, cresp_allocate_all, &
-      &      src_gpcresp, p_rch_init, detect_clean_spectrum, cresp_find_prepare_spectrum, cresp_detect_negative_content, fq_to_e, fq_to_n, q, decay_loss
+      &      src_gpcresp, p_rch_init, detect_clean_spectrum, cresp_find_prepare_spectrum, cresp_detect_negative_content, fq_to_e, fq_to_n, q, decay_loss, cresp_compute_free_cooling
 
    integer, dimension(1:2)            :: fail_count_NR_2dim, fail_count_interpol
    integer(kind=4), allocatable, dimension(:) :: fail_count_comp_q
@@ -103,7 +103,7 @@ contains
 
 !----- main subroutine -----
 
-   subroutine cresp_update_cell(dt, n_inout, e_inout, sptab, cfl_cresp_violation, q1, i_spc, substeps, p_out)
+   subroutine cresp_update_cell(dt, u_cell, n_inout, e_inout, sptab, cfl_cresp_violation, q1, i_spc, substeps, p_out)
 
       use constants,      only: zero, one, I_ZERO, I_ONE
       use cr_data,        only: cr_table, icr_Be10, eCRSP
@@ -111,9 +111,10 @@ contains
       use dataio_pub,     only: msg, printinfo
 #endif /* CRESP_VERBOSED */
       use diagnostics,    only: decr_vec
+      use fluidindex,     only: flind
       use global,         only: disallow_CRnegatives
       use initcosmicrays, only: ncrb
-      use initcrspectrum, only: allow_unnatural_transfer, crel, dfpq, e_small_approx_p, nullify_empty_bins, p_mid_fix, p_fix, spec_mod_trms, p_bnd
+      use initcrspectrum, only: allow_unnatural_transfer, crel, dfpq, e_small_approx_p, nullify_empty_bins, p_mid_fix, p_fix, g_fix, spec_mod_trms, p_bnd
 
       implicit none
 
@@ -123,6 +124,7 @@ contains
       logical,                        intent(inout) :: cfl_cresp_violation
       integer(kind=4),                intent(in)    :: i_spc
       real, dimension(1:2), optional, intent(inout) :: p_out
+      real, dimension(flind%all)                    :: u_cell
       integer(kind=4), optional,      intent(in)    :: substeps
 
       logical                                       :: solve_fail_lo, solve_fail_up, empty_cell
@@ -251,6 +253,9 @@ contains
          return
       endif
 
+
+
+
       do i_sub = 1, n_substep                   !< if one substep, all is done the classic way
 ! Compute momentum changes in after time period [t,t+dt]
          call cresp_update_bin_index(sptab%ub*dt, sptab%ud*dt, p_cut, p_cut_next, cfl_cresp_violation)
@@ -330,7 +335,24 @@ contains
 
       enddo
 
+
+
+      !print *, 'f (in cresp_update_cell): ', f
+
+      call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
+      f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+
+      call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
+
+      !print *, 'f (in cresp_update_cell, after free cooling): ', f
+      edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
+      ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
+
+      !print *, 'n: ', n
+      !print *, 'e: ', e
+
       if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_decay_loss(p, active_bins, i_spc)
+
 
       approx_p = e_small_approx_p         !< restore approximation after momenta computed
 
@@ -1791,6 +1813,8 @@ contains
          decay_loss_den = log(p(bins)/p(bins-1))
       endwhere
 
+      !add computation of energy density, + follow the equations A28, A29
+
       where (abs(decay_loss_num) > zero .and. abs(decay_loss_den) > zero)
          decay_loss(bins) = (p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins)*decay_loss_num/decay_loss_den
       endwhere
@@ -2123,6 +2147,116 @@ contains
       alpha = zero ;  n_in = zero
 
    end subroutine get_fqp_cutoff
+
+!---------------------------------------------------------------------------------------------------
+! Preparation and computation of free cooling method for spectral CRs, using the method developped in Girichids et al, 2020, section 2.6.
+! Application to the Coulomb energy loss
+!---------------------------------------------------------------------------------------------------
+
+   subroutine cresp_compute_free_cooling(u_cell,f_0,p_0,q_0,i_spc,bins,delta_t)
+
+   use cr_data,        only: cr_Z, cr_mass, icr_spc
+   use constants,      only: zero
+   use fluids_pub,     only: has_ion, has_neu
+   use fluidindex,     only: flind
+   use initcosmicrays, only: ncrb
+   use initcrspectrum, only: eps
+   use units,          only: clight, mH, mp, Lambda_Cc
+
+
+   integer(kind=4), intent(in)               :: i_spc
+   integer(kind=4)                           :: i_bin, last_bin, j
+   integer(kind=4), dimension(:), intent(in) :: bins
+   real                                      :: dgas
+   real                                      :: delta_t, h, delta_p, w
+   real, dimension(flind%all)                :: u_cell
+   real, dimension(0:ncrb)                   :: p_one, f_one, q_one
+   real, dimension(0:ncrb),intent(in)        :: p_0
+   real, dimension(0:ncrb)                   :: f_0
+   real, dimension(ncrb)                     :: q_0
+   real(kind=8)                              :: delta
+
+   last_bin = bins(size(bins))
+
+   dgas = 0.
+
+   delta = 1.e-20
+
+   h = - 1.9 !value of the power law coefficient for momentum-dependent Coulomb cooling approximation
+
+   if (has_ion) dgas = dgas + u_cell(flind%ion%idn) / mp
+   if (has_neu) dgas = dgas + u_cell(flind%neu%idn) / mH
+
+   p_one = p_0
+   f_one = f_0
+
+   !print *, 'p_0 (before free-cooling): ', p_0
+   !print *, 'f_0 (before free-cooling): ', f_0
+
+   !print *, 'in cresp_compute_free_cooling'
+   !
+   !print *, '(p_0)**(1-h): ', (p_0)**(1-h)
+   delta_p = delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*dgas/clight/(cr_mass(icr_spc(i_spc))*clight*mp)
+   !print *, 'delta_p: ', delta_p
+   do i_bin = 0, last_bin
+      !print *, 'i_bin: ', i_bin
+      if (f_one(i_bin) .eq. zero) f_one(i_bin)=delta
+      if (p_one(i_bin)**(1-h) .gt. (1-h)*delta_p) then
+         !print *, 'good'
+         p_one(i_bin) = ((p_0(i_bin))**(1-h)-(1-h)*delta_p)**(1/(1-h))
+         !print *, 'again good'
+   !print *, 'p_one: ', p_one
+   !do i_bin = 0, last_bin
+   !   print *, 'i_bin: ', i_bin
+   !   if (p_one(i_bin) .gt. zero) then
+   !      p_one(i_bin) = p_one(i_bin)**(1/(1-h)) !New bin boundaries after cooling
+   !      f_one(i_bin) = f_0(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)
+   !   endif
+   !
+   !enddo
+         f_one(i_bin) = f_0(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)                                                     !New f value at the boundaries
+      endif
+   enddo
+
+   do i_bin = 0, last_bin
+      f_0(i_bin) = 0.0
+
+      do j = 0, last_bin - 1
+         if (p_0(i_bin) >= p_one(j) .and. p_0(i_bin) < p_one(j+1)) then
+            if (f_one(j) > 0.0 .and. f_one(j+1) > 0.0) then
+               w = log(p_0(i_bin)/p_one(j)) / log(p_one(j+1)/p_one(j))
+               f_0(i_bin) = exp((1.0 - w)*log(f_one(j)) + w*log(f_one(j+1)))
+            else
+               f_0(i_bin) = 0.0  ! fallback if log is undefined
+            endif
+            exit
+         endif
+      enddo
+
+      ! Handle boundary cases (outside p_one range)
+      if (p_0(i_bin) <= p_one(0)) then
+         f_0(i_bin) = f_one(0)
+      else if (p_0(i_bin) >= p_one(last_bin)) then
+         f_0(i_bin) = f_one(last_bin)
+      endif
+   enddo
+
+   !print *, 'f_0 (after interpolation): ', f_0
+
+
+   do i_bin = 1, last_bin
+      !print *, 'i_bin: ', i_bin
+  !   print *, 'in q loop'
+      if (f_0(i_bin-1) .gt. zero .and. f_0(i_bin).gt. zero) q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
+      !print *, 'q_0(',i_bin,'): ', q_0(i_bin)
+   enddo
+
+   !print *, 'f_0: ', f_0
+   !print *, 'q_0: ', q_0
+
+   !compute new e and n, or new edt and ndt
+
+   end subroutine cresp_compute_free_cooling
 
 !>
 !! \brief Relative change of momentum due to losses (u_b*p*dt) and compression u_d*dt (Taylor expansion up to 3rd order)
