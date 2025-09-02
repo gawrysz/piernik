@@ -328,7 +328,8 @@ contains
             !!print *, 'n(before neq):', n
             !!print *, 'e(before neq):', e
 
-
+            print *, 'in the substep loop:'
+            print *, 'active_bins: ', active_bins
             call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
             f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)  !< Compute values of distribution function in the new step
          endif
@@ -336,11 +337,20 @@ contains
       enddo
 
 
+      approx_p = e_small_approx_p         !< restore approximation after momenta computed
 
-      !print *, 'f (in cresp_update_cell): ', f
+      p_cut = p_cut_next
+
+
+      print *, 'Before free cooling:'
+      print *, 'active_bins: ', active_bins
 
       call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
       f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+
+
+      print *, 'f (in cresp_update_cell), before free cooling: ', f
+      !print *, 'before computing free cooling'
 
       call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
 
@@ -348,15 +358,11 @@ contains
       edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
       ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
 
-      !print *, 'n: ', n
-      !print *, 'e: ', e
+      print *, 'n: ', n
+      print *, 'e: ', e
 
       if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_decay_loss(p, active_bins, i_spc)
 
-
-      approx_p = e_small_approx_p         !< restore approximation after momenta computed
-
-      p_cut = p_cut_next
 
 #ifdef CRESP_VERBOSED
       write (msg, "(A)") "[cresp_crspectrum:cresp_update_cell] :"               ; call printinfo(msg)
@@ -613,6 +619,9 @@ contains
       approx_p_tmp = approx_p                   !< Before computation of q and f for all bins approximation of cutoffs is disabled
       approx_p = I_ZERO
       i_cut = pre_i_cut                         !< make ne_to_q happy, FIXME - add cutoff indices to argument list
+
+      print *, 'q and f in cresp_find_prepare_spectrum'
+      print *, 'active_bins: ', active_bins
 
       call ne_to_q(n, e, q, active_bins, i_spc)        !< Compute power indexes for each bin at [t] and f on left bin faces at [t]
 
@@ -1946,7 +1955,7 @@ contains
                endif
 
             endif
-            !!print *, 'q : ', q(i)
+            !print *, 'q : ', q(i)
             !!print *, 'q_NR : ', q_NR(i)
             !!print *, 'Test difference : Delta q = ', abs(q(i) - q_NR(i))
          else
@@ -2006,6 +2015,9 @@ contains
       endwhere
 
       nq_to_f(bins-1) = f_bins
+      print *, 'f_bins: ', f_bins
+
+      print *, 'f: ', nq_to_f
 
    end function nq_to_f
 
@@ -2160,7 +2172,7 @@ contains
    use fluids_pub,     only: has_ion, has_neu
    use fluidindex,     only: flind
    use initcosmicrays, only: ncrb
-   use initcrspectrum, only: eps
+   use initcrspectrum, only: eps, q_init
    use units,          only: clight, mH, mp, Lambda_Cc
 
 
@@ -2180,7 +2192,7 @@ contains
 
    dgas = 0.
 
-   delta = 1.e-20
+   delta = 1.e-12
 
    h = - 1.9 !value of the power law coefficient for momentum-dependent Coulomb cooling approximation
 
@@ -2190,22 +2202,26 @@ contains
    p_one = p_0
    f_one = f_0
 
-   !print *, 'p_0 (before free-cooling): ', p_0
-   !print *, 'f_0 (before free-cooling): ', f_0
 
    !print *, 'in cresp_compute_free_cooling'
+   !
+   !print *, 'i_spc: ', i_spc
+   !
+   !print *, 'p_0 (before free-cooling): ', p_0
+   !print *, 'f_0 (before free-cooling): ', f_0
+   !
    !print *, 'cr_Z: ', cr_Z(icr_spc(i_spc))
    !print *, 'cr_mass: ', cr_mass(icr_spc(i_spc))
-   !
+   !!
    !print *, '(p_0)**(1-h): ', (p_0)**(1-h)
-   delta_p = delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*dgas/clight/(cr_mass(icr_spc(i_spc))*clight*mp)**h
+   delta_p = (1-h)*delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*(cr_mass(icr_spc(i_spc))/0.938)**(-h)*dgas/clight/(clight*mp)
    !print *, 'delta_p: ', delta_p
    do i_bin = 0, last_bin
       !print *, 'i_bin: ', i_bin
-      if (f_one(i_bin) .eq. zero) f_one(i_bin)=delta
-      if (p_one(i_bin)**(1-h) .gt. (1-h)*delta_p) then
+      !if (f_one(i_bin) .eq. zero) f_one(i_bin)=delta
+      if (p_one(i_bin)**(1-h) .gt. delta_p) then
          !print *, 'good'
-         p_one(i_bin) = ((p_0(i_bin))**(1-h)-(1-h)*delta_p)**(1/(1-h))
+         p_one(i_bin) = ((p_0(i_bin))**(1-h)-delta_p)**(1/(1-h))
          !print *, 'again good'
    !print *, 'p_one: ', p_one
    !do i_bin = 0, last_bin
@@ -2216,40 +2232,74 @@ contains
    !   endif
    !
    !enddo
-         f_one(i_bin) = f_0(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)                                                     !New f value at the boundaries
+         f_one(i_bin) = f_0(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)
       endif
+
    enddo
 
    do i_bin = 0, last_bin
-      f_0(i_bin) = 0.0
+      f_0(i_bin) = delta
 
       do j = 0, last_bin - 1
-         if (p_0(i_bin) >= p_one(j) .and. p_0(i_bin) < p_one(j+1)) then
-            if (f_one(j) > 0.0 .and. f_one(j+1) > 0.0) then
+         if (p_0(i_bin) .gt. p_one(j) .and. p_0(i_bin) .lt. p_one(j+1)) then
+            if (f_one(j) .gt. delta .and. f_one(j+1) .gt. delta) then
                w = log(p_0(i_bin)/p_one(j)) / log(p_one(j+1)/p_one(j))
                f_0(i_bin) = exp((1.0 - w)*log(f_one(j)) + w*log(f_one(j+1)))
             else
-               f_0(i_bin) = 0.0  ! fallback if log is undefined
+               f_0(i_bin) = delta ! fallback if log is undefined
             endif
             exit
          endif
       enddo
 
       ! Handle boundary cases (outside p_one range)
-      if (p_0(i_bin) <= p_one(0)) then
-         f_0(i_bin) = f_one(0)
-      else if (p_0(i_bin) >= p_one(last_bin)) then
-         f_0(i_bin) = f_one(last_bin)
-      endif
+      !if (p_0(i_bin) <= p_one(0)) then
+      !   f_0(i_bin) = f_one(0)
+      !else if (p_0(i_bin) >= p_one(last_bin)) then
+      !   f_0(i_bin) = f_one(last_bin)
+      !endif
    enddo
+
+   !do i_bin = 0, last_bin
+   !   ! --- Case 1: below lowest cooled momentum
+   !   !if (p_0(i_bin) <= p_one(0)) then
+   !   !   f_0(i_bin) = max(f_one(0), delta)
+   !   !
+   !   !! --- Case 2: above highest cooled momentum
+   !   !else if (p_0(i_bin) >= p_one(last_bin)) then
+   !   !   f_0(i_bin) = max(f_one(last_bin), delta)
+   !   !
+   !   !! --- Case 3: interpolate inside the range
+   !   !else
+   !   do j = 0, last_bin - 1
+   !      if (p_0(i_bin) >= p_one(j) .and. p_0(i_bin) <= p_one(j+1)) then
+   !         if (f_one(j) > delta .and. f_one(j+1) > delta) then
+   !            w = log(p_0(i_bin)/p_one(j)) / log(p_one(j+1)/p_one(j))
+   !            f_0(i_bin) = exp((1.0 - w)*log(f_one(j)) + w*log(f_one(j+1)))
+   !         else
+   !            ! One of the bracketing values is too small → clip to delta
+   !            f_0(i_bin) = delta
+   !         endif
+   !         exit
+   !      endif
+   !   enddo
+   !   !endif
+   !enddo
 
    !print *, 'f_0 (after interpolation): ', f_0
 
+  !do i_bin = 1, last_bin-1
+  !
+  !   !if (f_0(i_bin) .lt. delta) f_0(i_bin) = delta
+  !
+  !   if (q_0(i_bin) == zero) q_0(i_bin) = q_init(i_bin)
+  !
+  !enddo
 
    do i_bin = 1, last_bin
       !print *, 'i_bin: ', i_bin
   !   print *, 'in q loop'
-      if (f_0(i_bin-1) .gt. zero .and. f_0(i_bin).gt. zero) q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
+      if (f_0(i_bin-1) .gt. delta .and. f_0(i_bin) .gt. delta) q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
       !print *, 'q_0(',i_bin,'): ', q_0(i_bin)
    enddo
 
