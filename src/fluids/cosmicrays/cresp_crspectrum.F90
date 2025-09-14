@@ -332,8 +332,13 @@ contains
 
       call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
       f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+      !print *, 'f (before free cooling): ', f
+      !print *, 'q (before free cooling): ', q
 
       call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
+
+      !print *, 'f (after free cooling): ', f
+      !print *, 'q (after free cooling): ', q
 
       edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
       ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
@@ -2171,89 +2176,150 @@ contains
 
    subroutine cresp_compute_free_cooling(u_cell,f_0,p_0,q_0,i_spc,bins,delta_t)
 
-   use cr_data,        only: cr_Z, cr_mass, icr_spc
-   use constants,      only: zero
-   use fluids_pub,     only: has_ion, has_neu
-   use fluidindex,     only: flind
-   use initcosmicrays, only: ncrb
-   use initcrspectrum, only: eps, q_big
-   use units,          only: clight, mH, mp, Lambda_Cc
+      use cr_data,        only: cr_Z, cr_mass, icr_spc
+      use constants,      only: zero
+      use fluids_pub,     only: has_ion, has_neu
+      use fluidindex,     only: flind
+      use initcosmicrays, only: ncrb
+      use initcrspectrum, only: eps, q_big, initial_spectrum
+      use units,          only: clight, mH, mp, Lambda_Cc
 
+      integer(kind=4), intent(in)               :: i_spc
+      integer(kind=4)                           :: i_bin, last_bin, j, k
+      integer(kind=4), dimension(:), intent(in) :: bins
+      real                                      :: dgas
+      real                                      :: delta_t, h, delta_p, w
+      real, dimension(flind%all)                :: u_cell
+      real, dimension(0:ncrb)                   :: p_one, f_one, f_old, q_one
+      real, dimension(0:ncrb),intent(in)        :: p_0
+      real, dimension(0:ncrb)                   :: f_0
+      real, dimension(ncrb)                     :: q_0
+      real                                      :: tiny, eps_local
+      real(kind=8)                              :: delta
 
-   integer(kind=4), intent(in)               :: i_spc
-   integer(kind=4)                           :: i_bin, last_bin, j
-   integer(kind=4), dimension(:), intent(in) :: bins
-   real                                      :: dgas
-   real                                      :: delta_t, h, delta_p, w
-   real, dimension(flind%all)                :: u_cell
-   real, dimension(0:ncrb)                   :: p_one, f_one, q_one
-   real, dimension(0:ncrb),intent(in)        :: p_0
-   real, dimension(0:ncrb)                   :: f_0
-   real, dimension(ncrb)                     :: q_0
-   real(kind=8)                              :: delta
+      last_bin = bins(size(bins))
 
-   last_bin = bins(size(bins))
+      dgas = 0.
 
-   dgas = 0.
+      delta = 1.e-20
 
-   delta = 1.e-10
+      tiny = 1e-40      ! avoid exact zeros in logs/divides
+      eps_local = 1e-30 ! tolerance for nearly-equal momenta
 
-   h = - 1.9 !value of the power law coefficient for momentum-dependent Coulomb cooling approximation
+      h = - 1.9 !value of the power law coefficient for momentum-dependent Coulomb cooling approximation
 
-   if (has_ion) dgas = dgas + u_cell(flind%ion%idn) / mp
-   if (has_neu) dgas = dgas + u_cell(flind%neu%idn) / mH
+      if (has_ion) dgas = dgas + u_cell(flind%ion%idn) / mp
+      if (has_neu) dgas = dgas + u_cell(flind%neu%idn) / mH
 
-   p_one = p_0
-   f_one = f_0
+      ! initialize
+      p_one = 0.0
+      f_one = delta
+      f_old = f_0
 
-   delta_p = (1-h)*delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*(cr_mass(icr_spc(i_spc))/0.938)**(-h)*dgas/clight/(clight*mp)
+      f_old(last_bin) = zero
 
-   do i_bin = 0, last_bin
-      !print *, 'i_bin: ', i_bin
-      if (p_one(i_bin)**(1-h) .gt. delta_p) then
+      ! --- compute p_one and f_one FOR ALL bins 0..last_bin (was 0..last_bin-1)
+      delta_p = (1-h)*delta_t*Lambda_Cc*cr_Z(icr_spc(i_spc))**2*(cr_mass(icr_spc(i_spc))/0.938)**(-h)*dgas/clight/(clight*mp)
 
-         p_one(i_bin) = ((p_0(i_bin))**(1-h)-delta_p)**(1/(1-h))
-         f_one(i_bin) = f_0(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)
-
-      endif
-
-   enddo
-
-   do i_bin = 0, last_bin
-
-      do j = 0, last_bin - 1
-         if (p_0(i_bin) .gt. p_one(j) .and. p_0(i_bin) .lt. p_one(j+1)) then
-            if (f_one(j) .gt. delta .and. f_one(j+1) .gt. delta) then
-               w = log(p_0(i_bin)/p_one(j)) / log(p_one(j+1)/p_one(j))
-               f_0(i_bin) = exp((1.0 - w)*log(f_one(j)) + w*log(f_one(j+1)))
+      do i_bin = 0, last_bin
+         if (p_0(i_bin)**(1-h) .gt. delta_p) then
+            p_one(i_bin) = max(((p_0(i_bin))**(1-h) - delta_p)**(1/(1-h)), tiny)
+            ! avoid division by zero for extremely small p_one
+            if (p_one(i_bin) .gt. tiny) then
+               f_one(i_bin) = f_old(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)
             else
-               f_0(i_bin) = delta ! fallback if log is undefined
+               f_one(i_bin) = delta
             endif
-            exit
+         else
+            ! cooled to (near) zero momentum -> treat as removed (or sink)
+            p_one(i_bin) = 0.0
+            f_one(i_bin) = delta
          endif
       enddo
 
-      ! Handle boundary cases (outside p_one range)
-      if (p_0(i_bin) <= p_one(0)) then
-         f_0(i_bin) = f_one(0)
-      else if (p_0(i_bin) >= p_one(last_bin)) then
-         f_0(i_bin) = f_one(last_bin)
-      endif
-   enddo
+      ! Ensure p_one is non-decreasing; if a later p_one is zero while earlier not, keep consistency
+      ! (This is a conservative fix: if cooling removes later bins, keep monotonicity)
+      do i_bin = 1, last_bin
+         if (p_one(i_bin) .lt. p_one(i_bin-1)) then
+            p_one(i_bin) = p_one(i_bin-1)
+            f_one(i_bin) = f_one(i_bin-1)
+         endif
+      enddo
 
-   do i_bin = 1, last_bin
-      !print *, 'i_bin: ', i_bin
-  !  !print *, 'in q loop'
-      if (f_0(i_bin-1) .gt. delta .and. f_0(i_bin) .gt. delta) q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
-      !print *, 'q_0(',i_bin,'): ', q_0(i_bin)
-   enddo
+      ! --- Interpolate/extrapolate f_0 from f_one at the new p-grid p_0
+      do i_bin = 0, last_bin
+         ! default fallback
+         f_0(i_bin) = delta
 
-  !print *, 'f_0: ', f_0
-  !print *, 'q_0: ', q_0
+         ! If p_0 is smaller or equal than smallest p_one, use nearest (or fallback) value
+         if (p_0(i_bin) <= max(p_one(0), tiny)) then
+            if (f_one(0) .gt. delta) then
+               f_0(i_bin) = f_one(0)
+            else
+               f_0(i_bin) = delta
+            endif
+            cycle
+         end if
 
-   !compute new e and n, or new edt and ndt
+         ! If p_0 is larger or equal than largest p_one, use nearest-extrapolation:
+         if (p_0(i_bin) >= max(p_one(last_bin), tiny)) then
+            ! find last two distinct valid points for extrapolation
+            k = last_bin
+            do while (k .gt. 0 .and. p_one(k) <= p_one(k-1) + eps_local)
+               k = k - 1
+            enddo
+            if (k .ge. 1 .and. f_one(k) .gt. delta .and. f_one(k-1) .gt. delta) then
+               ! log-linear extrapolate using last segment
+               w = log(p_0(i_bin)/p_one(k-1)) / log(p_one(k)/p_one(k-1))
+               f_0(i_bin) = exp((1.0 - w)*log(f_one(k-1)) + w*log(f_one(k)))
+            else
+               ! fall back to last known value
+               if (f_one(last_bin) .gt. delta) then
+                  f_0(i_bin) = f_one(last_bin)
+               else
+                  f_0(i_bin) = delta
+               endif
+            endif
+            cycle
+         end if
 
-   end subroutine cresp_compute_free_cooling
+         ! Normal interior interpolation: find j such that p_one(j) < p_0(i) < p_one(j+1)
+         do j = 0, last_bin-1
+            if (p_0(i_bin) .gt. p_one(j) .and. p_0(i_bin) .le. p_one(j+1)) then
+               ! ensure denominators are safe
+               if (p_one(j+1) .gt. p_one(j) + eps_local .and. f_one(j) .gt. delta .and. f_one(j+1) .gt. delta) then
+                  w = log(p_0(i_bin)/p_one(j)) / log(p_one(j+1)/p_one(j))
+                  f_0(i_bin) = exp((1.0 - w)*log(f_one(j)) + w*log(f_one(j+1)))
+               else
+                  ! cannot interpolate reliably -> fallback
+                  if (f_one(j) .gt. delta) then
+                     f_0(i_bin) = f_one(j)
+                  else
+                     f_0(i_bin) = delta
+                  endif
+               endif
+               exit
+            endif
+         enddo
+
+      enddo
+
+      f_0(last_bin) = zero
+      f_old(last_bin) = zero
+
+      ! --- Recompute q_0 from neighbouring f_0 values; ensure q_0 defined only where both neighbors valid
+      do i_bin = 2, last_bin - 1
+         if (f_0(i_bin-1) .gt. delta .and. f_0(i_bin) .gt. delta) then
+            q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
+         else
+            if (i_bin .gt. 1) q_0(i_bin) = q_0(i_bin - 1) ! or some sentinel/previous value; adjust to your convention
+         endif
+      enddo
+      ! handle boundaries and set q_0(1) and q_0(last_bin-1) to sensible values if needed
+      q_0(1)        = zero
+      q_0(last_bin-1) = q_0(last_bin-2)
+
+end subroutine cresp_compute_free_cooling
 
 !>
 !! \brief Relative change of momentum due to losses (u_b*p*dt) and compression u_d*dt (Taylor expansion up to 3rd order)
