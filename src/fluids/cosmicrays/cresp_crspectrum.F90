@@ -1268,6 +1268,7 @@ contains
       integer,                        intent(in) :: i_spc
 
      print *, 'in init_plpc: '
+
       p_range_add(:) = zero
       i_br = int(minloc(abs(p_fix - p_br_init(LO, i_spc)), dim=1), kind=4) - I_ONE
       ic = get_i_cut(p_init(:,i_spc))
@@ -1293,7 +1294,6 @@ contains
 
      !print *, 'f(',ic(LO),':',ic(HI),'): ', f(ic(LO):ic(HI))
 
->>>>>>> f40eae4a0 ([cresp_crspectrum] compute free_cooling: remove prints)
       if (.not.allocated(act_bins )) allocate( act_bins(ic(HI) - ic(LO)+1))
       act_bins = cresp_all_bins(ic(LO)+1:ic(HI))
 
@@ -1330,9 +1330,6 @@ contains
       do i = i_br, ic(HI)
          q(i) = pf_to_q(p_range_add(i-1), p_range_add(i), f(i-1), f(i))
       enddo
-
-      n = n + fq_to_n(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), q(1:ncrb), act_bins)
-      e = e + fq_to_e(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), act_bins, i_spc)
 
      print *, 'q: ', q
 
