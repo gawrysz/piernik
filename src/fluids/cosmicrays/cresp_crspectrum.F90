@@ -131,8 +131,6 @@ contains
       integer                                       :: i_sub, n_substep
       real, dimension(ncrb), intent(out)            :: q1
 
-      !print *, 'in cresp_update_cell: '
-
       e = zero; n = zero; edt = zero; ndt = zero
       solve_fail_lo = .false.
       solve_fail_up = .false.
@@ -324,24 +322,32 @@ contains
          endif
 
       enddo
-
-
-      approx_p = e_small_approx_p         !< restore approximation after momenta computed
-
-      p_cut = p_cut_next
-
-      call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
+!
+      !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
       f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+      !print *, "e: ", e
+      !print *, "n: ", n
       !print *, 'f (before free cooling): ', f
       !print *, 'q (before free cooling): ', q
 
       call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
 
-      !print *, 'f (after free cooling): ', f
-      !print *, 'q (after free cooling): ', q
+      !print *, 'f (after free cooling (delta_p=0): ', f
+      !print *, 'q (after free cooling (delta_p=0): ', q
 
       edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
       ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
+
+      !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
+      !f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+      !print *, "e: ", e
+      !print *, "n: ", n
+      !print *, 'f (after generating e and n): ', f
+      !print *, 'q (after generating e and n): ', q
+
+      approx_p = e_small_approx_p         !< restore approximation after momenta computed
+
+      p_cut = p_cut_next
 
       if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_decay_loss(p, active_bins, i_spc)
 
@@ -1210,6 +1216,8 @@ contains
       integer(kind=4), dimension(LO:HI)          :: ic
       integer,                        intent(in) :: i_spc
 
+      print *, 'in cresp_init_powl_spectrum'
+
       p_range_add = zero
       ic = get_i_cut(p_init(:,i_spc))
 
@@ -1226,6 +1234,11 @@ contains
 
       n = n + fq_to_n(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), q(1:ncrb), act_bins)
       e = e + fq_to_e(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), g_fix(i_spc,0:ncrb-1), q(1:ncrb), act_bins, i_spc)
+
+      print *, 'active bins: ', active_bins
+
+      print *, 'f: ', f
+      print *, 'q: ', q
 
       call my_deallocate(act_bins)
       call my_deallocate(act_edges)
@@ -1254,23 +1267,17 @@ contains
       integer(kind=4)                            :: i_br, i
       integer,                        intent(in) :: i_spc
 
-<<<<<<< HEAD
-=======
-     !print *, 'in init_plpc: '
-
->>>>>>> f40eae4a0 ([cresp_crspectrum] compute free_cooling: remove prints)
+     print *, 'in init_plpc: '
       p_range_add(:) = zero
       i_br = int(minloc(abs(p_fix - p_br_init(LO, i_spc)), dim=1), kind=4) - I_ONE
       ic = get_i_cut(p_init(:,i_spc))
 
-<<<<<<< HEAD
       p_range_add(ic(LO):ic(HI)) = p_fix(ic(LO):ic(HI))
       p_range_add(ic)            = p_init(:,i_spc)
 
       f(ic(LO):ic(HI)) = f_init(i_spc) * (p_range_add(ic(LO):ic(HI))/p_br_init(LO, i_spc))**(-q_init(i_spc))
       q(ic(LO)+1:ic(HI)) = q_init(i_spc)
 
-=======
      !print *, 'i_br: ', i_br
      !print *, 'ic: ', ic
 
@@ -1325,11 +1332,15 @@ contains
       enddo
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       n = n + fq_to_n(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), q(1:ncrb), act_bins)
       e = e + fq_to_e(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), act_bins, i_spc)
 
 =======
      !print *, 'q: ', q
+=======
+     print *, 'q: ', q
+>>>>>>> 530a907fc (fix correct q indexing and correct computation of f, q, n and e for Coulomb free cooling implementation subroutine)
 
       n = n + fq_to_n(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), q(1:ncrb), act_bins)
       e = e + fq_to_e(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), act_bins, i_spc)
@@ -1918,7 +1929,7 @@ contains
       integer(kind=4), dimension(:), intent(in)  :: bins
       integer(kind=4),               intent(in)  :: i_spc
       integer                                    :: i, i_active, j
-      real                                       :: alpha_in, base
+      real                                       :: alpha_in, base, alpha_low
       real(kind=8)                               :: three_p_s
       logical                                    :: exit_code
 
@@ -1968,7 +1979,21 @@ contains
             !print *, 'q_NR : ', q_NR(i)
             !print *, 'Test difference : Delta q = ', abs(q(i) - q_NR(i))
          else
-            q(i) = zero
+            !------------------------------------------------------------
+            ! Extrapolate q in log-log space for low-energy bins
+            !------------------------------------------------------------
+            !if (e(bins(1)) <= e_small .and. e(bins(2)) > zero) then
+            !   ! compute slope between first two active bins
+            !   !alpha_low = log(q(bins(2))/q(bins(3))) / log(e(bins(2))/e(bins(3)))
+            !   ! extrapolate q for the first bin
+            !   !q(bins(1)) = min(q(bins(2)) * (e(bins(1))/e(bins(2)))**alpha_low, -q_big)
+            !   q(bins(1))=-q_big
+            !   ! sanity check: prevent negative or zero values
+            !   if (q(bins(1)) <= 0.0) q(bins(1)) = 1e-30
+            !endif
+
+
+            !q(i) = zero
          endif
          if (exit_code) fail_count_comp_q(i) = fail_count_comp_q(i) + I_ONE
       enddo
@@ -2201,7 +2226,7 @@ contains
 
       dgas = 0.
 
-      delta = 1.e-20
+      delta = 1.e-30
 
       tiny = 1e-40      ! avoid exact zeros in logs/divides
       eps_local = 1e-30 ! tolerance for nearly-equal momenta
@@ -2308,16 +2333,17 @@ contains
       f_old(last_bin) = zero
 
       ! --- Recompute q_0 from neighbouring f_0 values; ensure q_0 defined only where both neighbors valid
-      do i_bin = 2, last_bin - 1
+      do i_bin = 1, last_bin
          if (f_0(i_bin-1) .gt. delta .and. f_0(i_bin) .gt. delta) then
             q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
-         else
-            if (i_bin .gt. 1) q_0(i_bin) = q_0(i_bin - 1) ! or some sentinel/previous value; adjust to your convention
+         !else
+         !
+         !   if (i_bin .gt. 1) q_0(i_bin) = q_0(i_bin - 1) ! or some sentinel/previous value; adjust to your convention
          endif
       enddo
       ! handle boundaries and set q_0(1) and q_0(last_bin-1) to sensible values if needed
-      q_0(1)        = zero
-      q_0(last_bin-1) = q_0(last_bin-2)
+      !q_0(1)        = zero
+      !q_0(last_bin-1) = q_0(last_bin-2)
 
 end subroutine cresp_compute_free_cooling
 
