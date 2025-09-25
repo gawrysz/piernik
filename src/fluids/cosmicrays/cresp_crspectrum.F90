@@ -326,19 +326,19 @@ contains
       enddo
 !
       !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
-      !f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+      f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
       !!print *, "e: ", e
       !!print *, "n: ", n
       !!print *, 'f (before free cooling): ', f
       !!print *, 'q (before free cooling): ', q
       !
-      !call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
+      call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
       !
       !!print *, 'f (after free cooling (delta_p=0): ', f
       !!print *, 'q (after free cooling (delta_p=0): ', q
       !
-      !edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
-      !ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
+      edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
+      ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
 
       !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
       !f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
