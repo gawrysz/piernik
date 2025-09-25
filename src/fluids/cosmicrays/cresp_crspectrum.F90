@@ -38,7 +38,7 @@ module cresp_crspectrum
 
    private ! most of it
    public :: cresp_update_cell, cresp_init_state, cresp_get_scaled_init_spectrum, cleanup_cresp, cresp_allocate_all, &
-      &      src_gpcresp, p_rch_init, detect_clean_spectrum, cresp_find_prepare_spectrum, cresp_detect_negative_content, fq_to_e, fq_to_n, q, decay_loss, cresp_compute_free_cooling
+      &      src_gpcresp, p_rch_init, detect_clean_spectrum, cresp_find_prepare_spectrum, cresp_detect_negative_content, fq_to_e, fq_to_n, q, decay_loss_n, decay_loss_e, cresp_compute_free_cooling
 
    integer, dimension(1:2)            :: fail_count_NR_2dim, fail_count_interpol
    integer(kind=4), allocatable, dimension(:) :: fail_count_comp_q
@@ -69,7 +69,7 @@ module cresp_crspectrum
 
    real, allocatable, dimension(:) :: r                                   !> r term for energy losses (Miniati 2001, eqn. 25)
    real, allocatable, dimension(:) :: q                                   !> power-law exponent array
-   real, allocatable, dimension(:) :: decay_loss                          !> radioactive decay loss term for number density
+   real, allocatable, dimension(:) :: decay_loss_n, decay_loss_e          !> radioactive decay loss term for number density
 
 ! power-law
    real,    dimension(LO:HI)       :: p_cut_next, p_cut
@@ -145,7 +145,9 @@ contains
       r = zero
       f = zero
       q = zero
-      decay_loss = zero
+      decay_loss_n = zero
+
+      decay_loss_e = zero
 
       if (present(substeps)) then
          n_substep = substeps
@@ -264,7 +266,7 @@ contains
          endif
 ! Compute fluxes through fixed edges in time period [t,t+dt], using f, q, p_cut(LO) and p_cut(HI) at [t]
 ! Note that new [t+dt] values of p_cut(LO) and p_cut(HI) in case new fixed edges appear or disappear.
-! fill new bins
+! ! fill new bins
 
          call cresp_compute_fluxes(cooling_edges_next,heating_edges_next, i_spc)
 
@@ -324,19 +326,19 @@ contains
       enddo
 !
       !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
-      f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
-      !print *, "e: ", e
-      !print *, "n: ", n
-      !print *, 'f (before free cooling): ', f
-      !print *, 'q (before free cooling): ', q
-
-      call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
-
-      !print *, 'f (after free cooling (delta_p=0): ', f
-      !print *, 'q (after free cooling (delta_p=0): ', q
-
-      edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
-      ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
+      !f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+      !!print *, "e: ", e
+      !!print *, "n: ", n
+      !!print *, 'f (before free cooling): ', f
+      !!print *, 'q (before free cooling): ', q
+      !
+      !call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
+      !
+      !!print *, 'f (after free cooling (delta_p=0): ', f
+      !!print *, 'q (after free cooling (delta_p=0): ', q
+      !
+      !edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
+      !ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
 
       !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
       !f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
@@ -349,7 +351,11 @@ contains
 
       p_cut = p_cut_next
 
-      if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_decay_loss(p, active_bins, i_spc)
+      if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_radioactive_decay(p, active_bins, i_spc)
+
+      ndt(1:ncrb) = ndt(1:ncrb) *(one-dt*decay_loss_n(1:ncrb))
+
+      edt(1:ncrb) = edt(1:ncrb) *(one-dt*decay_loss_e(1:ncrb))
 
 
 #ifdef CRESP_VERBOSED
@@ -370,7 +376,9 @@ contains
       write (msg, '(A5, 50E18.9)') "  edt", edt        ; call printinfo(msg)
 
       write (msg, '(A5, 50E18.9)') "    r", r          ; call printinfo(msg)
-      write (msg, '(A5, 50E18.9)') "decay_loss", decay_loss ; call printinfo(msg)
+      write (msg, '(A5, 50E18.9)') "decay_loss_n", decay_loss_n ; call printinfo(msg)
+
+      write (msg, '(A5, 50E18.9)') "decay_loss_e", decay_loss_e ; call printinfo(msg)
       write (msg, '(A5, 50E18.9)') "    q", q          ; call printinfo(msg)
       write (msg, '(A5, 50E18.9)') "    f", f          ; call printinfo(msg)
 
@@ -1749,7 +1757,7 @@ contains
 
    end subroutine cresp_compute_fluxes
 
-   !function decay_loss(p_l, p_r, f_l, g_l, q, bins, i_spc) ! Computation of radioactive decay loss for number density
+   !function decay_loss_n(p_l, p_r, f_l, g_l, q, bins, i_spc) ! Computation of radioactive decay loss for number density
    !
    !   use constants,      only: zero, one, three
    !   use initcosmicrays, only: ncrb
@@ -1760,9 +1768,9 @@ contains
    !   real,            dimension(:), intent(in) :: p_l, p_r, f_l, g_l, q
    !   integer(kind=4), dimension(:), intent(in) :: bins
    !   integer(kind=4)              , intent(in) :: i_spc
-   !   real, dimension(size(bins))               :: decay_loss, decay_loss_num, decay_loss_den
+   !   real, dimension(size(bins))               :: decay_loss_n, decay_loss_n_num, decay_loss_n_den
    !
-   !   decay_loss = zero
+   !   decay_loss_n = zero
    !
    !   ! Found here an FPE occurring in mcrwind/mcrwind_cresp
    !   ! bins = [ 11, 12, 13, 14, 15 ]
@@ -1770,80 +1778,108 @@ contains
    !   ! five-q(bins) = 35, that seems to be a bit high power to apply carelessly
    !
    !   where (abs(q(bins) - one_ps(i_spc,bins)) > eps)
-   !      decay_loss_num = p_l(bins)**(-2)*((p_r(bins)/p_l(bins))**(one_ps(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)-q(bins))
+   !      decay_loss_n_num = p_l(bins)**(-2)*((p_r(bins)/p_l(bins))**(one_ps(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)-q(bins))
    !   elsewhere
-   !      decay_loss_num = log(p_r(bins)/p_l(bins))
+   !      decay_loss_n_num = log(p_r(bins)/p_l(bins))
    !   endwhere
    !
    !   where (abs((q(bins) - three)) > eps)
-   !      decay_loss_den = ((p_r(bins)/p_l(bins))**(three-q(bins))-one)/(three-q(bins))
+   !      decay_loss_n_den = ((p_r(bins)/p_l(bins))**(three-q(bins))-one)/(three-q(bins))
    !   elsewhere
-   !      decay_loss_den = log(p_r(bins)/p_l(bins))
+   !      decay_loss_n_den = log(p_r(bins)/p_l(bins))
    !   endwhere
    !
-   !   where (abs(decay_loss_num) > zero .and. abs(decay_loss_den) > zero)
-   !      decay_loss(bins) = s(i_spc,bins)*g_l(bins)*(decay_loss_num/decay_loss_den)
+   !   where (abs(decay_loss_n_num) > zero .and. abs(decay_loss_n_den) > zero)
+   !      decay_loss_n(bins) = s(i_spc,bins)*g_l(bins)*(decay_loss_n_num/decay_loss_n_den)
    !   endwhere
    !
-   !end function decay_loss
+   !end function decay_loss_n
 
-   subroutine cresp_compute_decay_loss(p, bins, i_spc) ! Computation of radioactive decay loss for number density
+   subroutine cresp_compute_radioactive_decay(p, bins, i_spc) ! Computation of radioactive decay loss for number density
 
+      use cr_data,        only: cr_mass, cr_tau, icr_spc
       use constants,      only: zero, one, three
       use cr_data,        only: cr_mass
       use initcosmicrays, only: ncrb
-      use initcrspectrum, only: g_fix, s, three_ps, one_ps, eps, p_mid_fix
+      use initcrspectrum, only: p_mid_fix, g_fix, s, one_ps, three_ps, eps
 
       implicit none
 
       real,            dimension(0:ncrb), intent(in) :: p
       integer(kind=4), dimension(:),      intent(in) :: bins
       integer(kind=4)              ,      intent(in) :: i_spc
-      real, dimension(size(bins))                    :: decay_loss_num, decay_loss_den
+      real, dimension(size(bins))                    :: decay_loss_n_num, decay_loss_n_den, decay_loss_e_num, decay_loss_e_den, pre_factor
 
-      decay_loss = zero
-      decay_loss_num = zero
-      decay_loss_den = zero
-      !print *, 'bins: ', bins
-      !print *, 'q: ', q
-      !print *, 'one_ps(',i_spc,'): ', one_ps(i_spc,:)
-      !print *, 'eps: ', eps
-      !print *, 'abs(q(bins) - one_ps(i_spc,bins)): ', abs(q(bins) - one_ps(i_spc,bins))
-      !print *, 'p(bins): ', p(bins)
+
+      decay_loss_n = zero
+      decay_loss_n_num = zero
+      decay_loss_n_den = zero
+
+      decay_loss_e = zero
+      decay_loss_e_num = zero
+      decay_loss_e_den = zero
+
+      pre_factor = cr_mass(icr_spc(i_spc))/cr_tau(icr_spc(i_spc))*(p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins-1)  ! pre_factor for mean radioactive decay loss term, same for e and n
+
+      ! number density:
 
       where (abs(q(bins) - one_ps(i_spc,bins)) > eps)
-         !!print *, 'one'
-         decay_loss_num = ((p(bins)/p(bins-1))**(one_ps(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)-q(bins))
+
+         decay_loss_n_num = ((p(bins)/p(bins-1))**(one_ps(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)-q(bins))
+
       elsewhere
-         !!print *, 'two'
-         decay_loss_num = log(p(bins)/p(bins-1))
+
+         decay_loss_n_num = log(p(bins)/p(bins-1))
+
       endwhere
 
       where (abs((q(bins) - three)) > eps)
-         !!print *, 'three'
-         decay_loss_den = ((p(bins)/p(bins-1))**(three-q(bins))-one)/(three-q(bins))
+
+         decay_loss_n_den = ((p(bins)/p(bins-1))**(three-q(bins))-one)/(three-q(bins))
+
       elsewhere
-         !!print *, 'four'
-         decay_loss_den = log(p(bins)/p(bins-1))
+
+         decay_loss_n_den = log(p(bins)/p(bins-1))
+
       endwhere
 
-      !add computation of energy density, + follow the equations A28, A29
+      !add computation of number density, + follow the equations A28
 
-      where (abs(decay_loss_num) > zero .and. abs(decay_loss_den) > zero)
-         decay_loss(bins) = (p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins)*decay_loss_num/decay_loss_den
+      where (abs(decay_loss_n_num) > zero .and. abs(decay_loss_n_den) > zero)
+         decay_loss_n(bins) = pre_factor*decay_loss_n_num/decay_loss_n_den
       endwhere
 
+      ! energy density:
 
-      !print *, 'decay_loss_num: ', decay_loss_num
-      !print *, 'decay_loss_den: ', decay_loss_den
-      !print *, 'decay_loss_num/decay_loss_den: ', decay_loss_num/decay_loss_den
-      !print *, '(p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins): ', (p(bins-1))**(-2)*s(i_spc,bins)*g_fix(i_spc,bins)
-      !print *, 'i_spc: ', i_spc
-      !print *, 'decay_loss: ', decay_loss
-      !print *, '1/gamma(p_mid_fix): ', 1/sqrt(1+(p_mid_fix/cr_mass(i_spc))**2)
-      !stop
+      where (abs(q(bins) - one_ps(i_spc,bins) + s(i_spc,bins)) > eps)
 
-   end subroutine cresp_compute_decay_loss
+         decay_loss_e_num = ((p(bins)/p(bins-1))**(one_ps(i_spc,bins)+s(i_spc,bins)-q(bins)) - one)/(one_ps(i_spc,bins)+s(i_spc,bins)-q(bins))
+
+      elsewhere
+
+         decay_loss_e_num = log(p(bins)/p(bins-1))
+
+      endwhere
+
+      where (abs((q(bins) - three_ps(i_spc,bins))) > eps)
+
+         decay_loss_e_den = ((p(bins)/p(bins-1))**(three_ps(i_spc,bins)-q(bins))-one)/(three_ps(i_spc,bins)-q(bins))
+
+      elsewhere
+
+         decay_loss_e_den = log(p(bins)/p(bins-1))
+
+      endwhere
+
+      !add computation of energy density, + follow the equations A29
+
+      where (abs(decay_loss_n_num) > zero .and. abs(decay_loss_n_den) > zero)
+
+         decay_loss_e(bins) = pre_factor*decay_loss_e_num/decay_loss_e_den
+
+      endwhere
+
+   end subroutine cresp_compute_radioactive_decay
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -2417,7 +2453,8 @@ end subroutine cresp_compute_free_cooling
       call my_allocate_with_index(e_amplitudes_l,ma1d, I_ONE)   !:: n, e, r
       call my_allocate_with_index(e_amplitudes_r,ma1d, I_ONE)
       call my_allocate_with_index(r,ma1d, I_ONE)
-      call my_allocate_with_index(decay_loss,ma1d, I_ONE)
+      call my_allocate_with_index(decay_loss_n,ma1d, I_ONE)
+      call my_allocate_with_index(decay_loss_e,ma1d, I_ONE)
       call my_allocate_with_index(q,ma1d, I_ONE)
 
       call my_allocate_with_index(f,ma1d, I_ZERO)
@@ -2457,7 +2494,8 @@ end subroutine cresp_compute_free_cooling
       call my_deallocate(e_amplitudes_l)
       call my_deallocate(e_amplitudes_r)
       call my_deallocate(r)
-      call my_deallocate(decay_loss)
+      call my_deallocate(decay_loss_n)
+      call my_deallocate(decay_loss_e)
       call my_deallocate(q)
       call my_deallocate(f)
       call my_deallocate(p)
