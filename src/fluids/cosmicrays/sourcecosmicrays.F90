@@ -128,7 +128,7 @@ contains
 !<
    subroutine src_cr_spallation_and_decay(uu, n, usrc, rk_coeff)
 
-      use cr_data,        only: eCRSP, cr_table, cr_tau, cr_sigma, icr_Be10, icrH, icrL
+      use cr_data,        only: eCRSP, cr_table, cr_tau, cr_sigma, icr_C12, icrH, icrL
       use dataio_pub,     only: die
       use domain,         only: dom
       use fluids_pub,     only: has_ion, has_neu
@@ -159,8 +159,8 @@ contains
 
       usrc(:,:) = 0.0
 
-      i = cr_table(icr_Be10) ; j = iarr_crn(i)
-      if (eCRSP(icr_Be10)) usrc(:, j) = usrc(:, j) - gn * uu(:, j) / cr_tau(i)
+      i = cr_table(icr_C12) ; j = iarr_crn(i)
+      if (eCRSP(icr_C12)) usrc(:, j) = usrc(:, j) - gn * uu(:, j) / cr_tau(i)
 
       do i = lbound(icrH, 1), ubound(icrH, 1)
          associate( Hi => cr_table(icrH(i)) )
@@ -227,7 +227,7 @@ contains
       use constants,        only: one, zero
       use initcrspectrum,   only: spec_mod_trms, p_fix, p_mid_fix, three_ps, g_fix
       use initcosmicrays,   only: iarr_crspc2_e, iarr_crspc2_n, ncrb
-      use cr_data,          only: eCRSP, ncrsp_prim, ncrsp_sec, cr_table, cr_tau, cr_sigma, icr_Be10, icr_prim, icr_sec, cr_tau, cr_mass, cr_spectral, cr_names, transrelativistic, icr_spc
+      use cr_data,          only: eCRSP, ncrsp_prim, ncrsp_sec, cr_table, cr_tau, cr_sigma, icr_C12, icr_prim, icr_sec, cr_tau, cr_mass, cr_spectral, transrelativistic, icr_spc
       use initcosmicrays,   only: nspc
       use fluidindex,       only: flind
       use fluids_pub,       only: has_ion, has_neu
@@ -265,13 +265,9 @@ contains
 
          associate( cr_prim => cr_table(icr_prim(i_prim)) )
 
-            !print *, 'cr_prim: ', cr_prim
-
                do i_sec = 1, ncrsp_sec
 
                   associate( cr_sec => cr_table(icr_sec(i_sec)) )
-
-                  !print *, 'cr_sec: ', cr_sec
 
                   if (cr_sigma(cr_prim, cr_sec) .gt. zero) then
 
@@ -279,16 +275,8 @@ contains
                      S_ratio_1 = 0.0
                      Q_ratio_2 = 0.0
                      S_ratio_2 = 0.0
-
-                    !print *, 'cr_mass(',cr_prim,'): ', cr_mass(cr_table(icr_prim(i_prim)))
-                    !print *, 'cr_mass(',cr_sec,'):  ', cr_mass(cr_table(icr_sec(i_sec)))
-                    !print *, 'cr_sigma'
                     !
                      do i_bin = 1, ncrb
-                        !print *, 'p_fix(',i_bin,'): ', p_fix(i_bin)
-                        !!print *, 'p_fix(',i_bin,'+1): ', p_fix(i_bin+1)
-                        !print *, 'p_fix(',i_bin-1,'): ', p_fix(i_bin-1)
-                        !print *, 'i_bin (for Q ratios): ', i_bin
 
                         if (transrelativistic) velocity(i_bin) = clight*p_mid_fix(i_bin)/sqrt(cr_mass(cr_table(icr_prim(i_prim)))**2 + p_mid_fix(i_bin)**2) ! Correction to the velocity of incident CR particle when approaching the transrelativistic regime
 
@@ -307,23 +295,10 @@ contains
 
                         endif
 
-                        !print *, 'Q_ratio(',i_bin,') : ', Q_ratio_1(i_bin)
-                        !print *, 'S_ratio(',i_bin,') : ', S_ratio_1(i_bin)
-
                      enddo
-
-                     !
-                     !print *, 'cr_sigma(',cr_prim,',', cr_sec,'): ',cr_sigma(cr_prim, cr_sec)
-                     !print *, 'dgas: ', dgas
-                     !print *, 'velocity(:): ', velocity(:)
 
                      dcr_n(:) = cr_sigma(cr_prim, cr_sec) * dgas * velocity(:) * u_cell(iarr_crspc2_n(cr_prim- count(.not. cr_spectral),:))
                      dcr_e(:) = cr_sigma(cr_prim, cr_sec) * dgas * velocity(:) * u_cell(iarr_crspc2_e(cr_prim- count(.not. cr_spectral),:))
-
-                     !print *, 'u_cell(iarr_crspc2_n(',cr_prim - count(.not. cr_spectral),':)): ', u_cell(iarr_crspc2_n(cr_prim - count(.not. cr_spectral),:))
-                     !
-                     !print *, 'dcr_n : ', dcr_n
-                     !print *, 'dcr_e : ', dcr_e
 
                      dcr_n(:) = min(dcr_n,u_cell(iarr_crspc2_n(cr_prim- count(.not. cr_spectral),:)))
                      dcr_e(:) = min(dcr_e,u_cell(iarr_crspc2_e(cr_prim- count(.not. cr_spectral),:))) ! Don't decay more element than available
@@ -332,8 +307,6 @@ contains
                      usrc_cell(iarr_crspc2_e(cr_prim - count(.not. cr_spectral),:)) = usrc_cell(iarr_crspc2_e(cr_prim - count(.not. cr_spectral),:)) - dcr_e(:)
 
                      do i_bin = 1, ncrb
-
-                        !print *, "i_bin: ", i_bin
 
                         if (i_bin == ncrb) then
 
@@ -355,22 +328,6 @@ contains
                enddo
 
          end associate
-
-      enddo
-
-      do i_spc = 1, nspc
-
-         if (i_spc==cr_table(icr_Be10) - count(.not. cr_spectral) .AND. eCRSP(icr_Be10)) then
-
-            u_cell(iarr_crspc2_n(i_spc,:)) = u_cell(iarr_crspc2_n(i_spc,:)) + dt_doubled*(usrc_cell(iarr_crspc2_n(i_spc,:)) - u_cell(iarr_crspc2_n(i_spc,:)) / (sqrt(1+(p_mid_fix/cr_mass(i_spc))**2)*cr_tau(icr_spc(i_spc))))
-            u_cell(iarr_crspc2_e(i_spc,:)) = u_cell(iarr_crspc2_e(i_spc,:)) + dt_doubled*(usrc_cell(iarr_crspc2_e(i_spc,:)) - u_cell(iarr_crspc2_e(i_spc,:)) / (sqrt(1+(p_mid_fix/cr_mass(i_spc))**2)*cr_tau(icr_spc(i_spc))))
-
-         else
-
-            u_cell(iarr_crspc2_n(i_spc,:)) = u_cell(iarr_crspc2_n(i_spc,:)) + dt_doubled*usrc_cell(iarr_crspc2_n(i_spc,:))
-            u_cell(iarr_crspc2_e(i_spc,:)) = u_cell(iarr_crspc2_e(i_spc,:)) + dt_doubled*usrc_cell(iarr_crspc2_e(i_spc,:))
-
-         endif
 
       enddo
 
