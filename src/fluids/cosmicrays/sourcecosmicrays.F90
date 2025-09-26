@@ -227,7 +227,7 @@ contains
       use constants,        only: one, zero
       use initcrspectrum,   only: spec_mod_trms, p_fix, p_mid_fix, three_ps, g_fix
       use initcosmicrays,   only: iarr_crspc2_e, iarr_crspc2_n, ncrb
-      use cr_data,          only: eCRSP, ncrsp_prim, ncrsp_sec, cr_table, cr_tau, cr_sigma, icr_C12, icr_prim, icr_sec, cr_tau, cr_mass, cr_spectral, transrelativistic, icr_spc
+      use cr_data,          only: ncrsp_prim, ncrsp_sec, cr_table, cr_sigma, icr_prim, icr_sec, cr_mass, cr_spectral, transrelativistic
       use initcosmicrays,   only: nspc
       use fluidindex,       only: flind
       use fluids_pub,       only: has_ion, has_neu
@@ -297,11 +297,11 @@ contains
 
                      enddo
 
-                     dcr_n(:) = cr_sigma(cr_prim, cr_sec) * dgas * velocity(:) * u_cell(iarr_crspc2_n(cr_prim- count(.not. cr_spectral),:))
-                     dcr_e(:) = cr_sigma(cr_prim, cr_sec) * dgas * velocity(:) * u_cell(iarr_crspc2_e(cr_prim- count(.not. cr_spectral),:))
+                     dcr_n(:) = cr_sigma(cr_prim, cr_sec) * dgas * velocity(:) * u_cell(iarr_crspc2_n(cr_prim - count(.not. cr_spectral),:))
+                     dcr_e(:) = cr_sigma(cr_prim, cr_sec) * dgas * velocity(:) * u_cell(iarr_crspc2_e(cr_prim - count(.not. cr_spectral),:))
 
-                     dcr_n(:) = min(dcr_n,u_cell(iarr_crspc2_n(cr_prim- count(.not. cr_spectral),:)))
-                     dcr_e(:) = min(dcr_e,u_cell(iarr_crspc2_e(cr_prim- count(.not. cr_spectral),:))) ! Don't decay more element than available
+                     dcr_n(:) = min(dcr_n,u_cell(iarr_crspc2_n(cr_prim - count(.not. cr_spectral),:)))
+                     dcr_e(:) = min(dcr_e,u_cell(iarr_crspc2_e(cr_prim - count(.not. cr_spectral),:))) ! Don't decay more element than available
 
                      usrc_cell(iarr_crspc2_n(cr_prim - count(.not. cr_spectral),:)) = usrc_cell(iarr_crspc2_n(cr_prim - count(.not. cr_spectral),:)) - dcr_n(:)
                      usrc_cell(iarr_crspc2_e(cr_prim - count(.not. cr_spectral),:)) = usrc_cell(iarr_crspc2_e(cr_prim - count(.not. cr_spectral),:)) - dcr_e(:)
@@ -328,6 +328,13 @@ contains
                enddo
 
          end associate
+
+      enddo
+
+      do i_spc = 1, nspc
+
+         u_cell(iarr_crspc2_n(i_spc,:)) = u_cell(iarr_crspc2_n(i_spc,:)) + dt_doubled*usrc_cell(iarr_crspc2_n(i_spc,:))
+         u_cell(iarr_crspc2_e(i_spc,:)) = u_cell(iarr_crspc2_e(i_spc,:)) + dt_doubled*usrc_cell(iarr_crspc2_e(i_spc,:))
 
       enddo
 

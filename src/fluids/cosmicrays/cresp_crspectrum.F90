@@ -1801,7 +1801,7 @@ contains
       use constants,      only: zero, one, three
       use cr_data,        only: cr_mass
       use initcosmicrays, only: ncrb
-      use initcrspectrum, only: p_mid_fix, g_fix, s, one_ps, three_ps, eps
+      use initcrspectrum, only: g_fix, s, one_ps, three_ps, eps
 
       implicit none
 
@@ -1947,7 +1947,7 @@ contains
       integer(kind=4), dimension(:), intent(in)  :: bins
       integer(kind=4),               intent(in)  :: i_spc
       integer                                    :: i, i_active, j
-      real                                       :: alpha_in, base, alpha_low
+      real                                       :: alpha_in, base!, alpha_low
       real(kind=8)                               :: three_p_s
       logical                                    :: exit_code
 
@@ -2224,7 +2224,7 @@ contains
       use fluids_pub,     only: has_ion, has_neu
       use fluidindex,     only: flind
       use initcosmicrays, only: ncrb
-      use initcrspectrum, only: eps, q_big, initial_spectrum
+      use initcrspectrum, only: q_big, initial_spectrum
       use units,          only: clight, mH, mp, Lambda_Cc
 
       integer(kind=4), intent(in)               :: i_spc
@@ -2233,12 +2233,12 @@ contains
       real                                      :: dgas
       real                                      :: delta_t, h, delta_p, w
       real, dimension(flind%all)                :: u_cell
-      real, dimension(0:ncrb)                   :: p_one, f_one, f_old, q_one
+      real, dimension(0:ncrb)                   :: p_one, f_one, f_old
       real, dimension(0:ncrb),intent(in)        :: p_0
       real, dimension(0:ncrb)                   :: f_0
       real, dimension(ncrb)                     :: q_0
       real                                      :: eps_tiny, eps_local
-      real(kind=8)                              :: delta, delta_t_min, delta_t_sub, loss_amplitude
+      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude
 
       last_bin = bins(size(bins))
 
