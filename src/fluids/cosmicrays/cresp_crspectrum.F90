@@ -336,7 +336,7 @@ contains
       !
       !!print *, 'f (after free cooling (delta_p=0): ', f
       !!print *, 'q (after free cooling (delta_p=0): ', q
-      !
+
       edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
       ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
 
@@ -351,11 +351,15 @@ contains
 
       p_cut = p_cut_next
 
-      if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) call cresp_compute_radioactive_decay(p, active_bins, i_spc)
+      if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) then
 
-      ndt(1:ncrb) = ndt(1:ncrb) *(one-dt*decay_loss_n(1:ncrb))
+         call cresp_compute_radioactive_decay(p, active_bins, i_spc)
 
-      edt(1:ncrb) = edt(1:ncrb) *(one-dt*decay_loss_e(1:ncrb))
+         ndt(1:ncrb) = ndt(1:ncrb) *(one-dt*decay_loss_n(1:ncrb))
+
+         edt(1:ncrb) = edt(1:ncrb) *(one-dt*decay_loss_e(1:ncrb))
+
+      endif
 
 
 #ifdef CRESP_VERBOSED
