@@ -106,7 +106,7 @@ contains
    subroutine cresp_update_cell(dt, u_cell, n_inout, e_inout, sptab, cfl_cresp_violation, q1, i_spc, substeps, p_out)
 
       use constants,      only: zero, one, I_ZERO, I_ONE
-      use cr_data,        only: cr_table, icr_Be10, eCRSP
+      use cr_data,        only: cr_table, icr_Be10, eCRSP, icr_spc, cr_names, cr_spectral
 #ifdef CRESP_VERBOSED
       use dataio_pub,     only: msg, printinfo
 #endif /* CRESP_VERBOSED */
@@ -351,7 +351,7 @@ contains
 
       p_cut = p_cut_next
 
-      if (i_spc==cr_table(icr_Be10) .AND. eCRSP(icr_Be10)) then
+      if (i_spc==cr_table(icr_Be10) - count(.not. cr_spectral) .AND. eCRSP(icr_Be10)) then
 
          call cresp_compute_radioactive_decay(p, active_bins, i_spc)
 
@@ -1814,7 +1814,6 @@ contains
       integer(kind=4)              ,      intent(in) :: i_spc
       real, dimension(size(bins))                    :: decay_loss_n_num, decay_loss_n_den, decay_loss_e_num, decay_loss_e_den, pre_factor
 
-
       decay_loss_n = zero
       decay_loss_n_num = zero
       decay_loss_n_den = zero
@@ -2250,7 +2249,7 @@ contains
 
       dgas = 0.
 
-      delta = 1.e-30
+      delta = 1.e-80
 
       eps_tiny = 1e-10      ! avoid exact zeros in logs/divides
       eps_local = 1e-30 ! tolerance for nearly-equal momenta
