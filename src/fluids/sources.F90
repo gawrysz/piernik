@@ -162,7 +162,7 @@ contains
       use gravity,          only: grav_src_exec
 #endif /* GRAV */
 #ifdef COSM_RAYS
-      use initcosmicrays,   only: use_CRdecay
+      use initcosmicrays,   only: use_CRdecay, use_CRloss
       use sourcecosmicrays, only: src_cr_spallation_and_decay, src_cr_coulomb_hadronic_loss
 #ifdef IONIZED
       use sourcecosmicrays, only: src_gpcr
@@ -233,8 +233,10 @@ contains
          usrc(:,:) = usrc(:,:) + newsrc(:,:)
       endif
 
-      call src_cr_coulomb_hadronic_loss(u, n, newsrc, coeffdt)
-      usrc(:,:) = usrc(:,:) + newsrc(:,:)
+      if (use_CRloss) then
+            call src_cr_coulomb_hadronic_loss(u, n, newsrc, coeffdt)
+            usrc(:,:) = usrc(:,:) + newsrc(:,:)
+      endif
 #endif /* COSM_RAYS */
 
 ! --------------------------------------------------

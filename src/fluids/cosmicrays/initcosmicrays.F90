@@ -60,6 +60,7 @@ module initcosmicrays
    real                                :: gamma_cr_1   !< gamma_cr - 1
    logical                             :: use_CRdiff   !< switch for diffusion of cosmic rays
    logical                             :: use_CRdecay  !< switch for spallation and decay of cosmic rays
+   logical                             :: use_CRloss  !< switch for Coulomb and hadronic losses of cosmic ray protons
    logical                             :: use_smallecr !< correct CR energy density when it gets lower than smallecr
    character(len=cbuff_len)            :: divv_scheme  !< scheme used to calculate div(v), see crhelpers for more details
    real, dimension(ncr_max)            :: K_cr_paral   !< array containing parallel diffusion coefficients of all CR nuclear components or maximal parallel diffusion coefficient value for CRESP
@@ -102,6 +103,7 @@ contains
 !! <tr><td>cr_eff      </td><td>0.1    </td><td>real value</td><td>\copydoc initcosmicrays::cr_eff     </td></tr>
 !! <tr><td>use_CRdiff  </td><td>.true. </td><td>logical   </td><td>\copydoc initcosmicrays::use_CRdiff </td></tr>
 !! <tr><td>use_CRdecay </td><td>.false.</td><td>logical   </td><td>\copydoc initcosmicrays::use_CRdecay</td></tr>
+!! <tr><td>use_CRloss </td><td>.false.</td><td>logical   </td><td>\copydoc initcosmicrays::use_CRloss</td></tr>
 !! <tr><td>ncr_user    </td><td>0      </td><td>integer   </td><td>\copydoc initcosmicrays::ncr_user   </td></tr>
 !! <tr><td>ncrb        </td><td>0      </td><td>integer   </td><td>\copydoc initcosmicrays::ncrb       </td></tr>
 !! <tr><td>ord_cr_prolong </td><td>2  </td><td>integer   </td><td>\copydoc initcosmicrays::ord_cr_prolong </td></tr>
@@ -133,7 +135,7 @@ contains
       integer(kind=4) :: nl, nn, icr
       real            :: maxKcrs
 
-      namelist /COSMIC_RAYS/ cfl_cr, use_smallecr, smallecr, cr_active, cr_eff, use_CRdiff, use_CRdecay, divv_scheme, ord_cr_prolong, &
+      namelist /COSMIC_RAYS/ cfl_cr, use_smallecr, smallecr, cr_active, cr_eff, use_CRdiff, use_CRdecay, use_CRloss, divv_scheme, ord_cr_prolong, &
            &                 gamma_cr, K_cr_paral, K_cr_perp, ncr_user, ncrb, gpcr_ess_user, diff_max_lev, diff_prolong
 
       call init_cr_species
@@ -149,6 +151,7 @@ contains
 
       use_CRdiff     = .true.
       use_CRdecay    = .false.
+      use_CRloss     = .false.
       use_smallecr   = .true.
 
       gamma_cr       = 4./3.
@@ -201,7 +204,8 @@ contains
 
          lbuff(1) = use_CRdiff
          lbuff(2) = use_CRdecay
-         lbuff(3) = use_smallecr
+         lbuff(3) = use_CRloss
+         lbuff(4) = use_smallecr
 
          ncrsp    = ncrsp + ncr_user
          nl       = 3                                     ! this must match the last lbuff() index above
@@ -245,7 +249,8 @@ contains
 
          use_CRdiff   = lbuff(1)
          use_CRdecay  = lbuff(2)
-         use_smallecr = lbuff(3)
+         use_CRloss   = lbuff(3)
+         use_smallecr = lbuff(4)
 
          ncrsp        = ncrsp + ncr_user
          nn           = ibuff(ubound(ibuff, 1)    )    ! this must match the last rbuff() index above
