@@ -38,9 +38,9 @@ module initcrspectrum
    implicit none
 
    private
-   public :: use_cresp, use_cresp_evol, p_init, initial_spectrum, p_bnd, p_br_init, f_init, q_init, q_br_init, q_big, cfl_cre, cre_eff, expan_order, e_small, e_small_approx_p, e_small_approx_init_cond,  &
+   public :: use_cresp, use_cresp_evol, p_init, initial_spectrum, p_bnd, transrelativistic, p_br_init, f_init, q_init, q_br_init, q_big, cfl_cre, cre_eff, expan_order, e_small, e_small_approx_p, e_small_approx_init_cond,  &
            & smallcren, smallcree, max_p_ratio, NR_iter_limit, force_init_NR, NR_run_refine_pf, NR_refine_solution_q, NR_refine_pf, nullify_empty_bins, synch_active, adiab_active,                 &
-           & icomp_active, allow_source_spectrum_break, cre_active, tol_f, tol_x, tol_f_1D, tol_x_1D, arr_dim_a, arr_dim_n, arr_dim_q, eps, eps_det, w, p_fix, p_mid_fix, total_init_cree, p_fix_ratio,           &
+           & icomp_active, coulomb_active, allow_source_spectrum_break, cre_active, tol_f, tol_x, tol_f_1D, tol_x_1D, arr_dim_a, arr_dim_n, arr_dim_q, eps, eps_det, w, p_fix, p_mid_fix, total_init_cree, p_fix_ratio,           &
            & spec_mod_trms, cresp_all_edges, cresp_all_bins, norm_init_spectrum_n, norm_init_spectrum_e, cresp, crel, dfpq, f_synchIC, init_cresp, cleanup_cresp_sp, check_if_dump_fpq, cleanup_cresp_work_arrays, q_eps,     &
            & u_b_max, def_dtsynchIC, def_dtadiab, NR_smap_file, NR_allow_old_smaps, cresp_substep, n_substeps_max, allow_unnatural_transfer, K_cresp_paral, K_cresp_perp, p_min_fix, p_max_fix, redshift, g_fix, s, one_ps, three_ps, four_ps, bin_old
 
@@ -55,6 +55,7 @@ module initcrspectrum
    real, dimension(:,:), allocatable :: p_init                   !< vector to store p_lo_init and p_up_init
    character(len=cbuff_len) :: initial_spectrum   !< available types: bump, powl, brpl, symf, syme. Description below.
    character(len=cbuff_len) :: p_bnd                             !< available types: 'mov' for electrons or 'fix' for nucleons
+   logical                  :: transrelativistic   !< logical parameter for use of trans-relativistic and non-relativistic limit of CR spectra
    real, dimension(:), allocatable :: p_br_init_lo, p_br_init_up  !< initial low energy break
    real, dimension(:,:), allocatable :: p_br_init                !< vector to store p_br_init_lo and p_br_init_up
    real, dimension(:), allocatable :: f_init                      !< initial value of distr. func. for isolated case
@@ -97,6 +98,8 @@ module initcrspectrum
    logical, dimension(:), allocatable :: synch_active !< TEST feature - turns on / off synchrotron cooling @ CRESP
    logical, dimension(:), allocatable :: adiab_active !< TEST feature - turns on / off adiabatic   cooling @ CRESP
    logical, dimension(:), allocatable :: icomp_active !< TEST feature - turns on / off Inv-Compton cooling @ CRESP
+   logical, dimension(:), allocatable :: coulomb_active !< TEST feature - turns on / off Coulomb cooling @ CRESP
+
    real,    dimension(:), allocatable :: cre_active   !< electron contribution to Pcr ! TODO FIXME RENAME ME PLEASE!!!!
    real                               :: redshift                    !< redshift for chosen epoch WARNING this remains constant
 
@@ -179,7 +182,7 @@ contains
 
       use constants,       only: cbuff_len, I_ZERO, I_ONE, zero, one, three, ten, half, logten, LO, HI
       use cresp_variables, only: clight_cresp
-      use cr_data,         only: cr_mass, cr_sigma_N, cr_names, cr_Z, icr_spc, icr_H1, cr_spectral, cr_table, eCRSP, transrelativistic
+      use cr_data,         only: cr_mass, cr_sigma_N, cr_names, cr_Z, icr_spc, icr_H1, cr_spectral, cr_table, eCRSP
       use dataio_pub,      only: printinfo, warn, msg, die, nh
       use diagnostics,     only: my_allocate_with_index, my_allocate, my_deallocate, ma1d, ma2d
       use global,          only: disallow_CRnegatives
@@ -193,13 +196,13 @@ contains
       integer(kind=4) :: i, j, k
       real, dimension(:), allocatable ::  p_br_def, q_br_def
 
-      namelist /COSMIC_RAY_SPECTRUM/ cfl_cre, p_lo_init, p_up_init, f_init, q_init, q_big, initial_spectrum, p_bnd, p_min_fix, p_max_fix,  &
+      namelist /COSMIC_RAY_SPECTRUM/ cfl_cre, p_lo_init, p_up_init, f_init, q_init, q_big, initial_spectrum, p_bnd, transrelativistic, p_min_fix, p_max_fix,  &
       &                         cre_eff, cre_active, K_cre_pow, expan_order, e_small, use_cresp, use_cresp_evol,                    &
       &                         e_small_approx_init_cond, p_br_init_lo, e_small_approx_p_lo, e_small_approx_p_up, force_init_NR,    &
       &                         NR_iter_limit, max_p_ratio, synch_active, adiab_active, arr_dim_a, arr_dim_n, arr_dim_q, q_br_init, &
       &                         Gamma_min_fix, Gamma_max_fix, nullify_empty_bins, approx_cutoffs, NR_run_refine_pf, b_max_db,       &
       &                         NR_refine_solution_q, NR_refine_pf_lo, NR_refine_pf_up, smallcree, smallcren, p_br_init_up, p_diff, &
-      &                         q_eps, NR_smap_file, cresp_substep, n_substeps_max, allow_unnatural_transfer, icomp_active, redshift
+      &                         q_eps, NR_smap_file, cresp_substep, n_substeps_max, allow_unnatural_transfer, icomp_active, redshift, coulomb_active
 
       call allocate_spectral_CRspecies_arrays(nspc, ncrb)
       ma1d = [nspc]
@@ -219,7 +222,8 @@ contains
       p_up_init(:)      = 7.5e2
       p_br_def(:)       = p_lo_init(:)
       initial_spectrum  = "powl"
-      p_bnd             = 'fix'
+      p_bnd             = 'mov'
+      transrelativistic = .false.
       f_init(:)         = 1.0
       q_init(:)         = 4.1
       q_br_def(:)       = q_init(:)
@@ -257,6 +261,7 @@ contains
       synch_active(:)      = .true.
       adiab_active(:)      = .true.
       icomp_active(:)      = .false.
+      coulomb_active(:)    = .false.
       cre_active(:)        = 0.0
 
       if (eCRSP(icr_H1)) then
@@ -326,17 +331,19 @@ contains
          lbuff(4:3+nspc)          = synch_active(:)
          lbuff(4+nspc:3+2*nspc)   = adiab_active(:)
          lbuff(4+2*nspc:3+3*nspc) = icomp_active(:)
-         lbuff(4+3*nspc)          = force_init_NR
-         lbuff(5+3*nspc)          = NR_run_refine_pf
-         lbuff(6+3*nspc)          = NR_refine_solution_q
-         lbuff(7+3*nspc)          = NR_refine_pf_lo
-         lbuff(8+3*nspc)          = NR_refine_pf_up
-         lbuff(9+3*nspc)          = nullify_empty_bins
-         lbuff(10+3*nspc)         = approx_cutoffs
-         lbuff(11+3*nspc)         = NR_allow_old_smaps
+         lbuff(4+3*nspc:3+4*nspc) = coulomb_active(:)
+         lbuff(4+4*nspc)          = force_init_NR
+         lbuff(5+4*nspc)          = NR_run_refine_pf
+         lbuff(6+4*nspc)          = NR_refine_solution_q
+         lbuff(7+4*nspc)          = NR_refine_pf_lo
+         lbuff(8+4*nspc)          = NR_refine_pf_up
+         lbuff(9+4*nspc)          = nullify_empty_bins
+         lbuff(10+4*nspc)         = approx_cutoffs
+         lbuff(11+4*nspc)         = NR_allow_old_smaps
 
-         lbuff(12+3*nspc)         = cresp_substep
-         lbuff(13+3*nspc)         = allow_unnatural_transfer
+         lbuff(12+4*nspc)         = cresp_substep
+         lbuff(13+4*nspc)         = allow_unnatural_transfer
+         lbuff(14+4*nspc)         = transrelativistic
 
          rbuff(1:nspc)        = cfl_cre(1:nspc)
          rbuff(1+nspc:2*nspc) = cre_eff(1:nspc)
@@ -374,6 +381,7 @@ contains
 
          cbuff(1)  = initial_spectrum
          cbuff(2)  = p_bnd
+
       endif
 
       call piernik_MPI_Bcast(ibuff)
@@ -402,17 +410,19 @@ contains
          synch_active                = lbuff(4:3+nspc)
          adiab_active                = lbuff(4+nspc:3+2*nspc)
          icomp_active                = lbuff(4+2*nspc:3+3*nspc)
-         force_init_NR               = lbuff(4+3*nspc)
-         NR_run_refine_pf            = lbuff(5+3*nspc)
-         NR_refine_solution_q        = lbuff(6+3*nspc)
-         NR_refine_pf_lo             = lbuff(7+3*nspc)
-         NR_refine_pf_up             = lbuff(8+3*nspc)
-         nullify_empty_bins          = lbuff(9+3*nspc)
-         approx_cutoffs              = lbuff(10+3*nspc)
-         NR_allow_old_smaps          = lbuff(11+3*nspc)
+         coulomb_active              = lbuff(4+3*nspc:3+4*nspc)
+         force_init_NR               = lbuff(4+4*nspc)
+         NR_run_refine_pf            = lbuff(5+4*nspc)
+         NR_refine_solution_q        = lbuff(6+4*nspc)
+         NR_refine_pf_lo             = lbuff(7+4*nspc)
+         NR_refine_pf_up             = lbuff(8+4*nspc)
+         nullify_empty_bins          = lbuff(9+4*nspc)
+         approx_cutoffs              = lbuff(10+4*nspc)
+         NR_allow_old_smaps          = lbuff(11+4*nspc)
 
-         cresp_substep               = lbuff(12+3*nspc)
-         allow_unnatural_transfer    = lbuff(13+3*nspc)
+         cresp_substep               = lbuff(12+4*nspc)
+         allow_unnatural_transfer    = lbuff(13+4*nspc)
+         transrelativistic           = lbuff(14+4*nspc)
 
          cfl_cre(1:nspc)      = rbuff(1:nspc)  !TODO check if i'm correct :)
          cre_eff(1:nspc)      = rbuff(1+nspc:2*nspc)
@@ -791,7 +801,7 @@ contains
    subroutine compute_gs
 
       use cresp_variables, only: clight_cresp
-      use cr_data,         only: transrelativistic, cr_mass, icr_spc
+      use cr_data,         only: cr_mass, icr_spc
       use constants,       only: zero, one, three, four
       use initcosmicrays,  only: ncrb, nspc
 
@@ -940,6 +950,7 @@ contains
       if (allocated(synch_active))   call my_deallocate(synch_active)
       if (allocated(adiab_active))   call my_deallocate(adiab_active)
       if (allocated(icomp_active))   call my_deallocate(icomp_active)
+      if (allocated(coulomb_active))   call my_deallocate(coulomb_active)
 
       if (allocated(p_init))   call my_deallocate(p_init)
       if (allocated(p_br_init))   call my_deallocate(p_br_init)
@@ -980,6 +991,7 @@ contains
       call my_allocate_with_index(synch_active, nsp, I_ONE)
       call my_allocate_with_index(adiab_active, nsp, I_ONE)
       call my_allocate_with_index(icomp_active, nsp, I_ONE)
+      call my_allocate_with_index(coulomb_active, nsp, I_ONE)
 
       ma2d = [nsp, nb * I_TWO]
       call my_allocate(K_cresp_paral, ma2d)

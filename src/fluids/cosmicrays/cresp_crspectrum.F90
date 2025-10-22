@@ -114,7 +114,7 @@ contains
       use fluidindex,     only: flind
       use global,         only: disallow_CRnegatives
       use initcosmicrays, only: ncrb
-      use initcrspectrum, only: allow_unnatural_transfer, crel, dfpq, e_small_approx_p, nullify_empty_bins, p_mid_fix, p_fix, g_fix, spec_mod_trms, p_bnd
+      use initcrspectrum, only: allow_unnatural_transfer, crel, dfpq, e_small_approx_p, nullify_empty_bins, p_mid_fix, p_fix, g_fix, spec_mod_trms, p_bnd, coulomb_active
 
       implicit none
 
@@ -324,28 +324,17 @@ contains
          endif
 
       enddo
-!
-      !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
-      f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
-      !!print *, "e: ", e
-      !!print *, "n: ", n
-      !!print *, 'f (before free cooling): ', f
-      !!print *, 'q (before free cooling): ', q
-      !
-      call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
-      !
-      !!print *, 'f (after free cooling (delta_p=0): ', f
-      !!print *, 'q (after free cooling (delta_p=0): ', q
 
-      edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
-      ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
+      if (coulomb_active(i_spc) .eqv. .true.) then
 
-      !call ne_to_q(n, e, q, active_bins, i_spc)  !< begins new step
-      !f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
-      !print *, "e: ", e
-      !print *, "n: ", n
-      !print *, 'f (after generating e and n): ', f
-      !print *, 'q (after generating e and n): ', q
+         f = nq_to_f(p(0:ncrb-1), p(1:ncrb), n(1:ncrb), q(1:ncrb), active_bins)
+
+         call cresp_compute_free_cooling(u_cell, f, p, q, i_spc, active_bins, dt)
+
+         edt = fq_to_e(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), active_bins, i_spc) ! once again we must count n and e
+         ndt = fq_to_n(p(0:ncrb-1), p(1:ncrb), f(0:ncrb-1), q(1:ncrb), active_bins)
+
+      endif
 
       approx_p = e_small_approx_p         !< restore approximation after momenta computed
 
@@ -1936,12 +1925,11 @@ contains
 
    subroutine ne_to_q(n, e, q, bins, i_spc)
 
-      use cr_data,         only: cr_table, icr_E, transrelativistic
       use constants,       only: zero, one, I_ONE
       use dataio_pub,      only: warn
       use cresp_NR_method, only: compute_q, q_tab, alpha_q_tab, lin_interpolation_1D
       use initcosmicrays,  only: ncrb
-      use initcrspectrum,  only: e_small, g_fix, three_ps, arr_dim_q, q_big
+      use initcrspectrum,  only: e_small, g_fix, three_ps, arr_dim_q, q_big, transrelativistic
 
       implicit none
 

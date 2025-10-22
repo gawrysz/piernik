@@ -225,9 +225,9 @@ contains
    subroutine cr_spallation_sources(u_cell,dt_doubled, q_spc_all)
 
       use constants,        only: one, zero
-      use initcrspectrum,   only: spec_mod_trms, p_fix, p_mid_fix, three_ps, g_fix
+      use initcrspectrum,   only: spec_mod_trms, p_fix, p_mid_fix, three_ps, transrelativistic
       use initcosmicrays,   only: iarr_crspc2_e, iarr_crspc2_n, ncrb
-      use cr_data,          only: ncrsp_prim, ncrsp_sec, cr_table, cr_sigma, icr_prim, icr_sec, cr_mass, cr_spectral, transrelativistic
+      use cr_data,          only: ncrsp_prim, ncrsp_sec, cr_table, cr_sigma, icr_prim, icr_sec, cr_mass, cr_spectral, cr_names, cr_Z
       use initcosmicrays,   only: nspc
       use fluidindex,       only: flind
       use fluids_pub,       only: has_ion, has_neu
@@ -269,7 +269,17 @@ contains
 
                   associate( cr_sec => cr_table(icr_sec(i_sec)) )
 
+
                   if (cr_sigma(cr_prim, cr_sec) .gt. zero) then
+
+                    !print *, 'cr_prim: ', cr_prim
+                    !print *, 'cr_names(cr_prim): ', cr_names(cr_prim)
+                    !print *, 'cr_mass(cr_prim): ', cr_mass(cr_prim)
+                    !print *, 'cr_Z(cr_prim): ', cr_Z(cr_prim)
+                    !print *, 'cr_sec: ', cr_sec
+                    !print *, 'cr_names(cr_sec): ', cr_names(cr_sec)
+                    !print *, 'cr_mass(cr_sec): ', cr_mass(cr_sec)
+                    !print *, 'cr_Z(cr_sec): ', cr_Z(cr_sec)
 
                      Q_ratio_1 = 0.0
                      S_ratio_1 = 0.0
