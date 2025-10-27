@@ -1331,23 +1331,16 @@ contains
          q(i) = pf_to_q(p_range_add(i-1), p_range_add(i), f(i-1), f(i))
       enddo
 
-<<<<<<< HEAD
-<<<<<<< HEAD
       n = n + fq_to_n(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), q(1:ncrb), act_bins)
       e = e + fq_to_e(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), act_bins, i_spc)
 
-=======
-     !print *, 'q: ', q
-=======
      print *, 'q: ', q
->>>>>>> 530a907fc (fix correct q indexing and correct computation of f, q, n and e for Coulomb free cooling implementation subroutine)
 
       n = n + fq_to_n(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), q(1:ncrb), act_bins)
       e = e + fq_to_e(p_range_add(0:ncrb-1), p_range_add(1:ncrb), f(0:ncrb-1), g_fix(i_spc, 0:ncrb-1), q(1:ncrb), act_bins, i_spc)
 
      !print *, 'e (in init_plpc): ', e
 
->>>>>>> f40eae4a0 ([cresp_crspectrum] compute free_cooling: remove prints)
       call my_deallocate(act_bins)
 
    end subroutine cresp_init_plpc_spectrum
@@ -1541,15 +1534,7 @@ contains
       real,    dimension(1:ncrb)        :: fq_to_e
 
       fq_to_e = zero
-<<<<<<< HEAD
-      !!print *, 'g_l(bins) : ', g_l(bins)
-      !!print *, 'p_l(bins) : ', p_l(bins)
-      !!print *, 'three_p_s(bins) : ', three_ps(i_spc,bins)
-      !!print *, 'q(bins)   : ', q(bins)
-      e_bins = fpcc * f_l(bins) * g_l(bins) * p_l(bins)**three
-=======
       e_bins = fpcc * f_l(bins) * p_l(bins)**3 * g_l(bins)
->>>>>>> f40eae4a0 ([cresp_crspectrum] compute free_cooling: remove prints)
       where (abs(q(bins) - three_ps(i_spc,bins)) > eps)
          e_bins = e_bins*((p_r(bins)/p_l(bins))**(three_ps(i_spc,bins) - q(bins)) - one)/(three_ps(i_spc,bins) - q(bins))
       elsewhere
