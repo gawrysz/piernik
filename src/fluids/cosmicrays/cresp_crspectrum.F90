@@ -1016,8 +1016,11 @@ contains
 
         !print *, 'p_fix: ', p_fix
 
-! Sorting bin edges - arbitrary chosen p_cut may need to be sorted to appear in growing order
-        do k = ncrb, 1, -1
+         p         = p_fix       ! actual array of p including free edges, p_fix shared via initcrspectrum
+         p(max_ic) = p_cut
+
+   ! Sorting bin edges - arbitrary chosen p_cut may need to be sorted to appear in growing order
+         do k = ncrb, 1, -1
             do i = 0, k-1
                 if (p(i) > p(i+1)) then
                 c = p(i)
