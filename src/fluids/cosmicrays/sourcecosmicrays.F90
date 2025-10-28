@@ -128,7 +128,7 @@ contains
 !<
    subroutine src_cr_spallation_and_decay(uu, n, usrc, rk_coeff)
 
-      use cr_data,        only: eCRSP, cr_table, cr_tau, cr_sigma, icr_C12, icrH, icrL
+      use cr_data,        only: eCRSP, cr_table, cr_tau, cr_sigma, icr_Be10, icrH, icrL
       use dataio_pub,     only: die
       use domain,         only: dom
       use fluids_pub,     only: has_ion, has_neu
@@ -159,8 +159,8 @@ contains
 
       usrc(:,:) = 0.0
 
-      i = cr_table(icr_C12) ; j = iarr_crn(i)
-      if (eCRSP(icr_C12)) usrc(:, j) = usrc(:, j) - gn * uu(:, j) / cr_tau(i)
+      i = cr_table(icr_Be10) ; j = iarr_crn(i)
+      if (eCRSP(icr_Be10)) usrc(:, j) = usrc(:, j) - gn * uu(:, j) / cr_tau(i)
 
       do i = lbound(icrH, 1), ubound(icrH, 1)
          associate( Hi => cr_table(icrH(i)) )
