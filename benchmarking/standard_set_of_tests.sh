@@ -23,7 +23,7 @@ if [ ! -d "$RESULTS_DIR" ]; then
 fi
 
 # Find the highest existing numeric directory name
-N=$( ( echo 0; ls -1 "$RESULTS_DIR" ) | grep -E '^[0-9]+$' | sort -n | tail -n 1 | awk '{print $1}')
+N=$( ( echo 0; ls -1 "$RESULTS_DIR" ) | grep -E '^[0-9]+$' | sort -n | tail -n 1 | awk '{print 1*$1}')
 
 NN=0
 while [ "$NN" == 0 ]; do

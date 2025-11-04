@@ -95,10 +95,10 @@ run_strong_weak_scaling() {
 
     case $scaling in
         weak)
-            $mpirun_cmd -np $threads ./piernik -n '&BASE_DOMAIN n_d = '$(( $threads * $nx ))', 2*'$nx' xmin = -'$(( $threads * $xmul ))' xmax = '$(( $threads * $xmul ))' / &MEMORY max_mem = '$max_mem'/' 2> /dev/null
+            $mpirun_cmd -np $threads ./piernik -n '&BASE_DOMAIN n_d = '$(( $threads * $nx ))', 2*'$nx' xmin = -'$(( $threads * $xmul ))' xmax = '$(( $threads * $xmul ))' / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null
             ;;
         strong)
-            $mpirun_cmd -np $threads ./piernik -n '&BASE_DOMAIN n_d = 3*'$nx' / &MEMORY max_mem = '$max_mem'/' 2> /dev/null
+            $mpirun_cmd -np $threads ./piernik -n '&BASE_DOMAIN n_d = 3*'$nx' / &NUMERICAL_SETUP max_mem = '$max_mem'/' 2> /dev/null
             ;;
     esac
 }
@@ -126,7 +126,7 @@ run_piernik() {
 
     if [ $scaling == flood ]; then
         for j in $( seq $threads ); do
-            ( cd $j && ./piernik -n '&BASE_DOMAIN n_d = 3*'$nx' / &MEMORY max_mem = '$max_mem'/' > _stdout_ 2> /dev/null ) &
+            ( cd $j && ./piernik -n '&BASE_DOMAIN n_d = 3*'$nx' / &NUMERICAL_SETUP max_mem = '$max_mem'/' > _stdout_ 2> /dev/null ) &
         done
         wait
         sleep 1
@@ -137,7 +137,7 @@ run_piernik() {
         case $problem in
             sedov)
                 local xmul=1
-                run_strong_weak_scaling $scaling $threads $nx "$mpirun_cmd" $max_mem $xmul | grep "dWallClock" | awk 'BEGIN {t=0; n=0;} {if ($12 != 0.) {printf(" %8.4f ", $12); t+=$12; n++;}} END {printf(" %9.5f ", t/n)}'
+                run_strong_weak_scaling $scaling $threads $nx "$mpirun_cmd" $max_mem $xmul | grep "dWallClock" | awk 'BEGIN {t=0; n=0;} {if ($3 != 0) {printf(" %8.4f ", $12); t+=$12; n++;}} END {printf(" %9.5f ", t/n)}'
                 ;;
             crtest)
                 local xmul=512
