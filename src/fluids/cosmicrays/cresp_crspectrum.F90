@@ -2231,8 +2231,8 @@ contains
       real, dimension(0:ncrb),intent(in)        :: p_0
       real, dimension(0:ncrb)                   :: f_0
       real, dimension(ncrb)                     :: q_0
-      real                                      :: eps_tiny, eps_local
-      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude
+      real                                      :: eps_tiny, eps_local, eps_f
+      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude, dp0, Fp_out, dN_out, N_lost, tau_sink
 
       last_bin = bins(size(bins))
 
@@ -2240,10 +2240,13 @@ contains
 
       dgas = 0.
 
-      delta = 1.e-80
+      delta = 1.e-60
+      eps_f = 1e-12
 
       eps_tiny = 1e-10      ! avoid exact zeros in logs/divides
-      eps_local = 1e-30 ! tolerance for nearly-equal momenta
+      eps_local = 1e-30     ! tolerance for nearly-equal momenta
+
+      N_lost = 0.
 
       h = - 1.9 !value of the power law coefficient for momentum-dependent Coulomb cooling approximation
 
@@ -2263,13 +2266,6 @@ contains
 
       endif
 
-      !print *, 'p_0(0): ', p_0(0)
-      !print *, 'loss_amplitude: ', loss_amplitude
-      !print *, 'delta_t_sub: ', delta_t_sub
-      !print *, 'n_sub: ', n_sub
-
-      !stop
-
       delta_p = (1-h)*delta_t_sub*loss_amplitude
 
 
@@ -2279,19 +2275,10 @@ contains
       p_one = eps_tiny
       f_one = f_old
 
-      ! --- compute p_one and f_one FOR ALL bins 0..last_bin (was 0..last_bin-1)
       do i_sub = 1, n_sub
-
-         ! initialize
 
 
          f_old(last_bin) = zero
-
-         !print *, 'p_0: ', p_0
-         !print *, 'p_0^(1-h): ', p_0**(1-h)
-         !print *, 'delta_p: ,', delta_p
-         !!print *, 'delta_t: ', delta_t
-         !stop
 
          do i_bin = 0, last_bin
             if (p_0(i_bin)**(1-h) .gt. delta_p) then
@@ -2300,19 +2287,14 @@ contains
                if (p_one(i_bin) .gt. eps_tiny) then
                   f_one(i_bin) = f_old(i_bin)*(p_0(i_bin)/p_one(i_bin))**(2+h)
                else
-                  !print *, 'here, in first loop'
                   f_one(i_bin) = delta
                endif
             else
-               !print *, 'second loop?'
                ! cooled to (near) zero momentum -> treat as removed (or sink)
                p_one(i_bin) = zero
                f_one(i_bin) = delta
             endif
          enddo
-
-         !print *, 'f_one: ', f_one
-         !stop
 
          ! Ensure p_one is non-decreasing; if a later p_one is zero while earlier not, keep consistency
          ! (This is a conservative fix: if cooling removes later bins, keep monotonicity)
@@ -2383,19 +2365,41 @@ contains
          f_old = f_0
          f_0(last_bin) = zero
          f_old(last_bin) = zero
-         !stop
+
       enddo
+
+      dp0 = max(p_0(1) - p_0(0), 1d-40)
+
+      ! Compute outgoing flux at lower boundary
+      Fp_out = abs(loss_amplitude * p_0(1)**h * f_0(1))
+
+      ! Number of particles leaving the CR regime during this substep
+      dN_out = Fp_out * delta_t_sub / dp0
+
+      if (dN_out >= f_0(1) * (1.0d0 - eps_f)) then
+         ! Tout le contenu du bin 1 est vidé
+         dN_out = f_0(1)
+         f_0(1) = delta
+         f_0(0) = f_0(0) + dN_out
+      else
+         ! Transfert normal
+         f_0(1) = f_0(1) - dN_out
+         f_0(0) = f_0(0) + dN_out
+      endif
+
+      ! Accumulate diagnostic (for conservation test)
+      N_lost = N_lost + dN_out * dp0
 
 
          ! --- Recompute q_0 from neighbouring f_0 values; ensure q_0 defined only where both neighbors valid
-         do i_bin = 1, last_bin
-            if (f_0(i_bin-1) .gt. delta .and. f_0(i_bin) .gt. delta) then
-               q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
-            !else
-            !
-            !   if (i_bin .gt. 1) q_0(i_bin) = q_0(i_bin - 1) ! or some sentinel/previous value; adjust to your convention
-            endif
-         enddo
+      do i_bin = 1, last_bin
+         if (f_0(i_bin-1) .gt. delta .and. f_0(i_bin) .gt. delta) then
+            q_0(i_bin) = pf_to_q(p_0(i_bin-1), p_0(i_bin), f_0(i_bin-1), f_0(i_bin))
+         !else
+         !
+         !   if (i_bin .gt. 1) q_0(i_bin) = q_0(i_bin - 1) ! or some sentinel/previous value; adjust to your convention
+         endif
+      enddo
          ! handle boundaries and set q_0(1) and q_0(last_bin-1) to sensible values if needed
          !q_0(1)        = zero
          !q_0(last_bin-1) = q_0(last_bin-2)
