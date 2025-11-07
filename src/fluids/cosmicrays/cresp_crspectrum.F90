@@ -2232,7 +2232,7 @@ contains
       real, dimension(0:ncrb)                   :: f_0
       real, dimension(ncrb)                     :: q_0
       real                                      :: eps_tiny, eps_local, eps_f
-      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude, dp0, Fp_out, dN_out, N_lost, tau_sink
+      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude, dp0, dp1, Fp0_out, dN0_out, Fp1_out, dN1_out, N_lost, tau_sink
 
       last_bin = bins(size(bins))
 
@@ -2259,6 +2259,9 @@ contains
 
       n_sub = max(1,int(delta_t/delta_t_sub))
 
+      print *, 'delta_t_sub: ', delta_t_sub
+      print *, 'n_sub: ', n_sub
+
       if (n_sub .gt. n_step_max) then
 
          n_sub = n_step_max
@@ -2268,7 +2271,6 @@ contains
 
       delta_p = (1-h)*delta_t_sub*loss_amplitude
 
-
       f_old = f_0
       f_0(last_bin) = zero
       f_old(last_bin) = zero
@@ -2276,6 +2278,8 @@ contains
       f_one = f_old
 
       do i_sub = 1, n_sub
+
+         print *, 'i_sub: ', i_sub
 
 
          f_old(last_bin) = zero
@@ -2366,29 +2370,43 @@ contains
          f_0(last_bin) = zero
          f_old(last_bin) = zero
 
+         dp0 = max(p_0(1) - p_0(0), 1d-40)
+         dp1 = max(p_0(2) - p_0(1), 1d-40)
+
+         ! Compute outgoing flux at lower boundary
+         Fp1_out = abs(loss_amplitude * p_0(1)**h * f_0(1))
+
+         ! Number of particles leaving the CR regime during this substep
+         dN1_out = Fp1_out * delta_t_sub / dp1
+
+         if (dN1_out >= f_0(1) * (1.0d0 - eps_f)) then
+            ! Tout le contenu du bin 1 est vidé
+            dN1_out = f_0(1)
+            f_0(1) = delta
+            f_0(0) = f_0(0) + dN1_out
+         else
+            ! Transfert normal
+            f_0(1) = f_0(1) - dN1_out
+            f_0(0) = f_0(0) + dN1_out
+         endif
+
+         Fp0_out = abs(loss_amplitude * p_0(0)**h * f_0(0))
+
+         dN0_out = Fp0_out * delta_t_sub / dp0
+
+         if (dN0_out >= f_0(0) * (1.0d0 - eps_f)) then
+            dN0_out = f_0(0)
+            f_0(0) = delta
+         else
+            f_0(0) = f_0(0) - dN0_out
+         endif
+
+         ! Accumulate diagnostic (for conservation test)
+         N_lost = N_lost + dN0_out * dp0 + dN1_out * dp1
+
       enddo
 
-      dp0 = max(p_0(1) - p_0(0), 1d-40)
 
-      ! Compute outgoing flux at lower boundary
-      Fp_out = abs(loss_amplitude * p_0(1)**h * f_0(1))
-
-      ! Number of particles leaving the CR regime during this substep
-      dN_out = Fp_out * delta_t_sub / dp0
-
-      if (dN_out >= f_0(1) * (1.0d0 - eps_f)) then
-         ! Tout le contenu du bin 1 est vidé
-         dN_out = f_0(1)
-         f_0(1) = delta
-         f_0(0) = f_0(0) + dN_out
-      else
-         ! Transfert normal
-         f_0(1) = f_0(1) - dN_out
-         f_0(0) = f_0(0) + dN_out
-      endif
-
-      ! Accumulate diagnostic (for conservation test)
-      N_lost = N_lost + dN_out * dp0
 
 
          ! --- Recompute q_0 from neighbouring f_0 values; ensure q_0 defined only where both neighbors valid
