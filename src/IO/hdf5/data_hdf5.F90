@@ -406,7 +406,7 @@ contains
       use named_array_list, only: wna
 #endif /* CRESP */
 #ifdef COSM_RAYS
-      use cr_data,          only: cr_names, cr_spectral, icr_spc
+      use cr_data,          only: cr_names, cr_spectral
       use initcosmicrays,   only: ncrn
 #endif /* COSM_RAYS */
 #ifndef ISO

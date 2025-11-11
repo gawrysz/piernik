@@ -140,34 +140,34 @@ def nr_get_q(q_start: float, three_p_s: float, e_to_npc_ratio: float, p_ratio: f
 
     return nr_get_q, q_not_found
 
+
 def intpol_get_q(i_bin: int, e_to_ng_ratio: float) -> float:
 
-    #print('i_bin : ', i_bin)
+    # print('i_bin : ', i_bin)
 
-    j = argmin(abs(e_to_ng_ratio - alpha_q_tab[:,i_bin]))
-    #print('j : ', j)
-    #print("e_to_ng : ", e_to_ng_ratio, 'alpha_q_tab(j;ibin) : ', alpha_q_tab[j,i_bin])
-    #print('alpha_q_tab(:;ibin=',i_bin,') : ', alpha_q_tab[:,i_bin])
+    j = argmin(abs(e_to_ng_ratio - alpha_q_tab[:, i_bin]))
+    # print('j : ', j)
+    # print("e_to_ng : ", e_to_ng_ratio, 'alpha_q_tab(j;ibin) : ', alpha_q_tab[j, i_bin])
+    # print('alpha_q_tab(:;ibin=', i_bin,') : ', alpha_q_tab[:, i_bin])
     if (j != arr_dim_q - 1):
-        #print('j != arr_dim_q - 1')
+        # print('j != arr_dim_q - 1')
         if (j != 0):
-            #print('j != 0')
-            if (abs(alpha_q_tab[j+1,i_bin] - alpha_q_tab[j,i_bin]) <= abs(alpha_q_tab[j,i_bin] - alpha_q_tab[j-1,i_bin])):
-                #print('ok !')
-                weight   = (e_to_ng_ratio - alpha_q_tab[j,i_bin]) / (alpha_q_tab[j+1,i_bin] - alpha_q_tab[j,i_bin])
-                intpol_get_q = q_tab[j] * (1 - weight) + q_tab[j+1] * weight
+            # print('j != 0')
+            if (abs(alpha_q_tab[j + 1, i_bin] - alpha_q_tab[j, i_bin]) <= abs(alpha_q_tab[j, i_bin] - alpha_q_tab[j - 1, i_bin])):
+                # print('ok !')
+                weight = (e_to_ng_ratio - alpha_q_tab[j, i_bin]) / (alpha_q_tab[j + 1, i_bin] - alpha_q_tab[j, i_bin])
+                intpol_get_q = q_tab[j] * (1 - weight) + q_tab[j + 1] * weight
             else:
-                weight   = (e_to_ng_ratio - alpha_q_tab[j-1,i_bin]) / (alpha_q_tab[j,i_bin] - alpha_q_tab[j-1,i_bin])
-                intpol_get_q = q_tab[j-1] * (1 - weight) + q_tab[j] * weight
+                weight = (e_to_ng_ratio - alpha_q_tab[j - 1, i_bin]) / (alpha_q_tab[j, i_bin] - alpha_q_tab[j - 1, i_bin])
+                intpol_get_q = q_tab[j - 1] * (1 - weight) + q_tab[j] * weight
         else:
-            #print('j = 0')
+            # print('j = 0')
             intpol_get_q = - q_big
     else:
-        #print('j = arr_dim_q')
+        # print('j = arr_dim_q')
         intpol_get_q = q_big
 
-
-    #print('q[j]: ', q_tab[j], 'q[j+1]: ', q_tab[j+1],' q_interpolated: ', intpol_get_q )
+    # print('q[j]: ', q_tab[j], 'q[j+1]: ', q_tab[j+1],' q_interpolated: ', intpol_get_q )
 
     return intpol_get_q
 
@@ -177,7 +177,7 @@ def intpol_get_q(i_bin: int, e_to_ng_ratio: float) -> float:
 def spectral_slope_root_function(x: float, three_p_s: float, s: float, e2npc_ratio: float, p_ratio: float) -> float:
 
     if abs(x - 3.0) < q_eps:
-        root_function_value = -e2npc_ratio + (-1.0 + p_ratio**s) / (s*log(p_ratio))
+        root_function_value = -e2npc_ratio + (-1.0 + p_ratio**s) / (s * log(p_ratio))
     elif abs(x - three_p_s) < q_eps:
         root_function_value = -e2npc_ratio - \
             s * log(p_ratio) / (p_ratio**s - 1.0)
@@ -249,31 +249,33 @@ def fill_q_grid():
             previous_solution = x
     return
 
+
 def fill_q_alpha_tab(three_p_s: float, s: float, p_range: float):
     global q_tab, alpha_q_tab
-    q_tab=[]
-    alpha_q_tab=[]
+    q_tab = []
+    alpha_q_tab = []
     q_tab = zeros(arr_dim_q)
     alpha_q_tab = zeros([arr_dim_q, ncrb])
-    #print('size of alpha q tab: ',))
+    # print('size of alpha q tab: ',))
     q_min = q_big
     for i in range(arr_dim_q):
-        q_tab[i] = q_big*10**(((log10(3*q_big/q_big))/float(arr_dim_q-1))*float(i-1))
-        q_tab[i] = q_tab[i] - 2*q_big
+        q_tab[i] = q_big * 10**(((log10(3 * q_big / q_big)) / float(arr_dim_q - 1)) * float(i - 1))
+        q_tab[i] = q_tab[i] - 2 * q_big
         for j in range(ncrb):
-            #print('j : ', j)
-            #print('p_range[j+1] : ', p_range[j+1])
-            #print('p_range[j] : ', p_range[j])
-            #print('q tab[i]', q_tab[i])
-            #print('s[i]', s[j])
-            #print('3+s[i]', three_p_s[j])
-            #print('p_ratio: ', p_range[j+1]/p_range[j])
-            #print('alpha tab(init): ', alpha_q_tab[i,j])
-            #print('alpha tab: ', spectral_slope_root_function(q_tab[i], three_p_s[j], 2.0, 0.0, 100.0))
-            alpha_q_tab[i,j] = spectral_slope_root_function(q_tab[i], three_p_s[j], s[j], 0.0, p_range[j+1]/p_range[j])
+            # print('j : ', j)
+            # print('p_range[j+1] : ', p_range[j+1])
+            # print('p_range[j] : ', p_range[j])
+            # print('q tab[i]', q_tab[i])
+            # print('s[i]', s[j])
+            # print('3+s[i]', three_p_s[j])
+            # print('p_ratio: ', p_range[j+1]/p_range[j])
+            # print('alpha tab(init): ', alpha_q_tab[i,j])
+            # print('alpha tab: ', spectral_slope_root_function(q_tab[i], three_p_s[j], 2.0, 0.0, 100.0))
+            alpha_q_tab[i, j] = spectral_slope_root_function(q_tab[i], three_p_s[j], s[j], 0.0, p_range[j + 1] / p_range[j])
 
-    #print('q_tab: ', q_tab)
+    # print('q_tab: ', q_tab)
     return
+
 
 def interpolate_q(e2npc_ratio: float) -> float:
     global arr_dim_q, e2npc_tab_q, q_grid
@@ -346,13 +348,11 @@ def plot_data(plot_var, pl, pr, gl, gr, fl, fr, q, time, location, i_lo_cut, i_u
 
     if par_fixed_dims:  # overwrite
         if (plot_var != "e"):
-            plt.ylim(10. * plot_var_min, 10. *
-                     max(plot_var_r))
+            plt.ylim(10. * plot_var_min, 10. * max(plot_var_r))
             plt.xlim(p_fix[0], p_fix[ncrb])
         else:
-            plt.ylim(10. * plot_var_min, 10. *
-                     max(plot_var_r))
-            plt.xlim(0.1*p_fix[0], p_fix[ncrb]*10)
+            plt.ylim(10. * plot_var_min, 10. * max(plot_var_r))
+            plt.xlim(0.1 * p_fix[0], p_fix[ncrb] * 10)
 
     if (par_plot_e3):
         plt.ylim(10. * plot_var_min, 10. *
@@ -495,32 +495,32 @@ def detect_active_bins_new(n_in, e_in):
     i_lo_tmp = max(ne_gt_zero[0], 0)
     i_up_tmp = min(ne_gt_zero[-1], ncrb)
     pln = p_fix[0:ncrb]
-    prn = p_fix[1:ncrb+1]
+    prn = p_fix[1:ncrb + 1]
     gln = g_fix[0:ncrb]
-    grn = g_fix[1:ncrb+1]
-    #num_active_bins = 0
-    #print('i_lo_tmp: ', i_lo_tmp)
-    #print('i_up_tmp: ', i_up_tmp)
+    grn = g_fix[1:ncrb + 1]
+    # num_active_bins = 0
+    # print('i_lo_tmp: ', i_lo_tmp)
+    # print('i_up_tmp: ', i_up_tmp)
 
-    #print('e_in(): ', e_in)
-    #print('n_in(): ', n_in)
-    #print('gln(): ',  gln)
+    # print('e_in(): ', e_in)
+    # print('n_in(): ', n_in)
+    # print('gln(): ',  gln)
 
     for i in range(0, ncrb):
-        #print('i: ',i)
-        #print('e_in(',i,'+',i_lo_tmp,'): ', e_in[i+i_lo_tmp])
-        #print('n_in(',i,'+',i_lo_tmp,'): ', n_in[i+i_lo_tmp])
-        #print('gln(',i,'+',i_lo_tmp-1,'): ',  gln[i+i_lo_tmp-1])
+        # print('i: ',i)
+        # print('e_in(',i,'+',i_lo_tmp,'): ', e_in[i+i_lo_tmp])
+        # print('n_in(',i,'+',i_lo_tmp,'): ', n_in[i+i_lo_tmp])
+        # print('gln(',i,'+',i_lo_tmp-1,'): ',  gln[i+i_lo_tmp-1])
         q_tmp = 3.5
         exit_code = False
         if (q_explicit is True):
-            #print('active bins call : ')
-            if (transrelativistic==False):
+            # print('active bins call : ')
+            if not transrelativistic:
                 q_tmp, exit_code = nr_get_q(
                     q_tmp, 3 + s_nr[i], e_in[i + i_lo_tmp] / (n_in[i + i_lo_tmp] * gln[i + i_lo_tmp]), prn[i + i_lo_tmp] / pln[i + i_lo_tmp], exit_code)
             else:
                 q_tmp = intpol_get_q(i, e_in[i + i_lo_tmp] / (n_in[i + i_lo_tmp] * gln[i + i_lo_tmp]))
-            #print('q_tmp, exit_code : ', q_tmp, exit_code)
+            # print('q_tmp, exit_code : ', q_tmp, exit_code)
         else:
             # this instruction is duplicated, TODO return it via detect_active_bins_new()
             q_tmp = interpolate_q(
@@ -532,23 +532,22 @@ def detect_active_bins_new(n_in, e_in):
         e_ampl_l.append(4 * pi * c**2 * f_gt_zero[-1] * pln[i + i_lo_tmp]**2 * gln[i + i_lo_tmp])
         e_ampl_r.append(
             4 * pi * c**2 * f_gt_zero[-1] * ((prn[i + i_lo_tmp] / pln[i + i_lo_tmp])**(-q_tmp)) * prn[i + i_lo_tmp] ** 2 * grn[i + i_lo_tmp])
-        #if ((e_ampl_l[-1] > e_small or e_ampl_r[-1] > e_small) and e_in[i + i_lo_tmp] > e_small ):
-        #    print('ne_gt_zero[',i,'];', ne_gt_zero[i])
-        #    active_bins_new.append(ne_gt_zero[i])
-        #    #num_active_bins = num_active_bins + 1
+        # if ((e_ampl_l[-1] > e_small or e_ampl_r[-1] > e_small) and e_in[i + i_lo_tmp] > e_small ):
+        #     print('ne_gt_zero[',i,'];', ne_gt_zero[i])
+        #     active_bins_new.append(ne_gt_zero[i])
+        #     #num_active_bins = num_active_bins + 1
 
     if num_active_bins == 0:
         return active_bins_new, i_lo_tmp, i_up_tmp
 
-    i_lo_tmp = 0 #max(active_bins_new[0], 0)
-    i_up_tmp = ncrb - 1 #min(active_bins_new[-1], ncrb)
+    i_lo_tmp = 0  # max(active_bins_new[0], 0)
+    i_up_tmp = ncrb - 1  # min(active_bins_new[-1], ncrb)
 
     print('i_lo_tmp: ', i_lo_tmp)
     print('i_up_tmp: ', i_up_tmp)
 
     active_bins_new = [i for i in range(0, ncrb)]
     num_active_bins = len(active_bins_new)
-
 
     prtinfo("Active_bins: " + str(active_bins_new))
     return active_bins_new, i_lo_tmp, i_up_tmp
@@ -567,29 +566,29 @@ def crs_initialize(parameter_names, parameter_values, plot_field):
 
     global cr_mass, p_fix_ratio, p_fix, g_fix, s_nr, three_ps
 
-    #print('plot_field (in crs_initialize) : ', plot_field)
+    # print('plot_field (in crs_initialize) : ', plot_field)
 
     mass = 0
 
-    #print('plot_field(3-6) : ', plot_field[3:6])
-    if (transrelativistic==True):
-        if (plot_field[3]=='e'):
+    # print('plot_field(3-6) : ', plot_field[3:6])
+    if transrelativistic:
+        if (plot_field[3] == 'e'):
             mass = mass_em
-        elif (plot_field[3]=='p'):
+        elif (plot_field[3] == 'p'):
             mass = mass_pp
-        elif (plot_field[3:6]=='Li7'):
+        elif (plot_field[3:6] == 'Li7'):
             mass = mass_Li7
-        elif (plot_field[3:6]=='C12'):
+        elif (plot_field[3:6] == 'C12'):
             mass = mass_C12
-        elif (plot_field[3:6]=='O16'):
+        elif (plot_field[3:6] == 'O16'):
             mass = mass_O16
-        elif (plot_field[3:6]=='Be9'):
+        elif (plot_field[3:6] == 'Be9'):
             mass = mass_Be9
-        elif (plot_field[3:7]=='Be10'):
+        elif (plot_field[3:7] == 'Be10'):
             mass = mass_Be10
-        elif (plot_field[3:6]=='B10'):
+        elif (plot_field[3:6] == 'B10'):
             mass = mass_B10
-        elif (plot_field[3:6]=='B11'):
+        elif (plot_field[3:6] == 'B11'):
             mass = mass_B11
 
     edges = []
@@ -605,8 +604,8 @@ def crs_initialize(parameter_names, parameter_values, plot_field):
     for i in range(0, ncrb):
         p_fix[i + 1] = p_min_fix * 10.0**(log_width * edges[i])
         p_fix_ratio = 10.0 ** log_width
-        #p_fix[0] = (sqrt(p_fix[1] * p_fix[2])) / p_fix_ratio
-        #p_fix[ncrb] = (sqrt(p_fix[ncrb - 2] * p_fix[ncrb - 1])) * p_fix_ratio
+        # p_fix[0] = (sqrt(p_fix[1] * p_fix[2])) / p_fix_ratio
+        # p_fix[ncrb] = (sqrt(p_fix[ncrb - 2] * p_fix[ncrb - 1])) * p_fix_ratio
         p_fix[0] = p_lo_init
         p_fix[ncrb] = p_up_init
         p_fix = asfarray(p_fix)
@@ -614,7 +613,7 @@ def crs_initialize(parameter_names, parameter_values, plot_field):
     g_fix = sqrt(p_fix**2 * c**2 + mass**2 * c**4) - mass * c**2
 
     p_mid_fix = zeros(ncrb)
-    p_mid_fix[1:ncrb - 1] = sqrt(p_fix[1:ncrb - 1] * p_fix[2:ncrb])/12.0
+    p_mid_fix[1:ncrb - 1] = sqrt(p_fix[1:ncrb - 1] * p_fix[2:ncrb]) / 12.0
     p_mid_fix[0] = p_mid_fix[1] / p_fix_ratio
     p_mid_fix[ncrb - 1] = p_mid_fix[ncrb - 2] * p_fix_ratio
     p_mid_fix = asfarray(p_mid_fix)
@@ -625,7 +624,7 @@ def crs_initialize(parameter_names, parameter_values, plot_field):
     g_mid_fix[ncrb - 1] = g_mid_fix[ncrb - 2] * p_fix_ratio
     g_mid_fix = asfarray(g_mid_fix)
 
-    #p_fix = tuple(p_fix)
+    # p_fix = tuple(p_fix)
     p_mid_fix = tuple(p_mid_fix)
     g_fix = tuple(g_fix)
     g_mid_fix = tuple(g_mid_fix)
@@ -638,31 +637,30 @@ def crs_initialize(parameter_names, parameter_values, plot_field):
     grn = zeros(ncrb)
 
     pln = p_fix[0:ncrb]
-    prn = p_fix[1:ncrb+1]
+    prn = p_fix[1:ncrb + 1]
     gln = g_fix[0:ncrb]
-    grn = g_fix[1:ncrb+1]
+    grn = g_fix[1:ncrb + 1]
     print('size of pln: ', size(pln))
     pln = array(pln)
     prn = array(prn)
     gln = array(gln)
     grn = array(grn)
 
-    print('pln: ', pln )
-    print('prn: ', prn )
-
+    print('pln: ', pln)
+    print('prn: ', prn)
 
     print('size of pln: ', size(pln))
     s_nr = log10(grn / gln) / log10(prn / pln)
     print('size of  s_nr: ', size(s_nr))
     print('s_nr : ', s_nr)
-    #s_nr = tuple(s_nr)
+    # s_nr = tuple(s_nr)
 
     print('size of p fix: ', size(p_fix))
 
     print('p_fix : ', p_fix)
     print('g_fix : ', g_fix)
 
-    fill_q_alpha_tab(3.0+s_nr,s_nr,p_fix)
+    fill_q_alpha_tab(3.0 + s_nr, s_nr, p_fix)
 
     global clean_plot
     clean_plot = True
@@ -725,9 +723,9 @@ def crs_plot_main(plot_var, ncrs, ecrs, time, location, **kwargs):
             ncrs[i_up] * g_fix[i_up]), ncrs[i_up], exit_code_up, verbose=verbosity_2)
 
     pln = p_fix[0:ncrb]
-    prn = p_fix[1:ncrb+1]
+    prn = p_fix[1:ncrb + 1]
     gln = g_fix[0:ncrb]
-    grn = g_fix[1:ncrb+1]
+    grn = g_fix[1:ncrb + 1]
     pln = array(pln)
     prn = array(prn)
     gln = array(gln)
@@ -775,18 +773,18 @@ def crs_plot_main(plot_var, ncrs, ecrs, time, location, **kwargs):
             q_tmp = 3.5
             exit_code = False
             # this instruction is duplicated, TODO return it via detect_active_bins_new()
-            #print('plot_main call : ')
-            #print('p_fix: ', p_fix)
-            #print('g_fix: ', g_fix)
-            #print('s_nr : ', s_nr)
-            #print('i+i_lo : ', i + i_lo)
-            #print('s_nr(i+i_lo) : ', s_nr[i + i_lo])
-            if (transrelativistic==False):
+            # print('plot_main call : ')
+            # print('p_fix: ', p_fix)
+            # print('g_fix: ', g_fix)
+            # print('s_nr : ', s_nr)
+            # print('i+i_lo : ', i + i_lo)
+            # print('s_nr(i+i_lo) : ', s_nr[i + i_lo])
+            if not transrelativistic:
                 q_tmp, exit_code = nr_get_q(
                     q_tmp, 3 + s_nr[i + i_lo], ecrs[i + i_lo] / (ncrs[i + i_lo] * gln[i + i_lo]), prn[i + i_lo] / pln[i + i_lo], exit_code)
             else:
                 q_tmp = intpol_get_q(i + i_lo, ecrs[i + i_lo] / (ncrs[i + i_lo] * gln[i + i_lo]))
-            #print('q_tmp, exit_code : ', q_tmp, exit_code)
+            # print('q_tmp, exit_code : ', q_tmp, exit_code)
         else:
             # this instruction is duplicated, TODO return it via detect_active_bins_new()
             q_tmp = interpolate_q(
@@ -796,8 +794,8 @@ def crs_plot_main(plot_var, ncrs, ecrs, time, location, **kwargs):
                    pln[i + i_lo], prn[i + i_lo]))
 
     q_nr = array(q_nr)
-    #print('q_nr : ', q_nr)
-    #print('q_tmp : ', q_tmp)
+    # print('q_nr : ', q_nr)
+    # print('q_tmp : ', q_tmp)
     fln = array(fln)
     frn = array(fln)
     frn = frn * (prn[i_lo:i_up + 1] / pln[i_lo:i_up + 1]) ** (-q_nr)
@@ -880,9 +878,8 @@ def crs_plot_main_fpq(parameter_names, parameter_values, plot_var, fcrs, qcrs, p
         for i in range(0, ncrb - 1):  # organize p_fix
             p_fix[i + 1] = p_min_fix * 10.0**(log_width * edges[i])
             p_fix_ratio = 10.0 ** log_width
-            #p_fix[0] = (sqrt(p_fix[1] * p_fix[2])) / p_fix_ratio
-            #p_fix[ncrb] = (
-                #sqrt(p_fix[ncrb - 2] * p_fix[ncrb - 1])) * p_fix_ratio
+            # p_fix[0] = (sqrt(p_fix[1] * p_fix[2])) / p_fix_ratio
+            # p_fix[ncrb] = (sqrt(p_fix[ncrb - 2] * p_fix[ncrb - 1])) * p_fix_ratio
 
             p_fix[0] = p_lo_init
             p_fix[ncrb] = p_up_init

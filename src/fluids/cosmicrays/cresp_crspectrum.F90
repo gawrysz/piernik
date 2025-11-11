@@ -106,7 +106,7 @@ contains
    subroutine cresp_update_cell(dt, u_cell, n_inout, e_inout, sptab, cfl_cresp_violation, q1, i_spc, substeps, p_out)
 
       use constants,      only: zero, one, I_ZERO, I_ONE
-      use cr_data,        only: cr_table, icr_Be10, eCRSP, icr_spc, cr_names, cr_spectral
+      use cr_data,        only: cr_table, icr_Be10, eCRSP, cr_spectral
 #ifdef CRESP_VERBOSED
       use dataio_pub,     only: msg, printinfo
 #endif /* CRESP_VERBOSED */
@@ -1976,7 +1976,7 @@ contains
                !print *, 'q_tab(j+1) : ', q_tab(j+1)
 
                if (j .ne. arr_dim_q) then
-                  if(j .ne. 1) then
+                  if (j .ne. 1) then
                      if (abs(alpha_q_tab(j+1,i_spc,i) - alpha_q_tab(j,i_spc,i)) .lt. abs(alpha_q_tab(j,i_spc,i) - alpha_q_tab(j-1,i_spc,i))) q(i) = lin_interpolation_1D([q_tab(j), q_tab(j+1)],[alpha_q_tab(j,i_spc,i), alpha_q_tab(j+1,i_spc,i)], alpha_in)
                      if (abs(alpha_q_tab(j+1,i_spc,i) - alpha_q_tab(j,i_spc,i)) .gt. abs(alpha_q_tab(j,i_spc,i) - alpha_q_tab(j-1,i_spc,i))) q(i) = lin_interpolation_1D([q_tab(j-1), q_tab(j)],[alpha_q_tab(j-1,i_spc,i), alpha_q_tab(j,i_spc,i)], alpha_in)
                   else
@@ -2218,8 +2218,9 @@ contains
       use fluids_pub,     only: has_ion, has_neu
       use fluidindex,     only: flind
       use initcosmicrays, only: ncrb
-      use initcrspectrum, only: q_big, initial_spectrum
       use units,          only: clight, mH, mp, Lambda_Cc
+
+      implicit none
 
       integer(kind=4), intent(in)               :: i_spc
       integer(kind=4)                           :: i_bin, last_bin, j, k, i_sub, n_sub, n_step_max
@@ -2322,7 +2323,7 @@ contains
                   f_0(i_bin) = delta
                endif
                cycle
-            end if
+            endif
 
             ! If p_0 is larger or equal than largest p_one, use nearest-extrapolation:
             if (p_0(i_bin) >= max(p_one(last_bin), eps_tiny)) then
@@ -2344,7 +2345,7 @@ contains
                   endif
                endif
                cycle
-            end if
+            endif
 
             ! Normal interior interpolation: find j such that p_one(j) < p_0(i) < p_one(j+1)
             do j = 0, last_bin-1

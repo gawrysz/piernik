@@ -141,13 +141,13 @@ contains
       use cg_leaves,          only: leaves
       use cg_level_connected, only: cg_level_connected_t
       use cg_level_finest,    only: finest
-      use cg_list,            only: cg_list_element
+      !use cg_list,            only: cg_list_element
       use constants,          only: wcr_n, PPP_CR
       !use constants,          only: ndims, xdim, ydim, zdim, LO, HI, BND_PER, BND_MPI, BND_FC, BND_MPI_FC, I_TWO, I_THRE
       use dataio_pub,         only: die
       !use domain,             only: dom
-      use grid_cont,          only: grid_container
-      use initcosmicrays,     only: diff_max_lev, smallecr
+      !use grid_cont,          only: grid_container
+      use initcosmicrays,     only: diff_max_lev!, smallecr
       use named_array_list,   only: wna
       use ppp,                only: ppp_main
 

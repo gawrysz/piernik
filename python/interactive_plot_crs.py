@@ -614,11 +614,9 @@ if f_run is True:
                     if ("cr_B11n" + str(ind).zfill(2) == str(element1[1])):
                         for element2 in h5ds.field_list:
                             if ("cr_C12n" + str(ind).zfill(2) == str(element2[1])):
-                                Bn_data = position["cr_B11n" +
-                                                   str(ind).zfill(2)] + position["cr_B10n" +
-                                                   str(ind).zfill(2)]
-                                Cn_data = position["cr_C12n" +
-                                                   str(ind).zfill(2)]
+                                Bn_data = position["cr_B11n" + str(ind).zfill(2)] + \
+                                    position["cr_B10n" + str(ind).zfill(2)]
+                                Cn_data = position["cr_C12n" + str(ind).zfill(2)]
                                 BC_ratio.append(Bn_data / Cn_data)
 
             BC_ratio = np_array(BC_ratio)
@@ -635,10 +633,8 @@ if f_run is True:
                     if ("cr_Be9n" + str(ind).zfill(2) == str(element1[1])):
                         for element2 in h5ds.field_list:
                             if ("cr_Be9n" + str(ind).zfill(2) == str(element2[1])):
-                                Be9_data = position["cr_Be9n" +
-                                                   str(ind).zfill(2)]
-                                Be10_data = position["cr_Be10n" +
-                                                   str(ind).zfill(2)]
+                                Be9_data = position["cr_Be9n" + str(ind).zfill(2)]
+                                Be10_data = position["cr_Be10n" + str(ind).zfill(2)]
                                 Isotope_ratio.append(Be10_data / Be9_data)
 
             Isotope_ratio = np_array(Isotope_ratio)

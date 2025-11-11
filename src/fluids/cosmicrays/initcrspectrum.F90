@@ -184,7 +184,7 @@ contains
       use cresp_variables, only: clight_cresp
       use cr_data,         only: cr_mass, cr_sigma_N, cr_names, cr_Z, icr_spc, icr_H1, cr_spectral, cr_table, eCRSP
       use dataio_pub,      only: printinfo, warn, msg, die, nh
-      use diagnostics,     only: my_allocate_with_index, my_allocate, my_deallocate, ma1d, ma2d
+      use diagnostics,     only: my_allocate_with_index, my_allocate, my_deallocate, ma1d!, ma2d
       use global,          only: disallow_CRnegatives
       use func,            only: emag
       use initcosmicrays,  only: ncrb, ncr2b, ncrn, nspc, K_cr_paral, K_cr_perp, K_crs_paral, K_crs_perp, use_smallecr

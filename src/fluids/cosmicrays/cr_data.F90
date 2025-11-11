@@ -41,8 +41,6 @@ module cr_data
 
 ! pulled by COSM_RAYS
 
-   use constants, only: idlen
-
    implicit none
 
    public               ! QA_WARN no secrets are kept here

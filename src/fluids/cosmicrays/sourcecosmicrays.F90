@@ -227,7 +227,7 @@ contains
       use constants,        only: one, zero
       use initcrspectrum,   only: spec_mod_trms, p_fix, p_mid_fix, three_ps, transrelativistic
       use initcosmicrays,   only: iarr_crspc2_e, iarr_crspc2_n, ncrb
-      use cr_data,          only: ncrsp_prim, ncrsp_sec, cr_table, cr_sigma, icr_prim, icr_sec, cr_mass, cr_spectral, cr_names, cr_Z
+      use cr_data,          only: ncrsp_prim, ncrsp_sec, cr_table, cr_sigma, icr_prim, icr_sec, cr_mass, cr_spectral!, cr_names, cr_Z
       use initcosmicrays,   only: nspc
       use fluidindex,       only: flind
       use fluids_pub,       only: has_ion, has_neu
