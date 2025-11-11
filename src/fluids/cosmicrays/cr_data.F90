@@ -324,8 +324,8 @@ contains
 
    subroutine cr_species_tables(ncrsp, crness)
 
-      use constants,  only: I_ONE
-      use dataio_pub, only: msg, printinfo, warn
+      use constants,  only: I_ONE, V_INFO
+      use dataio_pub, only: msg, printinfo, warn, die
       use mpisetup,   only: master
       use units,      only: me, mp, myr, mbarn, sigma_T
 
@@ -390,7 +390,7 @@ contains
             cr_gpess(icr)    = eCRSP_ess(i)
             if (master) then
                write(msg,'(a,a,a,l2)') spectral_or_not(cr_spectral(icr)), eCRSP_names(i), 'CR species is present; taken into account for grad_pcr: ', eCRSP_ess(i)
-               call printinfo(msg)
+               call printinfo(msg, V_INFO)
             endif
          endif
       enddo
@@ -424,7 +424,7 @@ contains
          cr_gpess(ncrsp_auto+I_ONE:ncrsp) = crness
          do i = ncrsp_auto+I_ONE, ncrsp
             write(msg,'(a,a,i2,a,l2)') spectral_or_not(cr_spectral(i)), 'user CR species no: ', i,' is present; taken into account for grad_pcr: ', cr_gpess(i)
-            if (master) call printinfo(msg)
+            if (master) call printinfo(msg, V_INFO)
          enddo
       endif
 
@@ -432,7 +432,7 @@ contains
          write(msg, '(a,i3)') 'Total amount of CR species: ', ncrsp
          if (count(cr_spectral) > 0) write(msg(len_trim(msg)+1:), '(a,i3,a)') ' | ', count(cr_spectral), ' spectral component(s)'
          if (ncrsp - ncrsp_auto > 0) write(msg(len_trim(msg)+1:), '(a,i3,a)') ' | ', ncrsp - ncrsp_auto, ' user component(s).'
-         call printinfo(msg)
+         call printinfo(msg, V_INFO)
       endif
 
       if (eCRSP(icr_C12)) then
