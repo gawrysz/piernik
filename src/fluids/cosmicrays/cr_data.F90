@@ -324,7 +324,7 @@ contains
    subroutine cr_species_tables(ncrsp, crness)
 
       use constants,  only: I_ONE, V_INFO
-      use dataio_pub, only: msg, printinfo, warn, die
+      use dataio_pub, only: msg, printinfo, warn
       use mpisetup,   only: master
       use units,      only: me, mp, myr, mbarn, sigma_T
 
