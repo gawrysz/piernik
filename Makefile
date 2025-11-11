@@ -156,7 +156,7 @@ doxy:
 
 # Target to run qa.py checks
 qa:
-	$(BIN_DIR)/qa.py $$( git ls-files | grep -vE "^(compilers/tests|doc/general)" | grep "\.F90$$" ) && \
+	$(BIN_DIR)/qa.py -q $$( git ls-files | grep -vE "^(compilers/tests|doc/general)" | grep "\.F90$$" ) && \
 	echo -e "  qa.py checks "$(PASSED) || \
 	( $(ECHO) -e "  qa.py checks "$(FAILED) && exit 1 )
 
