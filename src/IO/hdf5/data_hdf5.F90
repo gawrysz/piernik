@@ -508,15 +508,15 @@ contains
                enddo
                if (icr >= lbound(flind%crspcs, 1) .and. icr <= ubound(flind%crspcs, 1)) then
                   tab(:,:,:) = cg%u(flind%crspcs(icr)%ebeg+ibin-1, RNG)
-                  ! tab(:,:,:) = cg%u(flind%cre%ebeg+ibin-1, RNG)
+                  ! tab(:,:,:) = cg%u(flind%crspc%ebeg+ibin-1, RNG)
                else
                   tab(:,:,:) = -1.23456789
                   call warn("[data_hdf5:datafields_hdf5] miscomputed icr (e)")
                endif
                select type(l => wna%lst(wna%fi))
                   class is (na_var_4d)
-                     if (trim(var) /= trim(l%compname(flind%cre%ebeg+ibin-1))) then
-                        write(msg, '(5a,i3)') "cr_e '", trim(var), "' /= '", trim(l%compname(flind%cre%ebeg+ibin-1)), "' ", ibin
+                     if (trim(var) /= trim(l%compname(flind%crspc%ebeg+ibin-1))) then
+                        write(msg, '(5a,i3)') "cr_e '", trim(var), "' /= '", trim(l%compname(flind%crspc%ebeg+ibin-1)), "' ", ibin
                         call warn(msg)
                      endif
                   class default
@@ -535,15 +535,15 @@ contains
                !print *, 'flind%crspcs(icr)%nbeg+ibin-1: ', flind%crspcs(icr)%nbeg+ibin-1
                if (icr >= lbound(flind%crspcs, 1) .and. icr <= ubound(flind%crspcs, 1)) then
                   tab(:,:,:) = cg%u(flind%crspcs(icr)%nbeg+ibin-1, RNG)
-                  ! tab(:,:,:) = cg%u(flind%cre%nbeg+ibin-1, RNG)
+                  ! tab(:,:,:) = cg%u(flind%crspc%nbeg+ibin-1, RNG)
                else
                   tab(:,:,:) = -1.23456789
                   call warn("[data_hdf5:datafields_hdf5] miscomputed icr (n)")
                endif
                select type(l => wna%lst(wna%fi))
                   class is (na_var_4d)
-                     if (trim(var) /= trim(l%compname(flind%cre%nbeg+ibin-1))) then
-                        write(msg, '(5a,i3)') "cr_n '", trim(var), "' /= '", trim(l%compname(flind%cre%nbeg+ibin-1)), "' ", ibin
+                     if (trim(var) /= trim(l%compname(flind%crspc%nbeg+ibin-1))) then
+                        write(msg, '(5a,i3)') "cr_n '", trim(var), "' /= '", trim(l%compname(flind%crspc%nbeg+ibin-1)), "' ", ibin
                         call warn(msg)
                      endif
                   class default

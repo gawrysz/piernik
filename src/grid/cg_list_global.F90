@@ -369,12 +369,12 @@ contains
          ! After merge of Antoine's branch the Isotope names should go there
          select type (lst => wna%lst)
             type is (na_var_4d)
-               do i = flind%cre%nbeg, flind%cre%nend
-                  write(var, '(a,i2.2)') "cr_e-n", i - flind%cre%nbeg + 1
+               do i = flind%crspc%nbeg, flind%crspc%nend
+                  write(var, '(a,i2.2)') "cr_e-n", i - flind%crspc%nbeg + 1
                   call lst(wna%fi)%set_compname(i, var)
                enddo
-               do i = flind%cre%ebeg, flind%cre%eend
-                  write(var, '(a,i2.2)') "cr_e-e", i - flind%cre%ebeg + 1
+               do i = flind%crspc%ebeg, flind%crspc%eend
+                  write(var, '(a,i2.2)') "cr_e-e", i - flind%crspc%ebeg + 1
                   call lst(wna%fi)%set_compname(i, var)
                enddo
             class default
