@@ -5,8 +5,6 @@ import hashlib
 import subprocess as sp
 import numpy as np
 
-debug = False
-
 typ1 = np.dtype([('name', 'S50'), ('beg', 'i'), ('end', 'i'), ('type', 'S4')])
 
 # starts with spaces or spaces and one of { 'end', 'pure', ... }

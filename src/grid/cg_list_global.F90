@@ -386,7 +386,9 @@ contains
          ! After merge of Antoine's branch the Isotope names should go there
 
 ! This is somehow broken and would require careful reimplementation
-#if 0
+
+         return
+
          select type (lst => wna%lst)
             type is (na_var_4d)
                do i = flind%crspc%nbeg, flind%crspc%nend
@@ -400,7 +402,6 @@ contains
             class default
                call die("[cg_list_global:set_cresp_names] Unknown list type")
          end select
-#endif
 
       end subroutine set_cresp_names
 #endif /* CRESP */

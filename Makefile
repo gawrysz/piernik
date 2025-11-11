@@ -349,7 +349,6 @@ Maclaurin:
 
 # Target to run Propagation of Circularly polarized Alfvén Waves
 CPAW:
-	if [ ! -e problems/cpaw ] ; then exit 0 ; fi ;\
 	OTMPDIR=$$(mktemp -d obj_XXXXXX) ;\
 	RUNDIR=$(RUNS_DIR)/cpaw_$${OTMPDIR//obj_/} ;\
 	[ ! -e $(ARTIFACTS) ] && mkdir -p $(ARTIFACTS) ;\
