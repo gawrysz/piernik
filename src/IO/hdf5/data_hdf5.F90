@@ -117,11 +117,13 @@ contains
          case ("magdir")
             f%fu = "\rm{radians}"
 #ifdef COSM_RAYS
+         ! ToDo: Adopt for wider range
          case ("cr01" : "cr99")
             f%fu = "\rm{erg}/\rm{cm}^3"
             f%f2cgs = 1.0 / (erg/cm**3)
 #endif /* COSM_RAYS */
 #ifdef CRESP
+         ! ToDo: Adopt for wider range
          case ("cr_e-n01" : "cr_e-n99")
              f%fu = "\rm{erg}/\rm{cm}^3" ! rest mass energy times number density
              f%f2cgs = 1.0 / (erg/cm**3)
@@ -404,11 +406,12 @@ contains
 #endif /* MAGNETIC */
 #ifdef CRESP
       use initcrspectrum,   only: dfpq
-      use named_array_list, only: wna
 #endif /* CRESP */
 #ifdef COSM_RAYS
       use cr_data,          only: cr_names!, cr_spectral
       use initcosmicrays,   only: ncrn
+      use dataio_pub,       only: die, warn, msg
+      use named_array_list, only: wna, na_var_4d
 #endif /* COSM_RAYS */
 #ifndef ISO
       use units,            only: kboltz, mH
@@ -425,15 +428,15 @@ contains
       integer(kind=4)                                :: i_xyz
       integer                                        :: ii, jj, kk, icr
 #ifdef COSM_RAYS
+      integer(kind=4)                                :: clast
       integer                                        :: i
       integer, parameter                             :: auxlen = dsetnamelen - 1
       character(len=auxlen)                          :: aux
       !character(len=*)                               :: vname
+      character(len=I_TWO)                           :: varn2
 #endif /* COSM_RAYS */
 #ifdef CRESP
-      character(len=I_TWO)                           :: varn2
       integer                                        :: ibin
-      integer(kind=4)                                :: clast
 #endif /* CRESP */
 
       call common_shortcuts(var, fl_dni, i_xyz)
@@ -459,6 +462,15 @@ contains
          case ("cr01" : "cr99")
             read(var,'(A2,I2.2)') aux, i !> \deprecated BEWARE 0 <= i <= 99, no other indices can be dumped to hdf file
             tab(:,:,:) = cg%u(flind%crn%beg+i-1, RNG)
+            select type(l => wna%lst(wna%fi))
+               class is (na_var_4d)
+                  if (trim(var) /= trim(l%compname(flind%crn%beg+i-1))) then
+                     write(msg, '(5a,i3)') "cr_01-99 '", trim(var), "' /= '", trim(l%compname(flind%crn%beg+i-1)), "' ", i
+                     call warn(msg)
+                  endif
+               class default
+                  call die("[datafields_hdf5] 'cr01-99' not a na_var_4d")
+            end select
          case ('cr_A000' : 'cr_zz99')
             do i = 1, size(cr_names)
                if (var == trim('cr_' // cr_names(i))) then
@@ -468,6 +480,20 @@ contains
 
             !print *, 'cr_names: ', cr_names
 
+            tab(:,:,:) = cg%u(flind%crn%beg+i-1-count(cr_spectral), RNG)
+            select type(l => wna%lst(wna%fi))
+               class is (na_var_4d)
+                  clast = len(trim(var), kind=4)
+                  varn2 = var(clast - 1:clast)
+                  if (all(var(clast - 2:clast - 2) /= ['e', 'n'])) then
+                     if (trim(var) /= trim(l%compname(flind%crn%beg+i-1-count(cr_spectral)))) then
+                        write(msg, '(5a,i3)') "cr_A-zz '", trim(var), "' /= '", trim(l%compname(flind%crn%beg+i-1)), "' ", i
+                        call warn(msg)
+                     endif
+                  endif
+               class default
+                  call die("[datafields_hdf5] 'cr_A-zz' not a na_var_4d")
+            end select
 #endif /* COSM_RAYS */
 #ifdef CRESP
             clast = len(trim(var), kind=4)
@@ -482,10 +508,20 @@ contains
                enddo
                if (icr >= lbound(flind%crspcs, 1) .and. icr <= ubound(flind%crspcs, 1)) then
                   tab(:,:,:) = cg%u(flind%crspcs(icr)%ebeg+ibin-1, RNG)
+                  ! tab(:,:,:) = cg%u(flind%cre%ebeg+ibin-1, RNG)
                else
                   tab(:,:,:) = -1.23456789
                   call warn("[data_hdf5:datafields_hdf5] miscomputed icr (e)")
                endif
+               select type(l => wna%lst(wna%fi))
+                  class is (na_var_4d)
+                     if (trim(var) /= trim(l%compname(flind%cre%ebeg+ibin-1))) then
+                        write(msg, '(5a,i3)') "cr_e '", trim(var), "' /= '", trim(l%compname(flind%cre%ebeg+ibin-1)), "' ", ibin
+                        call warn(msg)
+                     endif
+                  class default
+                     call die("[datafields_hdf5] 'cr_e' not a na_var_4d")
+               end select
 
             else if (var(clast - 2:clast - 2) == 'n') then
 
@@ -499,10 +535,20 @@ contains
                !print *, 'flind%crspcs(icr)%nbeg+ibin-1: ', flind%crspcs(icr)%nbeg+ibin-1
                if (icr >= lbound(flind%crspcs, 1) .and. icr <= ubound(flind%crspcs, 1)) then
                   tab(:,:,:) = cg%u(flind%crspcs(icr)%nbeg+ibin-1, RNG)
+                  ! tab(:,:,:) = cg%u(flind%cre%nbeg+ibin-1, RNG)
                else
                   tab(:,:,:) = -1.23456789
                   call warn("[data_hdf5:datafields_hdf5] miscomputed icr (n)")
                endif
+               select type(l => wna%lst(wna%fi))
+                  class is (na_var_4d)
+                     if (trim(var) /= trim(l%compname(flind%cre%nbeg+ibin-1))) then
+                        write(msg, '(5a,i3)') "cr_n '", trim(var), "' /= '", trim(l%compname(flind%cre%nbeg+ibin-1)), "' ", ibin
+                        call warn(msg)
+                     endif
+                  class default
+                     call die("[datafields_hdf5] 'cr_n' not a na_var_4d")
+               end select
 
             !else
             !   do i = 1, size(cr_names)
