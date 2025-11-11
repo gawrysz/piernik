@@ -193,7 +193,7 @@ contains
 
       implicit none
 
-      integer(kind=4) :: i, j, k
+      integer(kind=4) :: i, j
       real, dimension(:), allocatable ::  p_br_def, q_br_def
 
       namelist /COSMIC_RAY_SPECTRUM/ cfl_cre, p_lo_init, p_up_init, f_init, q_init, q_big, initial_spectrum, p_bnd, transrelativistic, p_min_fix, p_max_fix,  &

@@ -388,7 +388,7 @@ contains
    subroutine datafields_hdf5(var, tab, ierrh, cg)
 
       use common_hdf5,      only: common_shortcuts
-      use constants,        only: dsetnamelen, I_ONE, I_TWO
+      use constants,        only: dsetnamelen, I_ONE
       use dataio_pub,       only: warn
       use fluids_pub,       only: has_ion, has_neu, has_dst
       use fluidindex,       only: flind
@@ -407,7 +407,7 @@ contains
       use named_array_list, only: wna
 #endif /* CRESP */
 #ifdef COSM_RAYS
-      use cr_data,          only: cr_names, cr_spectral
+      use cr_data,          only: cr_names!, cr_spectral
       use initcosmicrays,   only: ncrn
 #endif /* COSM_RAYS */
 #ifndef ISO

@@ -1529,7 +1529,7 @@ contains
 
    function fq_to_e(p_l, p_r, f_l, g_l, q, bins, i_spc)
 
-      use constants,       only: zero, one, three
+      use constants,       only: zero, one
       use cresp_variables, only: fpcc
       use initcosmicrays,  only: ncrb
       use initcrspectrum,  only: eps, three_ps
@@ -2242,7 +2242,7 @@ contains
       real, dimension(0:ncrb)                   :: f_0
       real, dimension(ncrb)                     :: q_0
       real                                      :: eps_tiny, eps_local, eps_f
-      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude, dp0, dp1, Fp0_out, dN0_out, Fp1_out, dN1_out, N_lost, tau_sink
+      real(kind=8)                              :: delta, delta_t_sub, loss_amplitude, dp0, dp1, Fp0_out, dN0_out, Fp1_out, dN1_out, N_lost
 
       last_bin = bins(size(bins))
 
