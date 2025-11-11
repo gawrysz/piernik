@@ -1021,7 +1021,7 @@ contains
 
    ! Sorting bin edges - arbitrary chosen p_cut may need to be sorted to appear in growing order
          do k = ncrb, 1, -1
-            do i = 0, k-1
+            do i = 0, k - I_ONE
                 if (p(i) > p(i+1)) then
                 c = p(i)
                 p(i) = p(i+1)
@@ -1109,13 +1109,13 @@ contains
 
                 !print *, 'if allow source spectrum break selected'
 
-                do i = i_ch(LO)+1, i_cut(LO)
+                do i = i_ch(LO) + I_ONE, i_cut(LO)
                 p(i) = p_fix(i)
                 f(i) = f(i_ch(LO)) * (p_fix(i)/p(i_ch(LO)))**(-q(i_ch(LO)+1))
                 q(i+1) = q(i_ch(LO)+1)
                 enddo
 
-                do i = i_cut(HI), i_ch(HI)-1
+                do i = i_cut(HI), i_ch(HI) - I_ONE
                 p(i) = p_fix(i)
                 f(i) = f(i_cut(HI)-1)* (p_fix(i)/p_fix(i_cut(HI)-1))**(-q(i_cut(HI)))
                 q(i) = q(i_cut(HI))
@@ -1215,10 +1215,11 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       real, dimension(0:ncrb)                    :: p_range_add
       integer(kind=4), allocatable, dimension(:) :: act_bins, act_edges
       integer(kind=4), dimension(LO:HI)          :: ic
-      integer,                        intent(in) :: i_spc
 
       print *, 'in cresp_init_powl_spectrum'
 
@@ -1264,14 +1265,15 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       real                                       :: c_1, c_2, c_3, lpb, lpu, lpl, a, b, lp_lpb
       real, dimension(0:ncrb)                    :: p_range_add
       integer(kind=4), allocatable, dimension(:) :: act_bins
       integer(kind=4), dimension(LO:HI)          :: ic
       integer(kind=4)                            :: i_br, i
-      integer,                        intent(in) :: i_spc
 
-     print *, 'in init_plpc: '
+      print *, 'in init_plpc: '
 
       p_range_add(:) = zero
       i_br = int(minloc(abs(p_fix - p_br_init(LO, i_spc)), dim=1), kind=4) - I_ONE
@@ -1358,8 +1360,9 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       integer(kind=4)     :: i, i_br
-      integer, intent(in) :: i_spc
 
       i_br = int(minloc(abs(p_fix - p_br_init(LO, i_spc)), dim=1), kind=4) - I_ONE
       f(i_cut(LO):i_br-1) = f(i_br-1) * exp(-(q_br_init(i_spc)*log(2.0) * log(p(i_cut(LO):i_br-1)/sqrt(p_init(LO, i_spc) * p(i_br)))**2))
@@ -1383,8 +1386,10 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       integer(kind=4)     :: i_br
-      integer, intent(in) :: i_spc
+
 
       i_br = int(minloc(abs(p_fix - p_br_init(LO, i_spc)), dim=1), kind=4) - I_ONE
       q(:i_br) = q_br_init(i_spc) ; q(i_br+1:) = q_init(i_spc)
@@ -1405,8 +1410,9 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       integer(kind=4)     :: i, i_br
-      integer, intent(in) :: i_spc
 
       i_br = int(sum(i_cut)/2, kind=4)
       q(i_cut(LO)+1:i_br) = -q_init(i_spc)
@@ -1434,8 +1440,9 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       integer(kind=4)     :: i, i_br
-      integer, intent(in) :: i_spc
 
       i_br = int(sum(i_cut)/2, kind=4)
       q(i_cut(LO)+1:i_br) = q_init(i_spc)-2.2
@@ -1461,8 +1468,9 @@ contains
 
       implicit none
 
-      integer(kind=4)     :: i
-      integer, intent(in) :: i_spc
+      integer(kind=4), intent(in) :: i_spc
+
+      integer(kind=4) :: i
 
       f = f_init(i_spc) * exp(-(4.*log(2.0)*log(p/sqrt(p_init(LO, i_spc)*p_init(HI, i_spc))/1.))**2) ! FWHM
       f(0:ncrb-1) = f(0:ncrb-1) / (fpcc * p(0:ncrb-1)**3) ! without this spectrum is gaussian for distribution function
@@ -1485,7 +1493,7 @@ contains
 
       real, dimension(1:ncrb), intent(inout) :: n_inout, e_inout
       real,                    intent(in)    :: e_in_total
-      integer,                 intent(in)    :: i_spc
+      integer(kind=4),         intent(in)    :: i_spc
 
       n_inout(:) = norm_init_spectrum_n(i_spc,:) * e_in_total / total_init_cree(i_spc)
       e_inout(:) = norm_init_spectrum_e(i_spc,:) * e_in_total / total_init_cree(i_spc)
@@ -1607,10 +1615,11 @@ contains
 
       implicit none
 
+      integer(kind=4), intent(in) :: i_spc
+
       real                   :: e_small_safe, rel_cut
       real, dimension(LO:HI) :: ec
       integer                :: co
-      integer,    intent(in) :: i_spc
 
       e_small_safe = max(e_small, epsilon(e_small))
 
@@ -2214,7 +2223,7 @@ contains
    subroutine cresp_compute_free_cooling(u_cell,f_0,p_0,q_0,i_spc,bins,delta_t)
 
       use cr_data,        only: cr_Z, cr_mass, icr_spc
-      use constants,      only: zero
+      use constants,      only: zero, I_ONE
       use fluids_pub,     only: has_ion, has_neu
       use fluidindex,     only: flind
       use initcosmicrays, only: ncrb
@@ -2258,7 +2267,7 @@ contains
 
       delta_t_sub = 0.1*abs(p_0(0)**(1-h)/loss_amplitude) !CFL for Coulomb = 0.5 * |p_min/(dp/dt)(p_min)|
 
-      n_sub = max(1,int(delta_t/delta_t_sub))
+      n_sub = max(I_ONE, int(delta_t/delta_t_sub, kind=4))
 
       print *, 'delta_t_sub: ', delta_t_sub
       print *, 'n_sub: ', n_sub
@@ -2330,7 +2339,7 @@ contains
                ! find last two distinct valid points for extrapolation
                k = last_bin
                do while (k .gt. 0 .and. p_one(k) <= p_one(k-1) + eps_local)
-                  k = k - 1
+                  k = k - I_ONE
                enddo
                if (k .ge. 1 .and. f_one(k) .gt. delta .and. f_one(k-1) .gt. delta) then
                   ! log-linear extrapolate using last segment
@@ -2348,7 +2357,7 @@ contains
             endif
 
             ! Normal interior interpolation: find j such that p_one(j) < p_0(i) < p_one(j+1)
-            do j = 0, last_bin-1
+            do j = I_ZERO, last_bin - I_ONE
                if (p_0(i_bin) .gt. p_one(j) .and. p_0(i_bin) .le. p_one(j+1)) then
                   ! ensure denominators are safe
                   if (p_one(j+1) .gt. p_one(j) + eps_local .and. f_one(j) .gt. delta .and. f_one(j+1) .gt. delta) then
@@ -2371,8 +2380,8 @@ contains
          f_0(last_bin) = zero
          f_old(last_bin) = zero
 
-         dp0 = max(p_0(1) - p_0(0), 1d-40)
-         dp1 = max(p_0(2) - p_0(1), 1d-40)
+         dp0 = max(p_0(1) - p_0(0), 1e-40)
+         dp1 = max(p_0(2) - p_0(1), 1e-40)
 
          ! Compute outgoing flux at lower boundary
          Fp1_out = abs(loss_amplitude * p_0(1)**h * f_0(1))
