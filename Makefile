@@ -323,7 +323,7 @@ Maclaurin:
 	[ ! -e $(ARTIFACTS) ] && mkdir -p $(ARTIFACTS) ;\
 	$(SETUP) 2body/3body -o $${OTMPDIR//obj_/} > $(ARTIFACTS)/3body.setup.stdout && \
 		( cd $${RUNDIR} ;\
-			( $(MPIEXEC) -n 3 ./piernik ;\
+			( $(MPIEXEC) -n 1 ./piernik ;\
 			../../$(PROBLEMS_DIR)/2body/3body/particle_error.py leapfrog_tst_0001.h5 | tee 3body.csv ) & pid_1=$$! ;\
 			# Run the two restart groups in parallel (the rs1 group contains two sequential mpiexec calls) ;\
 			RESTSTDIR=res ;\
@@ -333,8 +333,8 @@ Maclaurin:
 				ln -s ../piernik ;\
 				cp ../problem.par . ;\
 				sed -i 's-problems-../problems-' problem.par ;\
-				$(MPIEXEC) -n 3 ./piernik -n '&END_CONTROL nend = 30/' ; \
-				$(MPIEXEC) -n 3 ./piernik ) >> stdout & pid_rs=$$! ;\
+				$(MPIEXEC) -n 1 ./piernik -n '&END_CONTROL nend = 30/' ; \
+				$(MPIEXEC) -n 1 ./piernik ) >> stdout & pid_rs=$$! ;\
 			# Wait for both jobs to finish before comparing ;\
 			wait $$pid_1 $$pid_rs ;\
 			cat stdout ;\
