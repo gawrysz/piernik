@@ -58,9 +58,10 @@ contains
 !> \brief Read namelist of particle parameters
    subroutine init_particles
 
-      use constants,     only: I_NGP, I_CIC, I_TSC
+      use bcast,         only: piernik_MPI_Bcast
+      use constants,     only: I_NGP, I_CIC, I_TSC, V_INFO
       use dataio_pub,    only: msg, die, printinfo, nh
-      use mpisetup,      only: master, slave, cbuff, ibuff, lbuff, rbuff, piernik_mpi_bcast
+      use mpisetup,      only: master, slave, cbuff, ibuff, lbuff, rbuff
       use particle_func, only: check_ord
       use particle_maps, only: set_map
 
@@ -169,7 +170,7 @@ contains
             is_setacc_tsc = .true.
             msg = "[particle_pub:init_particles] Acceleration interpolation method: TSC"
       end select
-      if (master) call printinfo(trim(msg))
+      if (master) call printinfo(trim(msg), V_INFO)
 
    end subroutine init_particles
 

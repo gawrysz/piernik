@@ -165,12 +165,13 @@ contains
 
    subroutine timestep_nbody(dt)
 
+      use allreduce,    only: piernik_MPI_Allreduce
       use cg_leaves,    only: leaves
       use cg_list,      only: cg_list_element
-      use constants,    only: zero, one, two, pMIN
+      use constants,    only: zero, one, two, pMIN, V_VERBOSE
       use dataio_pub,   only: msg, printinfo
       use grid_cont,    only: grid_container
-      use mpisetup,     only: piernik_MPI_Allreduce, master
+      use mpisetup,     only: master
       use particle_pub, only: lf_c, eps, ignore_dt_fluid
 
       implicit none
@@ -223,7 +224,7 @@ contains
       endif
 
       write(msg,'(a,3g12.5)') '[particle_timestep:timestep_nbody] dt for hydro, nbody and both: ', dt_hydro, dt_nbody, dt
-      if (master) call printinfo(msg)
+      if (master) call printinfo(msg, V_VERBOSE)
 
 #ifdef VERBOSE
       call printinfo('[particle_timestep:timestep_nbody] Finish timestep_nbody')

@@ -296,17 +296,21 @@ contains
 
    subroutine publish(this)
 
-      use constants,    only: I_ZERO, I_ONE
-      use dataio_pub,   only: printinfo, msg
-      use MPIF,         only: MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE, MPI_CHARACTER, MPI_INTEGER, MPI_DOUBLE_PRECISION, MPI_COMM_WORLD
-      use MPIFUN,       only: MPI_Isend, MPI_Recv, MPI_Waitall
-      use mpisetup,     only: proc, master, slave, err_mpi, FIRST, LAST, req, inflate_req, piernik_MPI_Barrier, extra_barriers
+      use barrier,      only: piernik_MPI_Barrier
+      use constants,    only: I_ZERO, I_ONE, V_INFO
+      use dataio_pub,   only: warn, printinfo, msg
+      use isend_irecv,  only: piernik_Isend
+      use MPIF,         only: MPI_STATUS_IGNORE, MPI_CHARACTER, MPI_INTEGER, MPI_DOUBLE_PRECISION, MPI_COMM_WORLD
+      use MPIFUN,       only: MPI_Recv
+      use mpisetup,     only: proc, master, slave, err_mpi, FIRST, LAST
+      use req_array,    only: req_arr
 
       implicit none
 
       class(eventlist), intent(inout) :: this   !< an object invoking the type-bound procedure
 
-      integer(kind=4) :: t, ne, p
+      type(req_arr) :: req
+      integer(kind=4) :: ne, p
       integer :: ia
       character(len=cbuff_len), dimension(:), allocatable  :: buflabel
       real(kind=8), dimension(:), allocatable :: buftime
@@ -317,7 +321,7 @@ contains
       if (.not. use_profiling) return
 
       if (this%overflown) then
-         call printinfo("[ppp_eventlist:publish] Profile timings have overflown the allowed buffers and thus are partially broken. Skipping.")
+         call warn("[ppp_eventlist:publish] Profile timings have overflown the allowed buffers and thus are partially broken. Skipping.")
          call this%cleanup
          return
       endif
@@ -329,13 +333,11 @@ contains
             msg = "all events categories are enabled"
          endif
 
-         call printinfo("[ppp_eventlist:publish] Profile timings will be written to '" // trim(profile_file) // "' file, " // trim(msg))
+         call printinfo("[ppp_eventlist:publish] Profile timings will be written to '" // trim(profile_file) // "' file, " // trim(msg), V_INFO)
          open(newunit=profile_lun, file=profile_file)
       endif
 
       ! send
-      call inflate_req(int(TAG_ARR_T, kind=4))
-      t = TAG_CNT
       ne = I_ZERO
       do ia = lbound(this%arrays, dim=1), ubound(this%arrays, dim=1)
          if (allocated(this%arrays(ia)%ev_arr)) then
@@ -344,7 +346,10 @@ contains
             exit
          endif
       enddo
-      if (slave) call MPI_Isend(ne, I_ONE, MPI_INTEGER, FIRST, TAG_CNT, MPI_COMM_WORLD, req(TAG_CNT), err_mpi)
+      if (slave) then
+         call req%init(TAG_ARR_T, owncomm = .false., label = "ppp_ev")
+         call piernik_Isend(ne, I_ONE, MPI_INTEGER, FIRST, TAG_CNT, req)
+      endif
 
       if (ne > 0) then
          allocate(buflabel(ne), buftime(ne))
@@ -360,9 +365,8 @@ contains
             call publish_buffers(proc, buflabel, buftime)
             deallocate(buflabel, buftime)
          else
-            call MPI_Isend(buflabel, size(buflabel, kind=4)*len(buflabel(1), kind=4), MPI_CHARACTER,        FIRST, TAG_ARR_L, MPI_COMM_WORLD, req(TAG_ARR_L), err_mpi)
-            call MPI_Isend(buftime,  size(buftime, kind=4),                           MPI_DOUBLE_PRECISION, FIRST, TAG_ARR_T, MPI_COMM_WORLD, req(TAG_ARR_T), err_mpi)
-            t = TAG_ARR_T
+            call piernik_Isend(buflabel, size(buflabel, kind=4)*len(buflabel(1), kind=4), MPI_CHARACTER,        FIRST, TAG_ARR_L, req)
+            call piernik_Isend(buftime,  size(buftime,  kind=4),                          MPI_DOUBLE_PRECISION, FIRST, TAG_ARR_T, req)
          endif
       endif
 
@@ -381,11 +385,11 @@ contains
             endif
          enddo
       else
-         call MPI_Waitall(t, req(:t), MPI_STATUSES_IGNORE, err_mpi)
+         call req%waitall
          deallocate(buflabel, buftime)
       endif
 
-      if (extra_barriers) call piernik_MPI_Barrier
+      call piernik_MPI_Barrier
 
       call this%cleanup
 

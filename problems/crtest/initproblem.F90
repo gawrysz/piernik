@@ -77,11 +77,12 @@ contains
 
    subroutine read_problem_par
 
+      use bcast,          only: piernik_MPI_Bcast
       use constants,      only: xdim, ydim, zdim, I_ONE, I_TEN
       use dataio_pub,     only: die, nh
       use domain,         only: dom
       use func,           only: operator(.equals.)
-      use mpisetup,       only: ibuff, rbuff, master, slave, piernik_MPI_Bcast
+      use mpisetup,       only: ibuff, rbuff, master, slave
 #ifdef COSM_RAYS
       use constants,      only: AT_NO_B
       use cg_list_global, only: all_cg
@@ -397,14 +398,15 @@ contains
 !-----------------------------------------------------------------------------
    subroutine check_norm
 
+      use allreduce,        only: piernik_MPI_Allreduce
       use cg_leaves,        only: leaves
       use cg_list,          only: cg_list_element
-      use constants,        only: pSUM, pMIN, pMAX
+      use constants,        only: pSUM, pMIN, pMAX, V_INFO
       use dataio_pub,       only: msg, die, printinfo
       use func,             only: operator(.notequals.)
       use grid_cont,        only: grid_container
       use initcosmicrays,   only: iarr_crs, ncrsp, ncrb
-      use mpisetup,         only: master, piernik_MPI_Allreduce
+      use mpisetup,         only: master
       use named_array_list, only: qna
 
       implicit none
@@ -458,7 +460,7 @@ contains
          else
             write(msg,'(a,2f12.5)')"[initproblem:check_norm] Cannot compute L2 error norm, min and max error = ", dev(1:2)
          endif
-         call printinfo(msg)
+         call printinfo(msg, V_INFO)
       endif
 
    end subroutine check_norm
@@ -499,13 +501,13 @@ contains
 
    subroutine cr_dist_to_edge
 
+      use allreduce,      only: piernik_MPI_Allreduce
       use cg_leaves,      only: leaves
       use cg_expand_base, only: expand_base
       use cg_list,        only: cg_list_element
       use constants,      only: xdim, ydim, zdim, LO, HI, pMAX
       use domain,         only: dom
       use initcosmicrays, only: iarr_crs
-      use mpisetup,       only: piernik_MPI_Allreduce
 
       implicit none
 

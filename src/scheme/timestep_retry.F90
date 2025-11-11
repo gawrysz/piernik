@@ -85,6 +85,7 @@ contains
 
    subroutine repeat_fluidstep
 
+      use allreduce,        only: piernik_MPI_Allreduce
       use cg_cost_data,     only: I_OTHER
       use cg_leaves,        only: leaves
       use cg_list,          only: cg_list_element
@@ -92,7 +93,7 @@ contains
       use dataio_pub,       only: warn, msg, die
       use global,           only: dt, dt_full, t, t_saved, max_redostep_attempts, nstep, nstep_saved, dt_cur_shrink, repetitive_steps, tstep_attempt
       use mass_defect,      only: downgrade_magic_mass
-      use mpisetup,         only: master, piernik_MPI_Allreduce
+      use mpisetup,         only: master
       use named_array_list, only: qna, wna, na_var_list_q, na_var_list_w
       use ppp,              only: ppp_main
       use repeatstep,       only: repeat_step
@@ -234,7 +235,7 @@ contains
    subroutine restart_arrays
 
       use cg_list_global,   only: all_cg
-      use constants,        only: AT_BACKUP, AT_IGNORE, dsetnamelen, INVALID
+      use constants,        only: AT_BACKUP, AT_IGNORE, dsetnamelen, INVALID, V_VERBOSE
       use dataio_pub,       only: printinfo, msg
       use mpisetup,         only: master
       use named_array_list, only: qna, wna
@@ -257,7 +258,7 @@ contains
                   if (.not. na%exists(rname)) then
                      if (master) then
                         write(msg,'(3a)')"[timestep_retry:restart_arrays] creating backup field '", rname, "'"
-                        call printinfo(msg)
+                        call printinfo(msg, V_VERBOSE)
                      endif
                      allocate(pos_copy(size(na%lst(i)%position)))
                      pos_copy = na%lst(i)%position

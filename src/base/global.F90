@@ -33,8 +33,9 @@
 !<
 module global
 
-   use constants, only: cbuff_len, xdim, zdim
-   use mpisetup,  only: extra_barriers
+   use barrier,      only: extra_barriers
+   use constants,    only: cbuff_len, xdim, zdim
+   use mpi_wrappers, only: MPI_wrapper_stats
 
    implicit none
 
@@ -114,9 +115,9 @@ module global
         &                     max_redostep_attempts, limiter, limiter_b, relax_time, integration_order, cfr_smooth, skip_sweep, geometry25D, sweeps_mgu, print_divB, &
         &                     use_fargo, divB_0, glm_alpha, use_eglm, cfl_glm, ch_grid, interpol_str, w_epsilon, psi_bnd_str, ord_mag_prolong, ord_fluid_prolong, do_external_corners, solver_str
 
-   logical                       :: prefer_merged_MPI !< prefer internal_boundaries_MPI_merged over internal_boundaries_MPI_1by1
+   logical :: prefer_merged_MPI  !< prefer internal_boundaries_MPI_merged over internal_boundaries_MPI_1by1
 
-   namelist /PARALLEL_SETUP/ extra_barriers, prefer_merged_MPI
+   namelist /PARALLEL_SETUP/ extra_barriers, prefer_merged_MPI, MPI_wrapper_stats
 
 contains
 
@@ -168,20 +169,22 @@ contains
 !! \n \n
 !! <table border="+1">
 !!   <tr><td width="150pt"><b>parameter</b></td><td width="135pt"><b>default value</b></td><td width="200pt"><b>possible values</b></td><td width="315pt"> <b>description</b></td></tr>
-!!   <tr><td>prefer_merged_MPI </td><td>.true.  </td><td>logical </td><td>\copydoc global::prefer_merged_MPI </td></tr>
-!!   <tr><td>extra_barriers    </td><td>.false. </td><td>logical </td><td>\copydoc mpisetup::extra_barriers  </td></tr>
+!!   <tr><td>prefer_merged_MPI </td><td>.true.  </td><td>logical </td><td>\copydoc global::prefer_merged_MPI      </td></tr>
+!!   <tr><td>extra_barriers    </td><td>.false. </td><td>logical </td><td>\copydoc mpi_wrapper::extra_barriers    </td></tr>
+!!   <tr><td>MPI_wrapper_stats </td><td>.false. </td><td>logical </td><td>\copydoc mpi_wrapper::MPI_wrapper_stats </td></tr>
 !! </table>
 !! \n \n
 
 !<
    subroutine init_global
 
+      use bcast,      only: piernik_MPI_Bcast
       use constants,  only: big_float, one, PIERNIK_INIT_DOMAIN, INVALID, DIVB_CT, DIVB_HDC, &
            &                BND_INVALID, BND_ZERO, BND_REF, BND_OUT, I_ZERO, O_INJ, O_LIN, O_I2, INVALID, &
-           &                RTVD_SPLIT, HLLC_SPLIT, RIEMANN_SPLIT, GEO_XYZ
+           &                RTVD_SPLIT, HLLC_SPLIT, RIEMANN_SPLIT, GEO_XYZ, V_INFO, V_DEBUG
       use dataio_pub, only: die, msg, warn, code_progress, printinfo, nh
       use domain,     only: dom
-      use mpisetup,   only: cbuff, ibuff, lbuff, rbuff, master, slave, piernik_MPI_Bcast
+      use mpisetup,   only: cbuff, ibuff, lbuff, rbuff, master, slave
 
       implicit none
 
@@ -253,6 +256,7 @@ contains
       solver_str = ""
 
       prefer_merged_MPI = .true.  ! Non-merged MPI in internal_boundaries are implemented without buffers, which can be faster, especially for bsize(:) larger than 3*16, but in some non-periodic setups internal_boundaries_MPI_1by1 has tag collisions, so merged_MPI is currently safer.
+      MPI_wrapper_stats = .false.
 
       if (master) then
 
@@ -347,6 +351,7 @@ contains
          lbuff(13)  = disallow_CRnegatives
          lbuff(14)  = prefer_merged_MPI
          lbuff(15)  = extra_barriers
+         lbuff(16)  = MPI_wrapper_stats
 
       endif
 
@@ -370,6 +375,7 @@ contains
          disallow_CRnegatives  = lbuff(13)
          prefer_merged_MPI     = lbuff(14)
          extra_barriers        = lbuff(15)
+         MPI_wrapper_stats     = lbuff(16)
 
          smalld                = rbuff( 1)
          smallc                = rbuff( 2)
@@ -485,11 +491,11 @@ contains
       if (master) then
          select case (which_solver)
             case (RTVD_SPLIT)
-               call printinfo("    (M)HD solver: RTVD.")
+               call printinfo("    (M)HD solver: RTVD.", V_INFO)
             case (HLLC_SPLIT)
-               call printinfo("    HD solver: HLLC.")
+               call printinfo("    HD solver: HLLC.", V_INFO)
             case (RIEMANN_SPLIT)
-               call printinfo("    (M)HD solver: Riemann.")
+               call printinfo("    (M)HD solver: Riemann.", V_INFO)
             case default
                call die("[global:init_global] unrecognized hydro solver")
          end select
@@ -499,29 +505,27 @@ contains
       if (master) then
          select case (divB_0_method)
             case (DIVB_HDC)
-               call printinfo("    The div(B) constraint is maintained by Hyperbolic Cleaning (GLM).")
+               call printinfo("    The div(B) constraint is maintained by Hyperbolic Cleaning (GLM).", V_INFO)
             case (DIVB_CT)
-               call printinfo("    The div(B) constraint is maintained by Constrained Transport (2nd order).")
+               call printinfo("    The div(B) constraint is maintained by Constrained Transport (2nd order).", V_INFO)
             case default
                call die("    The div(B) constraint is maintained by Uknown Something.")
          end select
 
          if (cc_mag) then
-            call printinfo("    Magnetic field is cell-centered.")
+            call printinfo("    Magnetic field is cell-centered.", V_INFO)
          else
-            call printinfo("    Magnetic field is face-centered (staggered).")
+            call printinfo("    Magnetic field is face-centered (staggered).", V_INFO)
          endif
       endif
 #endif /* MAGNETIC */
 
-#ifdef DEBUG
       if (master) &
 #  ifdef MPIF08
-           call printinfo("    use mpi_f08 (modern interface)")
+           call printinfo("    use mpi_f08 (modern interface)", V_DEBUG)
 #  else /* !MPIF08 */
-           call printinfo("    use mpi (old interface)")
+           call printinfo("    use mpi (old interface)", V_DEBUG)
 #  endif /* !MPIF08 */
-#endif /* DEBUG */
 
       if (all(ord_fluid_prolong /= [O_INJ, O_LIN])) then
          write(msg, '(a,i3,a)')"[global:init_global] Prolongation order ", ord_fluid_prolong, " is not positive-definite and thus not allowed for density and energy. Degrading to injection (0)"

@@ -72,7 +72,7 @@ module load_balance
    integer(kind=4) :: watch_ind  !< which index to watch for exclusion in case of anomalously slow hosts
 
    enum, bind(C)
-      enumerator :: V_NONE = 0, V_SUMMARY, V_HOST, V_DETAILED, V_ELABORATE  !< verbosity levels
+      enumerator :: VB_NONE = 0, VB_SUMMARY, VB_HOST, VB_DETAILED, VB_ELABORATE  !< verbosity levels
    end enum
 
    integer(kind=4), parameter :: r_rebalance = 2  !< routine rebalance 2 steps after start or restart
@@ -105,10 +105,11 @@ contains
 !<
    subroutine init_load_balance
 
-      use constants,  only: INVALID, cbuff_len, I_ONE
+      use bcast,      only: piernik_MPI_Bcast
+      use constants,  only: INVALID, cbuff_len, I_ONE, V_VERBOSE
       use dataio_pub, only: nh      ! QA_WARN required for diff_nml
       use dataio_pub, only: msg, printinfo, warn
-      use mpisetup,   only: cbuff, ibuff, lbuff, rbuff, master, slave, piernik_MPI_Bcast
+      use mpisetup,   only: cbuff, ibuff, lbuff, rbuff, master, slave
 
       implicit none
 
@@ -123,8 +124,8 @@ contains
       balance_levels   = 0.
       balance_thread   = .false.
       cost_to_balance  = "all"
-      verbosity        = V_HOST
-      verbosity_nstep  = 0
+      verbosity        = VB_HOST
+      verbosity_nstep  = huge(1_4)
       enable_exclusion = .false.
       watch_cost       = "MHD"
       exclusion_thr    = intolerable_perf
@@ -215,10 +216,7 @@ contains
          exclusion_thr = huge(1.)
       endif
 
-      if (verbosity_nstep <= 0) then
-         if (master) call warn("[load_balance] verbosity_nstep <= 0 (disabling)")
-         verbosity_nstep = huge(1_4)
-      endif
+      if (verbosity_nstep <= 0) verbosity_nstep = huge(1_4)
 
       if (balance_host > 1.) then
          if (balance_host > insane_factor) then
@@ -253,15 +251,15 @@ contains
             if (balance_host > 0.) write(msg(len_trim(msg)+1:), '(a,f5.2,a)') &
                  " balance_host = ", balance_host, " (" // trim(merge("thread", "host  ", balance_thread)) // "-based)"
             if (balance_cg > 0.) write(msg(len_trim(msg)+1:), '(a,f5.2)') " balance_cg = ", balance_cg
-            call printinfo(msg)
+            call printinfo(msg, V_VERBOSE)
          endif
          if (watch_ind /= INVALID .and. enable_exclusion) then
             write(msg, '(a,f4.1,a)')"[load_balance] Thread exclusion enabled (threshold = ", exclusion_thr, ")"
-            call printinfo(msg)
+            call printinfo(msg, V_VERBOSE)
          endif
       endif
 
-      umsg_verbosity = V_NONE
+      umsg_verbosity = VB_NONE
       if (imbalance_tol > 1.) imbalance_tol = 1. / imbalance_tol  ! normalize to [0. : 1.] range
 
       if (flexible_balance) then

@@ -167,10 +167,11 @@ contains
 !<
    subroutine init_grav
 
+      use bcast,            only: piernik_MPI_Bcast
       use cg_list_global,   only: all_cg
       use constants,        only: PIERNIK_INIT_MPI, gp_n, gpot_n, hgpot_n, O_I2, O_I4
       use dataio_pub,       only: printinfo, warn, die, code_progress, nh
-      use mpisetup,         only: ibuff, rbuff, cbuff, master, slave, lbuff, piernik_MPI_Bcast
+      use mpisetup,         only: ibuff, rbuff, cbuff, master, slave, lbuff
       use named_array_list, only: qna
       use units,            only: newtong
 #ifdef SELF_GRAV
@@ -467,7 +468,8 @@ contains
 #ifdef SELF_GRAV
       use cg_leaves,         only: leaves
       use cg_list_dataop,    only: expanded_domain
-      use dataio_pub,        only: warn, die, restarted_sim
+      use constants,         only: V_VERBOSE
+      use dataio_pub,        only: die, printinfo, restarted_sim
       use fluidindex,        only: iarr_all_sg
       use mpisetup,          only: master
       use multigrid_gravity, only: multigrid_solve_grav, recover_sgpm, recover_sgp
@@ -513,7 +515,7 @@ contains
          !> First step in highly dynamical setups will behave as the potential was frozen before first timestep
          !> Solution? Take one step backwards just for calculating old potential? Sounds complicated.
          !> Another solution: don't use extrapolation, exploit rich history instead and call multigrid more often.
-         if (master) call warn("[gravity:source_terms_grav] assigned sgpm = sgp")
+         if (master) call printinfo("[gravity:source_terms_grav] assigned sgpm = sgp", V_VERBOSE)
       endif
 
       call expanded_domain%q_copy(i_sgp, i_sgpm) ! add fake history for selfgravitating potential: pretend that nothing was changing there until domain expanded
