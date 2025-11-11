@@ -180,6 +180,7 @@ contains
 !====================================================================================================
    subroutine init_cresp
 
+      use bcast,           only: piernik_MPI_Bcast
       use constants,       only: cbuff_len, I_ZERO, I_ONE, zero, one, three, ten, half, logten, LO, HI
       use cresp_variables, only: clight_cresp
       use cr_data,         only: cr_mass, cr_sigma_N, cr_names, cr_Z, icr_spc, icr_H1, cr_spectral, cr_table, eCRSP
@@ -188,7 +189,7 @@ contains
       use global,          only: disallow_CRnegatives
       use func,            only: emag
       use initcosmicrays,  only: ncrb, ncr2b, ncrn, nspc, K_cr_paral, K_cr_perp, K_crs_paral, K_crs_perp, use_smallecr
-      use mpisetup,        only: rbuff, ibuff, lbuff, cbuff, master, slave, piernik_MPI_Bcast
+      use mpisetup,        only: rbuff, ibuff, lbuff, cbuff, master, slave
       use units,           only: clight, me, amu
 
       implicit none

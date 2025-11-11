@@ -44,6 +44,7 @@ contains
 
    subroutine cresp_timestep
 
+      use allreduce,        only: piernik_MPI_Allreduce
       use all_boundaries,   only: all_fluid_boundaries
       use cg_cost_data,     only: I_OTHER
       use cg_leaves,        only: leaves
@@ -57,8 +58,6 @@ contains
       use grid_cont,        only: grid_container
       use initcosmicrays,   only: cfl_cr, iarr_crspc2_e, iarr_crspc2_n, nspc, diff_max_lev
       use initcrspectrum,   only: K_cresp_paral, K_cresp_perp, spec_mod_trms, synch_active, adiab_active, icomp_active, use_cresp_evol, cresp, f_synchIC, u_b_max, cresp_substep, n_substeps_max, redshift
-
-      use mpisetup,         only: piernik_MPI_Allreduce
 
       implicit none
 
