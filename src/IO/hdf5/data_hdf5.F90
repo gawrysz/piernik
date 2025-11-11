@@ -389,6 +389,7 @@ contains
 
       use common_hdf5,      only: common_shortcuts
       use constants,        only: dsetnamelen, I_ONE, I_TWO
+      use dataio_pub,       only: warn
       use fluids_pub,       only: has_ion, has_neu, has_dst
       use fluidindex,       only: flind
       use fluidtypes,       only: component_fluid
@@ -479,7 +480,12 @@ contains
                do i = 1, size(cr_names)
                   if (cr_names(i).eq.var(4:clast-3)) icr = i - ncrn
                enddo
-               tab(:,:,:) = cg%u(flind%crspcs(icr)%ebeg+ibin-1, RNG)
+               if (icr >= lbound(flind%crspcs, 1) .and. icr <= ubound(flind%crspcs, 1)) then
+                  tab(:,:,:) = cg%u(flind%crspcs(icr)%ebeg+ibin-1, RNG)
+               else
+                  tab(:,:,:) = -1.23456789
+                  call warn("[data_hdf5:datafields_hdf5] miscomputed icr (e)")
+               endif
 
             else if (var(clast - 2:clast - 2) == 'n') then
 
@@ -491,7 +497,12 @@ contains
                enddo
 
                !print *, 'flind%crspcs(icr)%nbeg+ibin-1: ', flind%crspcs(icr)%nbeg+ibin-1
-               tab(:,:,:) = cg%u(flind%crspcs(icr)%nbeg+ibin-1, RNG)
+               if (icr >= lbound(flind%crspcs, 1) .and. icr <= ubound(flind%crspcs, 1)) then
+                  tab(:,:,:) = cg%u(flind%crspcs(icr)%nbeg+ibin-1, RNG)
+               else
+                  tab(:,:,:) = -1.23456789
+                  call warn("[data_hdf5:datafields_hdf5] miscomputed icr (n)")
+               endif
 
             !else
             !   do i = 1, size(cr_names)
