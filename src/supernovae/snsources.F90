@@ -223,7 +223,7 @@ contains
       real, dimension(3)                 :: ysnoi
 #endif /* SHEAR */
 #ifdef CRESP
-      integer                            :: icr
+      integer(kind=4)                    :: icr
       real                               :: e_tot_sn
 #endif /* CRESP */
 
