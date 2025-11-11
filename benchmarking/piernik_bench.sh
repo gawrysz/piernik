@@ -134,6 +134,40 @@ else
 fi
 
 #
+# How to quantify how close a cuboid is to a cube
+#
+# Any metric comparing a cuboid to a cube should be invariant under permutations
+# of the cuboid edges.  If we normalize one edge to length 1, a cuboid can be
+# represented (up to these symmetries) by the following equivalent tuples:
+#     1:X:Y,  1:Y:X,  1:1/X:Y/X,  1:Y/X:1/X,  1:1/Y:X/Y,  1:X/Y:1/Y
+#
+# Taking these symmetries into account, a symmetric score for a cuboid with
+# proportions 1:X:Y can be defined as
+#     S(X,Y,a,b) = ( X^a Y^b + X^b Y^a + (X^a + X^b)/Y^(a+b) + (Y^a + Y^b)/X^(a+b) )/6 - 1
+# where a and b are real parameters that choose which aspect of "non-cubeness"
+# we emphasize.  By construction S(1,1,a,b) = 0 for any a,b.
+#
+# Useful special cases
+# * a = b = 1/3:
+#     S(X,Y,1/3,1/3) = (X + Y + XY) / (3 (XY)^(2/3)) - 1
+#   This corresponds to the ratio of the cuboid surface area to the surface area
+#   of a cube having the same volume, minus one.
+#
+# * a = b = -1/3:
+#     S(X,Y,-1/3,-1/3) = (1 + X + Y) / (3 (XY)^(1/3)) - 1
+#   This corresponds to the ratio of the total edge length of the cuboid to that
+#   of a cube with the same volume, minus one.
+#
+# * a = 1, b = 0:
+#     S(X,Y,1,0) = (X + Y + 1/X + 1/Y + X/Y + Y/X)/6 - 1
+#   This equals the average of all pairwise edge ratios (normalized so a perfect
+#   cube scores zero).
+#
+# All of these measures penalize deviations from a cube; for a fixed volume they
+# assign higher (worse) scores to elongated shapes than to flattened ones.
+#
+
+#
 # Trying to find best approximation of cuboid of given volume and integer edges.
 # Call:
 #     weak_cube number_of_work_units
