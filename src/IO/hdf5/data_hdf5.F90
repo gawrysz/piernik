@@ -408,7 +408,7 @@ contains
       use initcrspectrum,   only: dfpq
 #endif /* CRESP */
 #ifdef COSM_RAYS
-      use cr_data,          only: cr_names!, cr_spectral
+      use cr_data,          only: cr_names, cr_spectral
       use initcosmicrays,   only: ncrn
       use dataio_pub,       only: die, warn, msg
       use named_array_list, only: wna, na_var_4d
@@ -480,15 +480,25 @@ contains
 
             !print *, 'cr_names: ', cr_names
 
-            tab(:,:,:) = cg%u(flind%crn%beg+i-1-count(cr_spectral), RNG)
+            i = flind%crn%beg+i-1-count(cr_spectral)  ! highly suspicious
+
+            if (i >= lbound(cg%u, 1) .and. i <= ubound(cg%u, 1)) then
+               tab(:,:,:) = cg%u(flind%crn%beg+i-1-count(cr_spectral), RNG)
+            else
+               call warn("[data_hdf5:datafields_hdf5] miscomputed index for 'cr_A000' : 'cr_zz99'")
+            endif
             select type(l => wna%lst(wna%fi))
                class is (na_var_4d)
                   clast = len(trim(var), kind=4)
                   varn2 = var(clast - 1:clast)
                   if (all(var(clast - 2:clast - 2) /= ['e', 'n'])) then
-                     if (trim(var) /= trim(l%compname(flind%crn%beg+i-1-count(cr_spectral)))) then
-                        write(msg, '(5a,i3)') "cr_A-zz '", trim(var), "' /= '", trim(l%compname(flind%crn%beg+i-1)), "' ", i
-                        call warn(msg)
+                     if (i >= lbound(l%compname, 1) .and. i <= ubound(l%compname, 1)) then
+                        if (trim(var) /= trim(l%compname(flind%crn%beg+i-1-count(cr_spectral)))) then
+                           write(msg, '(5a,i3)') "cr_A-zz '", trim(var), "' /= '", trim(l%compname(flind%crn%beg+i-1-count(cr_spectral))), "' ", i
+                           call warn(msg)
+                        endif
+                     else
+                        call warn("[data_hdf5:datafields_hdf5] miscomputed index flind%crn%beg+i-1-count(cr_spectral)")
                      endif
                   endif
                class default
@@ -515,9 +525,14 @@ contains
                endif
                select type(l => wna%lst(wna%fi))
                   class is (na_var_4d)
-                     if (trim(var) /= trim(l%compname(flind%crspc%ebeg+ibin-1))) then
-                        write(msg, '(5a,i3)') "cr_e '", trim(var), "' /= '", trim(l%compname(flind%crspc%ebeg+ibin-1)), "' ", ibin
-                        call warn(msg)
+                     i = flind%crspc%ebeg+ibin-1
+                     if (i >= lbound(l%compname, 1) .and. i <= ubound(l%compname, 1)) then
+                        if (trim(var) /= trim(l%compname(i))) then
+                           write(msg, '(5a,i3)') "cr_e '", trim(var), "' /= '", trim(l%compname(i)), "' ", ibin
+                           call warn(msg)
+                        endif
+                     else
+                        call warn("[data_hdf5:datafields_hdf5] miscomputed index flind%crspc%ebeg+ibin-1 (e)")
                      endif
                   class default
                      call die("[datafields_hdf5] 'cr_e' not a na_var_4d")
@@ -542,9 +557,14 @@ contains
                endif
                select type(l => wna%lst(wna%fi))
                   class is (na_var_4d)
-                     if (trim(var) /= trim(l%compname(flind%crspc%nbeg+ibin-1))) then
-                        write(msg, '(5a,i3)') "cr_n '", trim(var), "' /= '", trim(l%compname(flind%crspc%nbeg+ibin-1)), "' ", ibin
-                        call warn(msg)
+                     i = flind%crspc%nbeg+ibin-1
+                     if (i >= lbound(l%compname, 1) .and. i <= ubound(l%compname, 1)) then
+                        if (trim(var) /= trim(l%compname(flind%crspc%nbeg+ibin-1))) then
+                           write(msg, '(5a,i3)') "cr_n '", trim(var), "' /= '", trim(l%compname(flind%crspc%nbeg+ibin-1)), "' ", ibin
+                           call warn(msg)
+                        endif
+                     else
+                         call warn("[data_hdf5:datafields_hdf5] miscomputed index flind%crspc%ebeg+ibin-1 (n)")
                      endif
                   class default
                      call die("[datafields_hdf5] 'cr_n' not a na_var_4d")
