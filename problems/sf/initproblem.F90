@@ -223,7 +223,7 @@ logical, intent(in) :: forward
       call die("You must define SELF_GRAV for this problem")
 #endif /* !SELF_GRAV */
 
-      if (mode < 0 .or. mode > 2)     call die("[initproblem:read_problem_par] Invalid mode.")     ! jrandpert
+      if (mode < 0 .or. mode > 3)     call die("[initproblem:read_problem_par] Invalid mode.")     ! jrandpert
       if (d0 < 0. .or. abs(amp) > 1.) call die("[initproblem:read_problem_par] Negative average density or amplitude too high.")
       if (p0 < 0.)                    call die("[initproblem:read_problem_par] Negative average pressure.")
       if (ix<0 .or. iy<0 .or. iz<0 .or. amp<0) then
@@ -335,6 +335,9 @@ logical, intent(in) :: forward
                      case (2)
                         cg%u(fl%idn,i,j,k)  = d0 * (1. +          amp * (1. - 2.*rand()))
                         pres                = p0 * (1. + fl%gam * amp * (1. - 2.*rand()))
+                     case (3)
+                        cg%u(fl%idn,i,j,k)  = d0 * (1. +          amp * ( - cos(kx*xi) * cos(ky*yj) * cos(kz*zk) + (1. - 2.*rand()) ))
+                        pres                = p0 * (1. + fl%gam * amp * ( - cos(kx*xi) * cos(ky*yj) * cos(kz*zk) + (1. - 2.*rand()) ))
                      case default ! should not happen
                         cg%u(fl%idn,i,j,k)  = d0
                         pres                = p0
