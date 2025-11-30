@@ -26,3 +26,5 @@
 #define NBODY_MULTIGRID
 
 #undef NBODY_GRIDDIRECT
+
+#undef NO_FFT
