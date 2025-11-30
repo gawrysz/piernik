@@ -1,24 +1,21 @@
  $BASE_DOMAIN
-    n_d = 64, 64, 64
+    n_d = 32, 32, 32
+    nb = 6          ! Change to 4 after merging vinod's fixes
     bnd_xl = 'per'
     bnd_xr = 'per'
     bnd_yl = 'per'
     bnd_yr = 'per'
     bnd_zl = 'per'
     bnd_zr = 'per'
-    xmin   = -1.0e3
-    xmax   = 1.0e3
-    ymin   = -1.0e3
-    ymax   = 1.0e3
-    zmin   = -1.0e3
-    zmax   = 1.0e3
+    xmin   = -0.5e3
+    xmax   = 0.5e3
+    ymin   = -0.5e3
+    ymax   = 0.5e3
+    zmin   = -0.5e3
+    zmax   = 0.5e3
  /
 
  $MPI_BLOCKS
-    allow_uneven = .true.
-    allow_noncart = .true.
-    dd_unif_quality = 1.1
-    dd_rect_quality = 1.1
  /
 
  $UNITS
@@ -30,28 +27,26 @@
  /
 
  $END_CONTROL
-    tend   = 500.0
+    tend   = 45.0           ! tend adopted to capture only the first SN
     nend   = 100000
  /
 
  $OUTPUT_CONTROL
     problem_name ='sf'
-    run_id =  'b22'
+    run_id =  't00'
     dt_hdf  = 1.0
     dt_res  = 0.0
     dt_log  = 1.0e-5
     dt_tsl  = 1.0e-5
-    vars(1)  = 'dens'
-    vars(2)  = 'velx'
-    vars(3)  = 'vely'
-    vars(4)  = 'velz'
-    vars(5)  = 'encr'
-    vars(6)  = 'gpot'
-    vars(7) = 'sfrl'  ! star formation rate at the last timestep
+    vars(1) = 'dens'
+    vars(2) = 'velx'
+    vars(3) = 'vely'
+    vars(4) = 'velz'
+    vars(5) = 'temp'
+    vars(6) = 'gpot'
+    vars(7) = 'sfrl'    ! star formation rate at the last timestep
     vars(8) = 'sfrh'    ! star formation rate since last dump
-    vars(9) = 'temp'
-    vars(10) = 'snel'    ! supernovae explosion rate at the last timestep
-    vars(11) = 'sneh'   ! supernovae explosion rate since last dump
+
  /
 
  $FLUID_IONIZED
@@ -62,7 +57,7 @@
  $FLUID_NEUTRAL
  /
 
- 
+
  $NUMERICAL_SETUP
     cfl    = 0.1
     smalld = 1.e-5
@@ -71,9 +66,9 @@
     limiter= 'vanleer'
     disallow_negatives = .false.
     solver_str = 'riemann'
-    cflcontrol = 'none'
+    cflcontrol = 'auto'
     integration_order = 2
-    
+
  /
 
  $GRAVITY
@@ -83,7 +78,8 @@
  $RESISTIVITY
  /
 
- $THERMAL
+
+$THERMAL
    thermal_active = .true.
    cool_model     = 'piecewise_power_law'
    cool_curve     = 'tabulated'
@@ -101,37 +97,52 @@
    isochoric      = 1
 /
 
+!!!!! Description of the SF module parameters !!!!!!
+!   kick : not compatible with the TIGRESS scheme presently. Pure thermal FB with kick for 6.5 Myr prior.
+!   dens_thr : density threshold for SF.
+!   temp_thr : Maximum temperature for SF
+!   Jeans_crit : True or False for SF
+!   n_SN : Will trigger n_SN after a particle reaches mass = n_SN*mass_SN.
+!   max_part_mass : maximum mass of particle, before it is locked. Set to higher values if you want a particle to explore multiple times over its lifetime
+!   delayed : Delayed FB of 6.5 Myr. Necessary to use TIGRESS scheme. Could be renamed "tigress" in fact.
+!   kineticFB : Allows kinetic energy injection in TIGRESS scheme. If set to False, only thermal energy is injected.
+!   inject_mass : Allows 10 Msun gas injection with SNe (for TIGRESS scheme)
+!   mass_SN : mass threshold of a star particle to explode.
+!   dist_accr : max distance (in pc) up to which a star particle can accrete star forming gas
+
 $STAR_FORMATION_CONTROL
   kick = .false.
-  dens_thr = 0.035   ! 0.035 !MH      ! Density threshold for star formation. Warning: Star formation also requires the cell mass to reach the Jeans mass (this criterion is only hardcoded for now, like the div(v) <0 criterion)
-  temp_thr = 1000000 ! 10000 !MH       ! Max temperature for star formation
-  mass_SN = 100.0          ! How much mass of star forming gas is required to reach 1 SNe
-  n_SN = 1 ! 1   !MH              ! How many SNe required to trigger the corresponding feedback. e.g. n_SN = 10:
-                           ! The module will wait until the star forming particle reaches 10 * mass_SN to inject the energy of 10 SNe at once.
-  max_part_mass = 1.0e4    ! A star forming particle will keep accreting gas and releasing feedback until it reaches max_part_mass.
-                           ! Once it reaches this maximum it is locked and cannot contribute to star formation and feedback anymore.
-  eps_sf = 0.1             ! star formation efficiency
-  dist_accr = 50.0         ! Distance of gas accretion for the star formin particles
+  dens_thr = 0.035    ! No effect in the present setup
+  temp_thr = 10000    ! No effect in this present setup
+  Jeans_crit = .true.
+  n_SN = 1
+  max_part_mass = 1.0e2
+  delayed = .true.
+  kineticFB = .true.
+  inject_mass = .true.
+  mass_SN = 100.0
+  dist_accr = 10.0
 /
+!--------------------------------------------
 
  $PROBLEM_CONTROL
     d0     = 0.025
     p0     = 0.247
     T0     = 860.0
-    amp    = 0.001
-    ix     = 2
-    iy     = 0
-    iz     = 0
-    mode   = 2
+    amp    = 0.4
+    ix     = 1
+    iy     = 1
+    iz     = 1
+    mode   = 3
  /
 
 $IO_PARAMS
     t_dmass_stars   = .true.
     t_dmass_stars_tot = .true.
  /
- 
+
  $MULTIGRID_SOLVER
-    stdout    = .true.
+    stdout      = .false.
     dirty_debug = .true.
  /
 
@@ -143,8 +154,8 @@ $IO_PARAMS
  /
 
  $AMR
- bsize = 32, 32
-level_max = 2
+ bsize = 16, 16, 16
+level_max = 0
 n_updamr = 3
 jeans_ref     = 40.  ! Require really good Jeans-length refinement
 jeans_plot = .true.  ! because we asked for "nJ" in plot vars(:)
