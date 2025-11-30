@@ -9,7 +9,7 @@ F90       = h5pfc
 F90FLAGS  = -fdefault-real-8 -ffree-form -std=gnu -fimplicit-none -ffree-line-length-none -g
 
 ifeq ($(TERM_PROGRAM),Apple_Terminal)
-   F90FLAGS += -I/usr/local/include
+   F90FLAGS += -I$(INCLUDE_DIR)
 else
    F90FLAGS += -I/usr/include
    LDFLAGS   = -Wl,--as-needed -Wl,-O1
