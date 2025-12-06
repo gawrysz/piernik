@@ -1,4 +1,3 @@
-! $Id: iosupport.F90 7934 2013-06-11 07:59:50Z wolt $
 !
 ! PIERNIK Code Copyright (C) 2006 Michal Hanasz
 !

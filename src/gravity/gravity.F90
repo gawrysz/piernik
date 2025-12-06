@@ -474,7 +474,7 @@ contains
       use mpisetup,          only: master
       use multigrid_gravity, only: multigrid_solve_grav, recover_sgpm, recover_sgp
 #ifdef NBODY
-      use constants,         only: nbdn_n, one, zero  
+      use constants,         only: nbdn_n, one, zero
       use named_array_list,  only: qna
       use particle_maps,     only: map_particles
 #endif /* NBODY */
@@ -508,7 +508,7 @@ contains
       else
 #ifdef NBODY
          call leaves%set_q_value(qna%ind(nbdn_n), zero)
-         call map_particles(qna%ind(nbdn_n), one)                    ! Need to recalculate for restart case 
+         call map_particles(qna%ind(nbdn_n), one)                    ! Need to recalculate for restart case
 #endif /* NBODY */
          call multigrid_solve_grav(iarr_all_sg)
       endif

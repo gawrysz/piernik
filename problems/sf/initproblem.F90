@@ -29,11 +29,6 @@
 module initproblem
 
    use fluidtypes,  only: component_fluid
-   use iosupport,    only: init_iosupport
-#ifdef SNE_DISTR
-   use sndistr,        only: register_user_var_sndistr, init_supernovae
-#endif /* SNE_DISTR */
-
 
    implicit none
 
@@ -85,30 +80,38 @@ contains
 
 !-----------------------------------------------------------------------------
 
-      subroutine init_user_module
+   subroutine init_user_module
 
-        use iosupport,    only: init_iosupport
+      use iosupport,    only: init_iosupport
 
 #ifdef SNE_DISTR
-         use sndistr,        only: init_supernovae
-         call init_supernovae
+      use sndistr,        only: init_supernovae
 #endif /* SNE_DISTR */
-         call init_iosupport
 
-       end subroutine init_user_module
+      implicit none
+
+#ifdef SNE_DISTR
+      call init_supernovae
+#endif /* SNE_DISTR */
+      call init_iosupport
+
+   end subroutine init_user_module
 
  !-----------------------------------------------------------------------------
 
-       subroutine sn_init_supplement
-
-        use iosupport,    only: init_iosupport
+   subroutine sn_init_supplement
 
 #ifdef SNE_DISTR
-        use sndistr,        only: register_user_var_sndistr
-        call register_user_var_sndistr
+      use sndistr,        only: register_user_var_sndistr
 #endif /* SNE_DISTR */
 
-      end subroutine sn_init_supplement
+      implicit none
+
+#ifdef SNE_DISTR
+      call register_user_var_sndistr
+#endif /* SNE_DISTR */
+
+   end subroutine sn_init_supplement
 
 
    !-----------------------------------------------------------------------------
@@ -293,10 +296,6 @@ logical, intent(in) :: forward
 #ifdef NBODY
       use star_formation, only: initialize_id
 #endif /* NBODY */
-
-      use thermal,     only: thermal_active
-
-
 
       implicit none
 

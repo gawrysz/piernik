@@ -1,4 +1,3 @@
-! $Id: sndistr.F90 7876 2013-06-03 12:50:56Z wolt $
 !
 ! PIERNIK Code Copyright (C) 2006 Michal Hanasz
 !
