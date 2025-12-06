@@ -365,14 +365,15 @@ contains
 
       use constants,  only: LO, HI, zdim
       use dataio_pub, only: die
-      use mpisetup,    only: proc
+      use func,       only: operator(.equals.)
+      use mpisetup,   only: proc
       use thermal,    only: find_temp_bin, alpha, Tref, lambda0, G1_heat, G0_heat
       use units,      only: mH
 
       implicit none
 
       integer, intent(in)         :: iia, jja
-      integer                     :: ksub, ksmid, k, ii, i, iip, kstart
+      integer                     :: ksub, ksmid, k, ii, i, kstart
       logical                     :: up, down, bnd_done
 
 
@@ -403,7 +404,7 @@ contains
          if (hscg%z(hscg%ijkse(zdim, LO)) .gt. 0.0) then
             up = .true.
             kstart = ksmin - 1
-            if (hscg%q(i_teq)%arr(iia, jja, hscg%lh1(zdim, LO)) .eq. 0.0) then
+            if (hscg%q(i_teq)%arr(iia, jja, hscg%lh1(zdim, LO)) .equals. 0.0) then
                Tprof = 100000
                dprof = 0.0000001
                !print *, 'T=0', proc, hscg%grid_id, hscg%x(iia), hscg%y(jja), hscg%z(hscg%lh1(zdim, HI))
@@ -414,7 +415,7 @@ contains
          else
             down = .true.
             kstart = ksmax
-            if (hscg%q(i_teq)%arr(iia, jja, hscg%lh1(zdim, HI)) .eq. 0.0) then
+            if (hscg%q(i_teq)%arr(iia, jja, hscg%lh1(zdim, HI)) .equals. 0.0) then
                Tprof = 100000
                dprof = 0.0000001
                print *, 'T=0', proc, hscg%grid_id, hscg%x(iia), hscg%y(jja), hscg%z(hscg%lh1(zdim, HI))
@@ -474,13 +475,13 @@ contains
                dprof(k) = dprof(k) + dprofs(ksub)/real(rnsub)
             endif
          enddo
-         if ((Tprof(k) .gt. 1.0e10) .or. (Tprof(k) .eq. 0.0)) then
+         if ((Tprof(k) .gt. 1.0e10) .or. (Tprof(k) .equals. 0.0)) then
             print *, hscg%x(iia), hscg%y(jja), hscg%z(k), Tprof(k),  dprof(k), zs(ksmin), zs(ksmax)
             call die('[hydrostatic:thermal_hydro_main] Problem with Temperature values')
          endif
       enddo
-      if ((sum(Tprof) .eq. 0.0) .or. (.not. (any(Tprof .gt. 0.0)))) call die('[hydrostatic:thermal_hydro_main] Tprof= 0')
-      if ((sum(dprof) .eq. 0.0) .or. (.not. (any(dprof .gt. 0.0)))) call die('[hydrostatic:thermal_hydro_main] dprof = 0')
+      if ((sum(Tprof) .equals. 0.0) .or. (.not. (any(Tprof .gt. 0.0)))) call die('[hydrostatic:thermal_hydro_main] Tprof= 0')
+      if ((sum(dprof) .equals. 0.0) .or. (.not. (any(dprof .gt. 0.0)))) call die('[hydrostatic:thermal_hydro_main] dprof = 0')
       hscg%q(i_teq)%arr(iia, jja, :) = 0.0
       hscg%q(i_teq)%arr(iia, jja, :) = Tprof
 
@@ -594,7 +595,6 @@ contains
 
       integer, intent(in)                     :: iia, jja
       integer(kind=4), dimension(ndims,LO:HI) :: lhn
-      integer(kind=4)                         :: nstot1, i, j, k
       real, dimension(:,:,:), pointer         :: gpots
       type(axes)                              :: ax
 

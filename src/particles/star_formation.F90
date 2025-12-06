@@ -57,6 +57,7 @@ contains
 
      use bcast,        only: piernik_MPI_Bcast
      use dataio_pub,   only: nh, printinfo, warn
+     use func,         only: operator(.notequals.)
      use mpisetup,     only: ibuff, lbuff, rbuff, master, slave
 
       implicit none
@@ -145,7 +146,7 @@ contains
          SN_ener         = rbuff(8)
          dt_violent_FB   = rbuff(9)
 
-         if ((kick) .and. (mass_SN .ne. max_part_mass)) call warn('[star_formation] Warning: With kick we assume particules only accrete up to 1 explosion loadout mass (n_SN * mass_SN) in 1 timestep.')
+         if ((kick) .and. (mass_SN .notequals. max_part_mass)) call warn('[star_formation] Warning: With kick we assume particules only accrete up to 1 explosion loadout mass (n_SN * mass_SN) in 1 timestep.')
 
       endif
 
@@ -159,20 +160,20 @@ contains
       use allreduce,        only: piernik_MPI_Allreduce
       use cg_leaves,        only: leaves
       use cg_list,          only: cg_list_element
-      use constants,        only: ndims, xdim, ydim, zdim, LO, HI, CENTER, pi, nbdn_n, pLOR, I_ONE
+      use constants,        only: ndims, xdim, ydim, zdim, LO, HI, CENTER, pi, nbdn_n, I_ONE  !, pLOR
       use dataio_pub,       only: warn
       use domain,           only: dom
       use fluidindex,       only: flind
       use fluidtypes,       only: component_fluid
-      use func,             only: ekin, emag
-      use global,           only: t, dt, nstep
+      use func,             only: ekin, emag, operator(.equals.)
+      use global,           only: t, dt
       use grid_cont,        only: grid_container
-      use mpisetup,         only: FIRST, LAST, proc
+      use mpisetup,         only: FIRST, LAST
       use named_array_list, only: qna
       use particle_func,    only: particle_in_area, ijk_of_particle, l_neighb_part, r_neighb_part
       use particle_types,   only: particle
       use particle_utils,   only: is_part_in_cg
-      use units,            only: newtong, cm, sek, gram, erg, km, Msun
+      use units,            only: newtong, cm, sek, gram, erg
 #ifdef COSM_RAYS
       use initcosmicrays,   only: cr_active, cr_eff
 #endif /* COSM_RAYS */
@@ -185,12 +186,12 @@ contains
       type(grid_container),  pointer    :: cg
       type(particle), pointer           :: pset
       class(component_fluid), pointer   :: pfl
-      integer(kind=4)                   :: pid, ig, ir, irh, is, isn, ish, ifl, i, j, k, aijk1, i1, j1, k1, p
+      integer(kind=4)                   :: pid, ig, ir, irh, is, isn, ish, ifl, i, j, k, aijk1, p
       integer(kind=4), dimension(ndims) :: ijk1, ijkp, ijkl, ijkr
       real, dimension(ndims)            :: ijkl_coord
-      real, dimension(ndims)            :: pos, vel, acc, v
+      real, dimension(ndims)            :: pos, vel, acc
       real, dimension(ndims,LO:HI)      :: sector
-      real                              :: sf_dens2dt, c_tau_ff, sfdf, frac, mass_SN_tot, mass, ener, tdyn, tbirth, padd, t1, tj, stage, en_SN, en_SN01, en_SN09, mfdv, tini, tinj, fpadd, dens_amb, frac1, mass1, dist_max
+      real                              :: sf_dens2dt, c_tau_ff, sfdf, frac, mass_SN_tot, mass, ener, tdyn, tbirth, padd, t1, tj, stage, en_SN, en_SN01, en_SN09, mfdv, tini, tinj, fpadd, dens_amb, frac1, dist_max
       logical                           :: in, phy, out, fin, fed, tcond1, tcond2
       logical, dimension(FIRST:LAST)    :: send_data
       logical, dimension(7,7,7)         :: ijk_check
@@ -361,7 +362,7 @@ contains
                         do j = ijkl(ydim), ijkr(ydim)
                            do k = ijkl(zdim), ijkr(zdim)
 
-                              if (mass_SN_tot .eq. max_part_mass) then
+                              if (mass_SN_tot .equals. max_part_mass) then
                                  !mfdv = aint(pset%pdata%mass / mass_SN_tot) / cg%dvol
                                  if (aint(pset%pdata%mass / mass_SN_tot) .gt. 1) print *, 'WARNING: More than 1 SNe for a given particle, but we will assume only 1 explosion'
                               !else
@@ -507,7 +508,7 @@ contains
       if (sne_dump) cg%q(ish)%arr(i,j,k)  = cg%q(ish)%arr(i,j,k) + mft
 
       return
-      if (cg%u(ien,i,j,k) > mft * mfcr) return ! suppress compiler warnings on unused arguments
+      if (cg%u(ien,i,j,k) > mft * mfcr + idn) return ! suppress compiler warnings on unused arguments
 
    end subroutine sf_inject
 
@@ -649,13 +650,13 @@ contains
 !    use cg_cost_data,          only: I_PARTICLE
     use cg_leaves,             only: leaves
     use cg_list,               only: cg_list_element
-    use constants,             only: ndims, I_ONE, LO, HI, xdim, ydim, zdim, CENTER
+    use constants,             only: ndims, I_ONE, LO, xdim, ydim, zdim, CENTER
     use domain,                only: dom
     use fluidindex,            only: flind
     use fluidtypes,            only: component_fluid
     use global,                only: t, dt
     use grid_cont,             only: grid_container
-    use mpisetup,              only: proc, FIRST, LAST
+    use mpisetup,              only: FIRST, LAST
     use particle_func,         only: particle_in_area, ijk_of_particle
     use particle_types,        only: particle
 
@@ -667,8 +668,8 @@ contains
     type(cg_list_element), pointer                      :: cgl
     type(particle), pointer                             :: pset
     class(component_fluid), pointer                     :: pfl
-    integer(kind=4), dimension(ndims)                   :: ijk1, ijkp, ijkl, ijkr
-    integer                                             :: i,j,k,p, ifl, idn
+    integer(kind=4), dimension(ndims)                   :: ijkp, ijkl, ijkr
+    integer                                             :: i, j, k, p, ifl
     real                                                :: t1, tj, dens_amb, frac1, dist_max
     real, dimension(ndims)                              :: ijkl_coord
     logical, dimension(7,7,7)                           :: ijk_check
@@ -790,6 +791,7 @@ contains
     use cg_list_global,        only: all_cg
     use fluidindex,            only: flind
     use fluidtypes,            only: component_fluid
+    use func,                  only: operator(.equals.)
     use grid_cont,             only: grid_container
     use constants,             only: I_ONE, xdim, ydim, zdim, ndims, LO, HI, CENTER
     use MPIF,                  only: MPI_INTEGER, MPI_COMM_WORLD, MPI_DOUBLE_PRECISION
@@ -807,11 +809,10 @@ contains
     class(component_fluid), pointer           :: pfl
     integer(kind=4), dimension(FIRST:LAST)    :: nrecv, disps, dispr, counts, countr
     real, dimension(:), allocatable           :: inj_recv
-    integer                                   :: p, part, ind, i, j, k, ncells, aijk1, ifl
-    real                                      :: x,y,z, mfdv, dens_amb, dx, frac, en_SN, en_SN01, en_SN09, frac1
+    integer                                   :: p, part, ind, i, j, k, aijk1, ifl
+    real                                      :: x,y,z, mfdv, dens_amb, dx, frac
     logical                                   :: in_cg
-    integer(kind=4), dimension(ndims)         :: ijk1, ijkp, ijkl, ijkr
-    real, dimension(ndims)                    :: ijkl_coord
+    integer(kind=4), dimension(ndims)         :: ijk1, ijkl, ijkr
     logical, dimension(:,:,:), allocatable    :: ijk_check
 
     call MPI_Alltoall(nsend, I_ONE, MPI_INTEGER, nrecv, I_ONE, MPI_INTEGER, MPI_COMM_WORLD, err_mpi)
@@ -845,18 +846,18 @@ contains
           call is_FB_in_cg(cg,x,y,z,dx, in_cg, ijkl, ijkr, ijk_check)
           if (.not. in_cg) cycle
 
-         if (dx .eq. cg%dx) then
+         if (dx .equals. cg%dx) then
              frac =  frac
-         else if (dx .eq. cg%dx/2) then
+         else if (dx .equals. cg%dx/2) then
             frac = frac * 8
-         else if (dx .eq. cg%dx*2) then
+         else if (dx .equals. cg%dx*2) then
             frac = frac / 8
          else
             print *, 'WARNING! Something weird happening in SN injection: ', dx, cg%dx
             cycle
          endif
 
-         if (frac .eq. 0.0) then
+         if (frac .equals. 0.0) then
             print *, 'WARNING! fraction 0 in SNe: ', dx, cg%dx, frac, dens_amb
             cycle
          endif
@@ -893,6 +894,7 @@ contains
 
     use constants,             only: xdim, ydim, zdim, ndims, LO, HI, CENTER
     use grid_cont,             only: grid_container
+    use func,                  only: operator(.equals.)
     use particle_func,         only: particle_in_area
 
     implicit none
@@ -925,7 +927,7 @@ contains
     if (ymax .lt. cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO))) return
     if (zmax .lt. cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO))) return
 
-    if ((particle_in_area((/ x,y,z /), cg%fbnd)) .and. (cg%dx .eq. dx)) return    ! Let's not inject the same FB twice in the same cg
+    if ((particle_in_area((/ x,y,z /), cg%fbnd)) .and. (cg%dx .equals. dx)) return    ! Let's not inject the same FB twice in the same cg
 
     in_cg = .true. ! The cell is within this cg
 
@@ -1026,10 +1028,9 @@ contains
    integer(kind=4), dimension(:), intent(in) :: ijk1
    integer, intent(in)                       :: is, ish, i,j,k, aijk1
    logical, intent(in)                       :: sne_dump
-   real                                      :: padd, en_SN, en_SN01, en_SN09, maxvel, frac1, enclosed_mass, new_dens, frac3, frac4, RM
+   real                                      :: padd, en_SN, en_SN01, en_SN09, maxvel, frac1, enclosed_mass, frac3, frac4, RM
    real                                      :: Ekin0, mp0cost, mp0sq, mp
-   integer                                   :: dir_max, ndim
-   real, dimension(3)                        :: moms, frac2, v
+   real, dimension(3)                        :: v
    logical                                   :: equalize_region
 
    ! 10 Msun deposited into SN injection region
@@ -1112,50 +1113,49 @@ contains
   end subroutine TIGRESS_injection
 
 ! Find which cells should receive SN injection around exploding particle: 3 cell radius
-subroutine find_injection_region(ppos, ijkl, ijkr, ijkl_coord, dx, dist_max, ijk_check, frac)
+  subroutine find_injection_region(ppos, ijkl, ijkr, ijkl_coord, dx, dist_max, ijk_check, frac)
 
-use constants, only: ndims, xdim, ydim, zdim, LO, HI
+     use constants, only: ndims, xdim, ydim, zdim
 
-implicit none
+     implicit none
 
-real, dimension(ndims), intent(in)        :: ppos
-integer, dimension(ndims), intent(in)     :: ijkl, ijkr
-real, dimension(ndims), intent(in)        :: ijkl_coord
-real, intent(in)                          :: dx, dist_max
-logical, dimension(ijkl(xdim):ijkr(xdim), ijkl(ydim):ijkr(ydim), ijkl(zdim):ijkr(zdim)), intent(out)    :: ijk_check
-real, intent(out)                         :: frac
+     real, dimension(ndims), intent(in)        :: ppos
+     integer, dimension(ndims), intent(in)     :: ijkl, ijkr
+     real, dimension(ndims), intent(in)        :: ijkl_coord
+     real, intent(in)                          :: dx, dist_max
+     logical, dimension(ijkl(xdim):ijkr(xdim), ijkl(ydim):ijkr(ydim), ijkl(zdim):ijkr(zdim)), intent(out)    :: ijk_check
+     real, intent(out)                         :: frac
 
-integer :: i,j,k, ncount
-real :: dist
-real, dimension(ndims,ijkl(xdim):ijkr(xdim), ijkl(ydim):ijkr(ydim), ijkl(zdim):ijkr(zdim)) :: ijk_coord
+     integer :: i,j,k, ncount
+     real :: dist
+     real, dimension(ndims,ijkl(xdim):ijkr(xdim), ijkl(ydim):ijkr(ydim), ijkl(zdim):ijkr(zdim)) :: ijk_coord
 
-ijk_check = .false.
-ncount = 0
-ijk_coord = 0.0
+     ijk_check = .false.
+     ncount = 0
+     ijk_coord = 0.0
 
-do i = ijkl(xdim), ijkr(xdim)
-   do j = ijkl(ydim), ijkr(ydim)
-      do k = ijkl(zdim), ijkr(zdim)
-         ijk_coord(xdim,i,j,k) = ijkl_coord(xdim) + (i-ijkl(xdim)) * dx
-         ijk_coord(ydim,i,j,k) = ijkl_coord(ydim) + (j-ijkl(ydim)) * dx
-         ijk_coord(zdim,i,j,k) = ijkl_coord(zdim) + (k-ijkl(zdim)) * dx
-         dist = sqrt((ppos(xdim)-ijk_coord(xdim,i,j,k))**2 + (ppos(ydim)-ijk_coord(ydim,i,j,k))**2 + (ppos(zdim)-ijk_coord(zdim,i,j,k))**2)
-         if (dist <= dist_max) then
-            ijk_check(i,j,k) = .true.
-            ncount = ncount +1
-         endif
-      enddo
-   enddo
-enddo
+     do i = ijkl(xdim), ijkr(xdim)
+        do j = ijkl(ydim), ijkr(ydim)
+           do k = ijkl(zdim), ijkr(zdim)
+              ijk_coord(xdim,i,j,k) = ijkl_coord(xdim) + (i-ijkl(xdim)) * dx
+              ijk_coord(ydim,i,j,k) = ijkl_coord(ydim) + (j-ijkl(ydim)) * dx
+              ijk_coord(zdim,i,j,k) = ijkl_coord(zdim) + (k-ijkl(zdim)) * dx
+              dist = sqrt((ppos(xdim)-ijk_coord(xdim,i,j,k))**2 + (ppos(ydim)-ijk_coord(ydim,i,j,k))**2 + (ppos(zdim)-ijk_coord(zdim,i,j,k))**2)
+              if (dist <= dist_max) then
+                 ijk_check(i,j,k) = .true.
+                 ncount = ncount +1
+              endif
+           enddo
+        enddo
+     enddo
 
-if (ncount == 0) then
-   print *, 'find_injection_region: No injection region found'
-   frac = 0.0
-   return
-endif
-frac = 1.0 / ncount
+     if (ncount == 0) then
+        print *, 'find_injection_region: No injection region found'
+        frac = 0.0
+        return
+     endif
+     frac = 1.0 / ncount
 
-end subroutine find_injection_region
-
+  end subroutine find_injection_region
 
 end module star_formation

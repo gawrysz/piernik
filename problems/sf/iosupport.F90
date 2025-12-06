@@ -358,8 +358,8 @@ contains
       character(len=*), dimension(:), intent(inout), allocatable, optional :: tsl_names
       real, dimension(2)                                                   :: massflxz
 #ifdef MAGNETIC
-      real, dimension(5)                                                   :: mflx5
-      real                                                                 :: emag_disk
+!      real, dimension(5)                                                   :: mflx5
+!      real                                                                 :: emag_disk
 #endif /* MAGNETIC */
 
       if (present(tsl_names)) then

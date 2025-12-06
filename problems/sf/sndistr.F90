@@ -406,8 +406,8 @@ module sndistr
 #ifdef DIPOLS
       type(named_array3d)            :: emag_asn, emag_bsn
       integer(kind=4)                :: dir
-#endif /* DIPOLS */
       real                           :: dmass_stars
+#endif /* DIPOLS */
 
 #ifdef INSERTSNONCEASTEP
       if (.not.forward) return

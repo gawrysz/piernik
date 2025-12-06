@@ -294,7 +294,7 @@ logical, intent(in) :: forward
       use star_formation, only: initialize_id
 #endif /* NBODY */
 
-      use thermal,     only: itemp, thermal_active
+      use thermal,     only: thermal_active
 
 
 
