@@ -1,0 +1,85 @@
+---
+AlignAmpersandToColumnLimit: false
+AlignAssignmentOperators: false
+AlignUseItems:
+  Kind:            Regular
+  FirstLineFit:    FitIfPossible
+BreakBeforeBinaryOperators: true
+Casing:
+  Identifiers:     Preserve
+  Keywords:        Preserve
+  LogicalConstants: Preserve
+  LogicalOperators: Preserve
+  RelationalOperators: Preserve
+  UserDefinedOperators: Preserve
+ColumnLimit:     0
+CommentDirectivePrefixes: []
+DisabledDirectivePrefixes: []
+IndentSize:      Preserve
+IndentExceptions:
+  ModuleContains:  IndentBeforeAndAfter
+  Comments:        Indent
+FixedFormLabelAlignment: Preserve
+ContinuationIndentSize: DoubleIndentSize
+DoubleColonSeparator: Preserve
+EndOfLineNormalization: Preserve
+EndStatementFormat: Preserve
+EndStatementSeparation:
+  EndAssociate:    Preserve
+  EndBlockConstruct: Preserve
+  EndBlockData:    Preserve
+  EndCritical:     Preserve
+  EndTeam:         Preserve
+  EndDoLoop:       Preserve
+  EndEnum:         Preserve
+  EndEnumerationType: Preserve
+  EndForall:       Preserve
+  EndFunction:     Preserve
+  EndIf:           Preserve
+  EndInterface:    Preserve
+  EndModule:       Preserve
+  EndModuleProcedure: Preserve
+  EndProgram:      Preserve
+  EndSelect:       Preserve
+  EndSubmodule:    Preserve
+  EndSubroutine:   Preserve
+  EndType:         Preserve
+  EndWhere:        Preserve
+EnsureNewlineAtEOF: false
+ConsecutiveEmptyLines:
+  MaxToKeep:       Preserve
+  BetweenProcedures: Preserve
+  RemoveAtStartOfFile: false
+  RemoveAtEndOfFile: false
+KindKeywordPrefix: Preserve
+MacroIdentifiers: ["BALSARA", "CORIOLIS", "COSM_RAYS", "CRESP", "CRESP_VERBOSED", "DEBUG", "DUST", "FFTW", "FLUID_INTERACTIONS", "GLOBAL_FR_SPEED", "GRAV", "HDF5", "IONIZED", "ISO", "JEANS_PROBLEM", "LOCAL_FR_SPEED", "MAGNETIC", "MULTIGRID", "NBODY", "NBODY_MULTIGRID", "NBODY_GRIDDIRECT", "NEUTRAL", "NON_INERTIAL", "NONMAGNETIC", "RANDOMIZE", "RESISTIVE", "SELF_GRAV", "SHEAR", "SHEAR_BND", "SN_SRC", "THERM", "TRACER", "VERBOSE", "VS"]
+RelationalOperators: Preserve
+SpacesAroundOperators:
+  LeftParenthesisExpression: Preserve
+  LeftParenthesisGeneric: Preserve
+  LeftParenthesisKeyword: Preserve
+  RightParenthesisExpression: Preserve
+  RightParenthesisGeneric: Preserve
+  RightParenthesisKeyword: Preserve
+  Assignment:      Preserve
+  Association:     Preserve
+  ControlFlowAssignment: Preserve
+  KeywordAssignment: Preserve
+  ParameterAssignment: Preserve
+  BinaryArithmetic: Preserve
+  Exponentiation:  Preserve
+  DefinedBinary:   Preserve
+  DefinedUnary:    Preserve
+  Relational:      Preserve
+  RelationalLegacy: Preserve
+  LogicalBinary:   Preserve
+  LogicalNot:      Preserve
+  UnaryPlusMinus:  Preserve
+  Comma:           Preserve
+  Concat:          Preserve
+  DoubleColon:     Preserve
+RemoveConsecutiveWhitespace: false
+RemoveSemicolons: false
+RemoveTrailingWhitespace: false
+SeparateMultipleInlineStatements: false
+...

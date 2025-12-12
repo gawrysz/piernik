@@ -1,0 +1,85 @@
+---
+AlignAmpersandToColumnLimit: false
+AlignAssignmentOperators: true
+AlignUseItems:
+  Kind:            OneItemPerLine
+  FirstLineFit:    FitIfPossible
+BreakBeforeBinaryOperators: true
+Casing:
+  Identifiers:     Preserve
+  Keywords:        Lowercase
+  LogicalConstants: Lowercase
+  LogicalOperators: Lowercase
+  RelationalOperators: Lowercase
+  UserDefinedOperators: Lowercase
+ColumnLimit:     0
+CommentDirectivePrefixes: []
+DisabledDirectivePrefixes: []
+IndentSize:      Preserve
+IndentExceptions:
+  ModuleContains:  IndentBeforeAndAfter
+  Comments:        IndentIfAlreadyIndented
+FixedFormLabelAlignment: Right
+ContinuationIndentSize: 5
+DoubleColonSeparator: AddAlways
+EndOfLineNormalization: Autodetect
+EndStatementFormat: EndStructureAndName
+EndStatementSeparation:
+  EndAssociate:    Separated
+  EndBlockConstruct: Separated
+  EndBlockData:    Separated
+  EndCritical:     Separated
+  EndTeam:         Separated
+  EndDoLoop:       Joined
+  EndEnum:         Separated
+  EndEnumerationType: Separated
+  EndForall:       Separated
+  EndFunction:     Separated
+  EndIf:           Joined
+  EndInterface:    Separated
+  EndModule:       Separated
+  EndModuleProcedure: Separated
+  EndProgram:      Separated
+  EndSelect:       Separated
+  EndSubmodule:    Separated
+  EndSubroutine:   Separated
+  EndType:         Separated
+  EndWhere:        Joined
+EnsureNewlineAtEOF: true
+ConsecutiveEmptyLines:
+  MaxToKeep:       1
+  BetweenProcedures: 1
+  RemoveAtStartOfFile: true
+  RemoveAtEndOfFile: true
+KindKeywordPrefix: AddAlways
+MacroIdentifiers: ["BALSARA", "CORIOLIS", "COSM_RAYS", "CRESP", "CRESP_VERBOSED", "DEBUG", "DUST", "FFTW", "FLUID_INTERACTIONS", "GLOBAL_FR_SPEED", "GRAV", "HDF5", "IONIZED", "ISO", "JEANS_PROBLEM", "LOCAL_FR_SPEED", "MAGNETIC", "MULTIGRID", "NBODY", "NBODY_MULTIGRID", "NBODY_GRIDDIRECT", "NEUTRAL", "NON_INERTIAL", "NONMAGNETIC", "RANDOMIZE", "RESISTIVE", "SELF_GRAV", "SHEAR", "SHEAR_BND", "SN_SRC", "THERM", "TRACER", "VERBOSE"]
+RelationalOperators: UseSymbols
+SpacesAroundOperators:
+  LeftParenthesisExpression: NoTrailing
+  LeftParenthesisGeneric: NoSpaces
+  LeftParenthesisKeyword: OnlyLeading
+  RightParenthesisExpression: NoLeading
+  RightParenthesisGeneric: NoLeading
+  RightParenthesisKeyword: NoLeading
+  Assignment:      Preserve
+  Association:     Preserve
+  ControlFlowAssignment: Both
+  KeywordAssignment: NoSpaces
+  ParameterAssignment: NoSpaces
+  BinaryArithmetic: Both
+  Exponentiation:  NoSpaces
+  DefinedBinary:   Both
+  DefinedUnary:    NoTrailing
+  Relational:      Both
+  RelationalLegacy: Both
+  LogicalBinary:   Both
+  LogicalNot:      Trailing
+  UnaryPlusMinus:  NoTrailing
+  Comma:           Preserve
+  Concat:          Both
+  DoubleColon:     Preserve
+RemoveConsecutiveWhitespace: false
+RemoveSemicolons: true
+RemoveTrailingWhitespace: true
+SeparateMultipleInlineStatements: false
+...
