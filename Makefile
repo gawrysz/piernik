@@ -20,6 +20,7 @@
 #                            $P defaults to testing_and_debuging/chimaera
 #   'make qa'              # run qa.py on all F90 files in src and problems
 #                            directories
+#   'make codee_check'     # Apply codee formatter in preserving mode to find suspicious constructs
 #   'make pep8'            # run pep8 on all Python scripts, ignore long lines
 #                            (obsoleted by pycodestyle)
 #   'make pycodestyle'     # run pycodestyle on all Python scripts, ignore long lines
@@ -95,7 +96,7 @@ endef
 
 # Define phony targets
 .PHONY: $(ALLOBJ) ctags resetup clean check allsetup doxy help \
-	oldgold gold-serial gold-clean pep8 view_dep colortest \
+	oldgold gold-serial gold-clean pep8 view_dep colortest codee_check \
 	CI QA artifacts gold $(QA_TESTS) $(ARTIFACT_TESTS) $(GOLD_TESTS)
 
 # Default target to build all object directories
@@ -181,6 +182,11 @@ chk_lic_hdr:
 	$(BIN_DIR)/check_license_headers.sh && \
 		$(ECHO) -e "  License header checks "$(PASSED) || \
 		( $(ECHO) -e "  License header checks "$(FAILED)": exceptional license headers found" && exit 1 )
+
+# Check with codee
+codee_check:
+	codee format --config .codee-check --verbose --colors=always `find src/ -name *F90` `find problems/ -name *F90` `find compilers -name *F90` 2>&1 | \
+		grep -v "Loading configuration from"
 
 # Help target
 help:
