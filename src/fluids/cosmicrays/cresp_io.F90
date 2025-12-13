@@ -347,14 +347,14 @@ contains
       integer(kind=4), parameter       :: flun = 31
       character(len=flen)              :: f_name
       type(map_header), intent(inout)  :: hdr
-      character(len=fmt_len)           :: fmt
+      character(len=fmt_len)           :: frmt
       character(len=*), intent(in)     :: var_name
       integer(kind=4)                  :: fstat, rstat
 
       fstat = 0
       rstat = 0
       f_name = var_name // extension
-      fmt = "(1E15.8,2I10,10E22.15)"
+      frmt = "(1E15.8,2I10,10E22.15)"
 
       open(flun, file=f_name, status="old", position="rewind", IOSTAT=fstat)
 
@@ -365,9 +365,9 @@ contains
          return
       endif
 
-      read(flun, fmt, IOSTAT=rstat) hdr%s_es, hdr%s_dim1, hdr%s_dim2, hdr%s_pr, hdr%s_qbig, hdr%s_c, hdr%s_amin, hdr%s_amax, hdr%s_nmin, hdr%s_nmax
+      read(flun, frmt, IOSTAT=rstat) hdr%s_es, hdr%s_dim1, hdr%s_dim2, hdr%s_pr, hdr%s_qbig, hdr%s_c, hdr%s_amin, hdr%s_amax, hdr%s_nmin, hdr%s_nmax
       if (rstat > 0 ) then  ! should work for older files using the same format
-         read(flun, fmt, IOSTAT=rstat) hdr%s_es, hdr%s_dim1, hdr%s_dim2, hdr%s_pr, hdr%s_qbig, hdr%s_c
+         read(flun, frmt, IOSTAT=rstat) hdr%s_es, hdr%s_dim1, hdr%s_dim2, hdr%s_pr, hdr%s_qbig, hdr%s_c
          hdr%s_amin = 0.
          hdr%s_amax = 0.
          hdr%s_nmin = 0.

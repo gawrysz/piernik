@@ -239,7 +239,7 @@ contains
          integer, dimension(coarsest%level%l%id:finest%level%l%id) :: cnt_mv, cnt_gp
          real, dimension(FIRST:LAST) :: costs_above
          real :: global_costs_above
-         character(len=fmt_len) :: fmt
+         character(len=fmt_len) :: frmt
 
          if (slave) call die("[rebalance:rebalance_all] slave in how_many_to_shuffle")
          if (all(pnames%exclude)) call die("[rebalance:rebalance_all] all threads excluded")
@@ -315,9 +315,9 @@ contains
          s = sum(cnt_mv)
          if (s / real(sum(cnt_gp)) > oop_thr) rebalance_necessary = .true.
          if (s > 0) then
-            write(fmt, *)"(2(a,i2),a,", size(cnt_mv), "i", int(log10(real(maxval([cnt_mv, 1]))))+3, ",a,", &
+            write(frmt, *)"(2(a,i2),a,", size(cnt_mv), "i", int(log10(real(maxval([cnt_mv, 1]))))+3, ",a,", &
                  &                      size(cnt_gp), "i", int(log10(real(maxval([cnt_gp, 1]))))+3, ",a,f6.3,a)"
-            write(msg, fmt)"Rebalance: ^", lbound(cnt_gp, 1), " .. ", ubound(cnt_gp, 1), " OutOfPlace grids = [", cnt_mv, " ] / [ ", cnt_gp, &
+            write(msg, frmt)"Rebalance: ^", lbound(cnt_gp, 1), " .. ", ubound(cnt_gp, 1), " OutOfPlace grids = [", cnt_mv, " ] / [ ", cnt_gp, &
                  " ] (", s/real(sum(cnt_gp)), " -> " // trim(merge("reshuffling)       ", "skipping reshuffle)", rebalance_necessary))
             call printinfo(msg, V_VERBOSE)
          endif
