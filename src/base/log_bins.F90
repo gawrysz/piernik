@@ -146,7 +146,7 @@ contains
 
       integer :: maxn
       integer(LONG), dimension(this%n) :: bindata
-      character(len=fmt_len) :: fmt  ! for formats like '(a,5(' ',i3,'(',i3,')'))'
+      character(len=fmt_len) :: frmt  ! for formats like '(a,5(' ',i3,'(',i3,')'))'
 
       call printinfo(trim(title), v)
 
@@ -157,13 +157,13 @@ contains
          call warn(msg)
       endif
 
-      write(fmt, '(a,2(i0,a))')"(a,", maxn - 1, "('   ',es8.2))"
-      write(msg, fmt)"    ", this%bnd(1:maxn-1)
+      write(frmt, '(a,2(i0,a))')"(a,", maxn - 1, "('   ',es8.2))"
+      write(msg, frmt)"    ", this%bnd(1:maxn-1)
       call printinfo(trim(msg), v)
 
-      write(fmt, '(a,2(i0,a))')"(a,", maxn - 1, "(i8,' | '),i8)"
+      write(frmt, '(a,2(i0,a))')"(a,", maxn - 1, "(i8,' | '),i8)"
       bindata = this%bins%get_v1()
-      write(msg, fmt)"  ", bindata(1:maxn)
+      write(msg, frmt)"  ", bindata(1:maxn)
       call printinfo(trim(msg), v)
 
    end subroutine print

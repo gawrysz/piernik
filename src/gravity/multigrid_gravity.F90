@@ -1081,7 +1081,7 @@ contains
       logical, save      :: norm_was_zero = .false.
       real,    parameter :: suspicious_factor = 1.05 !> \deprecated If the norm decreases too slowly then dump diagnostic output (BEWARE: this option is for tests only)
       integer, parameter :: fmtlen = 32
-      character(len=fmtlen)    :: fmt
+      character(len=fmtlen)    :: frmt
       character(len=cbuff_len) :: dname
       integer(kind=4), dimension(4)    :: mg_fields
       type(cg_level_connected_t), pointer :: curl
@@ -1136,11 +1136,11 @@ contains
          tot_ts = tot_ts + ts
          if (master .and. verbose_vcycle) then
             if (norm_old/norm_lhs < 1.e5) then
-               fmt='(3a,i3,a,f12.9,a,f8.2,a,f7.3)'
+               frmt='(3a,i3,a,f12.9,a,f8.2,a,f7.3)'
             else
-               fmt='(3a,i3,a,f12.9,a,es8.2,a,f7.3)'
+               frmt='(3a,i3,a,f12.9,a,es8.2,a,f7.3)'
             endif
-            write(msg, fmt)"[multigrid_gravity] ", trim(vstat%cprefix), "Cycle:", v, " norm/rhs= ", norm_lhs/norm_rhs, " reduction factor= ", norm_old/norm_lhs, "   dt_wall= ", ts
+            write(msg, frmt)"[multigrid_gravity] ", trim(vstat%cprefix), "Cycle:", v, " norm/rhs= ", norm_lhs/norm_rhs, " reduction factor= ", norm_old/norm_lhs, "   dt_wall= ", ts
             call printinfo(msg, V_INFO, .true.)
          endif
 

@@ -408,7 +408,7 @@ contains
          implicit none
 
          integer :: host, dec, ln
-         character(len=fmt_len) :: fmt, header
+         character(len=fmt_len) :: frmt, header
          real :: mx
          integer, parameter :: mpl = 16, maxex = 128
 
@@ -424,10 +424,10 @@ contains
                        &     pe => min(lbound(ph%proc, 1) + (ln+1) * mpl - 1, ubound(ph%proc, 1)))
 
                      if (ph%wtime > 0.) then
-                        write(fmt, *)"(3a,f6.", dec, ",a)"
-                        write(header, fmt) "@", ph%nodename(:pnames%maxnamelen), " <MHD speed> = ", 1./ph%wtime, " blk/s ["
-                        write(fmt,  *) "(a,", pe - pb + 1, "f6.", dec, ",a)"
-                        write(msg, fmt) merge(trim(header), repeat(" ", len_trim(header)), ln == 0), &
+                        write(frmt, *)"(3a,f6.", dec, ",a)"
+                        write(header, frmt) "@", ph%nodename(:pnames%maxnamelen), " <MHD speed> = ", 1./ph%wtime, " blk/s ["
+                        write(frmt,  *) "(a,", pe - pb + 1, "f6.", dec, ",a)"
+                        write(msg, frmt) merge(trim(header), repeat(" ", len_trim(header)), ln == 0), &
                              merge(1. / pnames%wtime(ph%proc(pb:pe)), 0., pnames%wtime(ph%proc(pb:pe)) > 0.), &
                              merge(" ]", "  ", ln == int((size(ph%proc) - 1)/ mpl))
                      else
@@ -448,8 +448,8 @@ contains
                   if (any(pnames%exclude(ph%proc))) then
                      header = "@" // ph%nodename(:pnames%maxnamelen)
                      if (size(ph%proc) <= maxex) then
-                        write(fmt, *)"(a,", size(ph%proc), "a2,a)"
-                        write(msg, fmt) trim(header) // ": [", merge("X", ".", pnames%exclude(ph%proc)), " ]"
+                        write(frmt, *)"(a,", size(ph%proc), "a2,a)"
+                        write(msg, frmt) trim(header) // ": [", merge("X", ".", pnames%exclude(ph%proc)), " ]"
                      else
                         write(msg, '(a,2(i5,a))') trim(header), count(pnames%exclude(ph%proc)), " out of ", size(ph%proc), " threads"
                      endif

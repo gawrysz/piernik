@@ -306,14 +306,14 @@ contains
 
          integer, intent(in) :: i  !< input integers
 
-         character(len=fmt_len) :: fmt
+         character(len=fmt_len) :: frmt
 
          if (i >= 1000000000) then ! really big number, this should never happen here, in multipole_array
-            fmt = '(a,i20,a,g13.5)'  !i20 should be enough for any 64-bit integer, signed or not
+            frmt = '(a,i20,a,g13.5)'  !i20 should be enough for any 64-bit integer, signed or not
          else
-            write(fmt, '(a,i1,a)')'(a,i',1 + int(log10(real(max(1,i)))),',a,g13.5)'
+            write(frmt, '(a,i1,a)')'(a,i',1 + int(log10(real(max(1,i)))),',a,g13.5)'
          endif
-         write(msg, fmt)"  r( ",i," ) = ", this%i_r(i)
+         write(msg, frmt)"  r( ",i," ) = ", this%i_r(i)
          if (master) call printinfo(msg, V_LOG)
 
       end subroutine print_ri
