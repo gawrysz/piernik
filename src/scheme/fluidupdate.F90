@@ -156,11 +156,11 @@ contains
 #endif /* NBODY */
 #endif /* GRAV */
 #ifdef COSM_RAYS
-#ifdef MULTIGRID
+#  ifdef MULTIGRID
       use multigrid_diffusion, only: inworth_mg_diff
-#else /* !MULTIGRID */
+#  else /* !MULTIGRID */
       use initcosmicrays,      only: use_CRdiff
-#endif /* !MULTIGRID */
+#  endif /* !MULTIGRID */
       use crdiffusion,         only: make_diff_sweeps
 #endif /* COSM_RAYS */
 #ifdef SHEAR
@@ -189,13 +189,11 @@ contains
 #endif /* GRAV */
 
 #ifdef COSM_RAYS
-#ifdef MULTIGRID
-      if (inworth_mg_diff()) then
-#else /* !MULTIGRID */
-      if (use_CRdiff) then
-#endif /* !MULTIGRID */
-         call make_diff_sweeps(forward)
-      endif
+#  ifdef MULTIGRID
+      if (inworth_mg_diff()) call make_diff_sweeps(forward)
+#  else /* !MULTIGRID */
+      if (use_CRdiff) call make_diff_sweeps(forward)
+#  endif /* !MULTIGRID */
 #endif /* COSM_RAYS */
 
       ! At this point everything should be initialized after domain expansion and we no longer need this list.

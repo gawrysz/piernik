@@ -160,16 +160,15 @@ contains
                mom  => cg%w(wna%fi)%get_sweep(dir, iarr_all_dn(ifluid) + dir, i2, i3)
                dens => cg%w(wna%fi)%get_sweep(dir, iarr_all_dn(ifluid)      , i2, i3)
                associate( &
-#ifndef _CRAYFTN
-                  vv => mom(:) / dens(:), &
-#endif /* _CRAYFTN */
                   nn => cg%n_(dir), &
                   idl => cg%idl(dir) &
                )
 #ifndef _CRAYFTN
-                  divvel(4:nn-3)  = divvel(4:nn-3) + (vv(5:nn-2) - vv(3:nn-4)) * (p3_4  * idl)
-                  divvel(4:nn-3)  = divvel(4:nn-3) + (vv(6:nn-1) - vv(2:nn-5)) * (m3_20 * idl)
-                  divvel(4:nn-3)  = divvel(4:nn-3) + (vv(7:nn  ) - vv(1:nn-6)) * (p1_60 * idl)
+                  associate(vv => mom(:) / dens(:))
+                     divvel(4:nn-3)  = divvel(4:nn-3) + (vv(5:nn-2) - vv(3:nn-4)) * (p3_4  * idl)
+                     divvel(4:nn-3)  = divvel(4:nn-3) + (vv(6:nn-1) - vv(2:nn-5)) * (m3_20 * idl)
+                     divvel(4:nn-3)  = divvel(4:nn-3) + (vv(7:nn  ) - vv(1:nn-6)) * (p1_60 * idl)
+                  end associate
 #else /* _CRAFTN */
                   divvel(4:nn-3)  = divvel(4:nn-3) + (mom(5:nn-2)/dens(5:nn-2) - mom(3:nn-4)/dens(3:nn-4)) * (p3_4  * idl)
                   divvel(4:nn-3)  = divvel(4:nn-3) + (mom(6:nn-1)/dens(6:nn-1) - mom(2:nn-5)/dens(2:nn-5)) * (m3_20 * idl)
@@ -216,14 +215,13 @@ contains
                mom    => cg%w(wna%fi)%get_sweep(dir, iarr_all_dn(ifluid)+dir, i2, i3)
                dn     => cg%w(wna%fi)%get_sweep(dir, iarr_all_dn(ifluid)    , i2, i3)
                associate( &
-#ifndef _CRAYFTN
-                  vv => mom(:) / dn(:), &
-#endif /* _CRAYFTN */
                   nn => cg%n_(dir), &
                   idl => cg%idl(dir) &
                )
 #ifndef _CRAYFTN
-                  divvel(2:nn-1) = divvel(2:nn-1) + (vv(3:nn) - vv(1:nn-2)) * (half * idl)
+                  associate(vv => mom(:) / dn(:))
+                     divvel(2:nn-1) = divvel(2:nn-1) + (vv(3:nn) - vv(1:nn-2)) * (half * idl)
+                  end associate
 #else /* _CRAYFTN */
                   divvel(2:nn-1) = divvel(2:nn-1) + (mom(3:nn) / dn(3:nn) - mom(1:nn-2) / dn(1:nn-2)) * (half * idl)
 #endif /* _CRAYFTN */

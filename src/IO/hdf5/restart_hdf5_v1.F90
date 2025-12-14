@@ -267,13 +267,11 @@ contains
       if (area_type == AT_OUT_B) then
          call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_INDEPENDENT_F, error)
       else
-#endif /* INDEPENDENT_ATOUTB */
-         if (.not. is_multicg) then
-            call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
-         endif
-#ifdef INDEPENDENT_ATOUTB
+         if (.not. is_multicg) call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
       endif
-#endif /* INDEPENDENT_ATOUTB */
+#else /* !INDEPENDENT_ATOUTB */
+      if (.not. is_multicg) call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
+#endif /* !INDEPENDENT_ATOUTB */
 
       stride(:) = 1
       cnt(:)  = 1

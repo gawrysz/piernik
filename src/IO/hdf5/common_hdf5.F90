@@ -1488,6 +1488,7 @@ contains
 
    end subroutine dump_announce_time
 
+! Codee complains about conditional subroutine definition
 #ifdef NBODY
    subroutine initialize_write_cg(this, cgl_g_id, cg_n, nproc_io, ntags, dsets, pdsets)
 #else /* !NBODY */

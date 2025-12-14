@@ -144,6 +144,7 @@ contains
    subroutine init_cr_species
 
       use bcast,      only: piernik_MPI_Bcast
+      use constants,  only: I_ONE
       use dataio_pub, only: nh
       use mpisetup,   only: lbuff, master, slave
 
@@ -166,8 +167,6 @@ contains
       eN14  = .false.
       eO16  = .false.
 
-#define VS *3-2:3*
-
       if (master) then
 
          if (.not.nh%initialized) call nh%init()
@@ -184,16 +183,16 @@ contains
          open(newunit=nh%lun, file=nh%tmp2, status="unknown")
          write(nh%lun,nml=CR_SPECIES)
          close(nh%lun)
-         call nh%compare_namelist() ! Do not use one-line if here!
+         call nh%compare_namelist()
 
-         lbuff(icr_E    VS icr_E   ) = eE
-         lbuff(icr_H1   VS icr_H1  ) = eH1
-         lbuff(icr_C12  VS icr_C12 ) = eC12
-         lbuff(icr_Be9  VS icr_Be9 ) = eBe9
-         lbuff(icr_Be10 VS icr_Be10) = eBe10
-         lbuff(icr_N14  VS icr_N14 ) = eN14
-         lbuff(icr_O16  VS icr_O16 ) = eO16
-         lbuff(icr_Li7  VS icr_Li7 ) = eLi7
+         lbuff(icr_E    *SPEC-SPEC+I_ONE:icr_E    *SPEC) = eE
+         lbuff(icr_H1   *SPEC-SPEC+I_ONE:icr_H1   *SPEC) = eH1
+         lbuff(icr_C12  *SPEC-SPEC+I_ONE:icr_C12  *SPEC) = eC12
+         lbuff(icr_Be9  *SPEC-SPEC+I_ONE:icr_Be9  *SPEC) = eBe9
+         lbuff(icr_Be10 *SPEC-SPEC+I_ONE:icr_Be10 *SPEC) = eBe10
+         lbuff(icr_N14  *SPEC-SPEC+I_ONE:icr_N14  *SPEC) = eN14
+         lbuff(icr_O16  *SPEC-SPEC+I_ONE:icr_O16  *SPEC) = eO16
+         lbuff(icr_Li7  *SPEC-SPEC+I_ONE:icr_Li7  *SPEC) = eLi7
 
       endif
 
@@ -201,18 +200,16 @@ contains
 
       if (slave) then
 
-         eE    = lbuff(icr_E    VS icr_E   )
-         eH1   = lbuff(icr_H1   VS icr_H1  )
-         eC12  = lbuff(icr_C12  VS icr_C12 )
-         eBe9  = lbuff(icr_Be9  VS icr_Be9 )
-         eBe10 = lbuff(icr_Be10 VS icr_Be10)
-         eN14  = lbuff(icr_N14  VS icr_N14 )
-         eO16  = lbuff(icr_O16  VS icr_O16 )
-         eLi7  = lbuff(icr_Li7  VS icr_Li7 )
+         eE    = lbuff(icr_E    *SPEC-SPEC+I_ONE:icr_E    *SPEC)
+         eH1   = lbuff(icr_H1   *SPEC-SPEC+I_ONE:icr_H1   *SPEC)
+         eC12  = lbuff(icr_C12  *SPEC-SPEC+I_ONE:icr_C12  *SPEC)
+         eBe9  = lbuff(icr_Be9  *SPEC-SPEC+I_ONE:icr_Be9  *SPEC)
+         eBe10 = lbuff(icr_Be10 *SPEC-SPEC+I_ONE:icr_Be10 *SPEC)
+         eN14  = lbuff(icr_N14  *SPEC-SPEC+I_ONE:icr_N14  *SPEC)
+         eO16  = lbuff(icr_O16  *SPEC-SPEC+I_ONE:icr_O16  *SPEC)
+         eLi7  = lbuff(icr_Li7  *SPEC-SPEC+I_ONE:icr_Li7  *SPEC)
 
       endif
-
-#undef VS
 
       eCRSP(1:nicr) = [eE(PRES), eH1(PRES), eC12(PRES), eBe9(PRES), eBe10(PRES), eN14(PRES), eO16(PRES), eLi7(PRES)]
       ncrsp_auto = count(eCRSP, kind=4)

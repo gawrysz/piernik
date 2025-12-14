@@ -55,20 +55,20 @@ contains
 
 #ifdef GRAV
       use gravity,             only: source_terms_grav, compute_h_gpot, need_update
-#ifdef NBODY
+#  ifdef NBODY
       use particle_solvers,    only: psolver
-#endif /* NBODY */
+#  endif /* NBODY */
 #endif /* GRAV */
 #ifdef CRESP
       use cresp_grid,          only: cresp_update_grid, cresp_clean_grid
 #endif /* CRESP */
       use user_hooks,          only: problem_customize_solution
 #ifdef COSM_RAYS
-#ifdef MULTIGRID
+#  ifdef MULTIGRID
       use multigrid_diffusion, only: inworth_mg_diff
-#else /* !MULTIGRID */
+#  else /* !MULTIGRID */
       use initcosmicrays,      only: use_CRdiff
-#endif /* !MULTIGRID */
+#  endif /* !MULTIGRID */
       use crdiffusion,         only: make_diff_sweeps
 #endif /* COSM_RAYS */
 #ifdef SHEAR
@@ -86,14 +86,13 @@ contains
 #ifdef GRAV
       call compute_h_gpot
 #endif /* GRAV */
+
 #ifdef COSM_RAYS
-#ifdef MULTIGRID
-      if (inworth_mg_diff()) then
-#else /* !MULTIGRID */
-      if (use_CRdiff) then
-#endif /* !MULTIGRID */
-         call make_diff_sweeps(.true.)
-      endif
+#  ifdef MULTIGRID
+      if (inworth_mg_diff()) call make_diff_sweeps(.true.)
+#  else /* !MULTIGRID */
+      if (use_CRdiff) call make_diff_sweeps(.true.)
+#  endif /* !MULTIGRID */
 #endif /* COSM_RAYS */
 
       ! At this point everything should be initialized after domain expansion and we no longer need this list.
@@ -106,9 +105,9 @@ contains
       call unsplit_sweep
 #ifdef GRAV
       need_update = .true.
-#ifdef NBODY
+#  ifdef NBODY
       if (associated(psolver)) call psolver(.true.)  ! this will clear need_update it it would call source_terms_grav
-#endif /* NBODY */
+#  endif /* NBODY */
       if (need_update) call source_terms_grav
 #endif /* GRAV */
       call external_sources(.true.)

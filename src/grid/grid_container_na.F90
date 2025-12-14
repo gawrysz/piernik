@@ -58,10 +58,11 @@ module grid_cont_na
       real, dimension(:,:,:), pointer :: prth    => null()  !< Array for histogram of particles
       real, dimension(:,:,:), pointer :: nbdn    => null()  !< Array of density from particles
       real, dimension(:,:,:), pointer :: gp1b    => null()  !< Array of gravitational potential from particles
-#ifdef NBODY_GRIDDIRECT
-      real, dimension(:,:,:), pointer :: nbgp    => null()  !< Array of gravitational potential from particles
-#endif /* NBODY_GRIDDIRECT */
 #endif /* NBODY */
+! Codee complained here on nested conditionals
+#if defined(NBODY) && defined(NBODY_GRIDDIRECT)
+      real, dimension(:,:,:), pointer :: nbgp    => null()  !< Array of gravitational potential from particles
+#endif /* NBODY && NBODY_GRIDDIRECT */
 
       ! handy shortcuts to some entries in w(:)
       real, dimension(:,:,:,:), pointer :: u       => null()  !< Main array of all fluids' components
