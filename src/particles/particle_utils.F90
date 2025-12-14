@@ -342,6 +342,7 @@ contains
       type(cg_list_element), pointer         :: cgl
       type(grid_container),  pointer         :: cg
       type(particle), pointer                :: pset
+      logical                                :: do_detach
       character(len=*), parameter            :: ts_label = "leave_cg", cnt_label = "cnt_part", snd_label = "send_part_prep", &
            &                                    del_label = "detach_part", add_label = "add_part", addl_label = "chcg_part"
 
@@ -414,10 +415,11 @@ contains
             pset => cg%pset%first
             do while (associated(pset))
 #ifdef NBODY_CHECK_PID
-               if (.not. pset%pdata%out .or. (pset%pdata%in .and. .not. pset%pdata%fin)) then
+               do_detach = (.not. pset%pdata%out .or. (pset%pdata%in .and. .not. pset%pdata%fin))
 #else /* !NBODY_CHECK_PID */
-               if (.not. (pset%pdata%in .and. pset%pdata%fin)) then
+               do_detach = (.not. (pset%pdata%in .and. pset%pdata%fin))
 #endif /* !NBODY_CHECK_PID */
+               if (do_detach) then
                   call detach_particle(cg, pset)
                   cycle
                endif
@@ -565,7 +567,7 @@ contains
 
       character(len=*), optional, intent(in) :: message
 
-      character(len=fmt_len) :: fmt
+      character(len=fmt_len) :: frmt
 
       gpcount = count_all_particles()
       call piernik_MPI_Allreduce(gpcount, pSUM)
@@ -574,11 +576,11 @@ contains
          if (master) then
             select case (gpcount)
                case (:999999999)
-                  fmt = '(2a,i9)'
+                  frmt = '(2a,i9)'
                case default
-                  fmt = '(2a,i20)'
+                  frmt = '(2a,i20)'
             end select
-            write(msg, fmt) trim(message), " Total number of particles is ", gpcount
+            write(msg, frmt) trim(message), " Total number of particles is ", gpcount
             call printinfo(msg, V_INFO)
          endif
       endif

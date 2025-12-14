@@ -403,6 +403,8 @@ contains
       ibin = 0
 #endif /* CRESP */
 
+! Codee doesn't like such preprocessed conditional statement versions
+! It also doesn't like preprocessor inside associate() statement
 #ifdef MAGNETIC
       associate(emag_c => merge(emag(cg%b(xdim, RNG), cg%b(ydim, RNG),  cg%b(zdim, RNG)), &
            &                    emag(half*(cg%b(xdim, RNG) + cg%b(xdim, cg%is+dom%D_x:cg%ie+dom%D_x, cg%js        :cg%je,         cg%ks        :cg%ke        )), &
@@ -444,7 +446,6 @@ contains
                class default
                   call die("[datafields_hdf5] 'cr_A-zz' not a na_var_4d")
             end select
-#endif /* COSM_RAYS */
 #ifdef CRESP
             clast = len(trim(var), kind=4)
             varn2 = var(clast - 1:clast)
@@ -497,6 +498,11 @@ contains
             read(var,'(A4,I2.2)') aux, i !> \deprecated BEWARE 0 <= i <= 99, no other indices can be dumped to hdf file
             tab(:,:,:) = cg%w(wna%ind(dfpq%q_nam))%arr(i,RNG)  !flind%cre%fbeg+i-1, RNG)
 #endif /* CRESP */
+#endif /* COSM_RAYS */
+#ifdef TRACER
+         case ("trcr")
+            tab(:,:,:) = cg%u(flind%trc%beg, RNG)
+#endif /* TRACER */
          case ("dend", "deni", "denn")
             if (associated(fl_dni)) tab(:,:,:) = cg%u(fl_dni%idn, RNG)
          case ("vlxd", "vlxn", "vlxi", "vlyd", "vlyn", "vlyi", "vlzd", "vlzn", "vlzi")
