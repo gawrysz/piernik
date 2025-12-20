@@ -1488,15 +1488,10 @@ contains
 
    end subroutine dump_announce_time
 
-! Codee complains about conditional subroutine definition
-#ifdef NBODY
    subroutine initialize_write_cg(this, cgl_g_id, cg_n, nproc_io, ntags, dsets, pdsets)
-#else /* !NBODY */
-   subroutine initialize_write_cg(this, cgl_g_id, cg_n, nproc_io, ntags, dsets)
-#endif /* !NBODY */
 
       use constants,  only: dsetnamelen, I_ONE
-      use dataio_pub, only: can_i_write
+      use dataio_pub, only: can_i_write, die
       use hdf5,       only: HID_T, H5P_GROUP_ACCESS_F, H5P_DATASET_ACCESS_F, H5P_DATASET_XFER_F, &
           &                 h5gopen_f, h5pclose_f, h5dopen_f
       use mpisetup,   only: FIRST, LAST
@@ -1509,9 +1504,7 @@ contains
       integer(kind=4),                          intent(in)    :: nproc_io
       integer(kind=4),                          intent(out)   :: ntags
       character(len=dsetnamelen), dimension(:), intent(in)    :: dsets
-#ifdef NBODY
-      character(len=dsetnamelen), dimension(:), intent(in)    :: pdsets
-#endif /* NBODY */
+      character(len=dsetnamelen), dimension(:), optional, intent(in) :: pdsets
 
       integer(kind=4)                                         :: i, ncg
       integer(HID_T)                                          :: plist_id
@@ -1523,10 +1516,13 @@ contains
       allocate(this%cg_src_n(1:this%tot_cg_n))
       allocate(this%cg_g_id(1:this%tot_cg_n))
 #ifdef NBODY
+      if (.not. present(pdsets)) call die("[common_hdf5:initialize_write_cg] pdsets must be provided when NBODY is defined")
       allocate(this%part_g_id(1:this%tot_cg_n))
       allocate(this%st_g_id(1:this%tot_cg_n))
       ntags = ntags + ubound(pdsets, 1, kind=4) + I_ONE
-#endif /* NBODY */
+#else /* !NBODY */
+      if (present(pdsets)) call die("[common_hdf5:initialize_write_cg] pdsets provided but NBODY is not defined")
+#endif /* !NBODY */
       allocate(this%offsets(0:nproc_io-1))
 
       ! construct source addresses of the cg to be written
