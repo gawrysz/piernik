@@ -730,26 +730,28 @@ contains
             case ('help')
                ! Codee doesn't like inserting conditional part into write statement
                if (master) then
-                  write(msg,*) "[dataio:user_msg_handler] Recognized messages:", char(10), &
+                  write(msg, *) "[dataio:user_msg_handler] Recognized messages:", char(10), &
                   &"  help      - prints this information", char(10), &
-                  &"  stop      - finish the simulation", char(10), &
+                  &"  stop      - finish the simulation", char(10)
 #ifdef HDF5
-                  &"  res       - immediately dumps a restart file", char(10), &
+                  write(msg(len_trim(msg)+1:), *) &
+                  &" res       - immediately dumps a restart file", char(10), &
                   &"  dump      - immediately dumps a restart file of full domain for all blocks", char(10), &
-                  &"  hdf       - dumps a plotfile", char(10), &
+                  &"  hdf       - dumps a plotfile", char(10)
 #endif /* HDF5 */
-                  &"  log       - update logfile", char(10), &
+                  write(msg(len_trim(msg)+1:), *) &
+                  &" log       - update logfile", char(10), &
                   &"  tsl       - write a timeslice", char(10), &
                   &"  +v        - be more verbose", char(10), &
                   &"  -v        - be less verbose", char(10), &
                   &"  refine    - call refinement_update as soon as possible", char(10), &
                   &"  balance   - call rebalance as soon as possible", char(10), &
-                  &"  ppp [N]   - start ppp_main profiling for N timesteps (default 1)", char(10), &
+                  &"  ppp <N>   - start ppp_main profiling for <N> timesteps (default 1)", char(10), &
                   &"  unexclude - reset thread exclusion mask", char(10), &
-                  &"  perf [N]  - print performance data with verbosity N (default VB_HOST)", char(10), &
+                  &"  perf <N>  - print performance data with verbosity <N> (default VB_HOST)", char(10), &
                   &"  wleft     - show how much walltime is left", char(10), &
                   &"  wresleft  - show how much walltime is left till next restart", char(10), &
-                  &"  sleep <number> - wait <number> seconds", char(10), &
+                  &"  sleep <N> - wait <N> seconds", char(10), &
                   &"  wend|wdtres|tend|nend|dtres|dthdf|dtlog|dttsl <value> - update specified parameter with <value>", char(10), &
                   &"Note that only one line at a time is read."
                   call printinfo(msg, V_ESSENTIAL)
