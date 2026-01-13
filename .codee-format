@@ -15,9 +15,10 @@ Casing:
 ColumnLimit:     0
 CommentDirectivePrefixes: []
 DisabledDirectivePrefixes: []
+IgnoredPreprocessorDirectives: []
 IndentSize:      Preserve
 IndentExceptions:
-  ModuleContains:  IndentBeforeAndAfter
+  Contains:        IndentBeforeAndAfter
   Comments:        IndentIfAlreadyIndented
 FixedFormLabelAlignment: Right
 ContinuationIndentSize: 5
