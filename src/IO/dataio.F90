@@ -1019,6 +1019,7 @@ contains
          enumerator :: T_MASS                                  !< total mass
          enumerator :: T_MOMX, T_MOMY, T_MOMZ                  !< total momenta
          enumerator :: T_ENER, T_EINT, T_EKIN, T_EMAG          !< total energies
+! codee doesn't like inserting conditional parts into enum statement
 #ifdef GRAV
          enumerator :: T_EPOT                                  !< total gravitational potential energy
 #endif /* GRAV */

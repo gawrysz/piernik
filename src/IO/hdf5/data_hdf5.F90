@@ -704,6 +704,7 @@ contains
       end associate
 
    end subroutine datafields_hdf5
+! codee doesn't like inserting conditional parts into select statement
 
 !
 ! ------------------------------------------------------------------------------------

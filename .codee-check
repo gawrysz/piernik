@@ -15,7 +15,7 @@ Casing:
 ColumnLimit:     0
 CommentDirectivePrefixes: []
 DisabledDirectivePrefixes: []
-IgnoredPreprocessorDirectives: []
+IgnoredPreprocessorDirectives: [] # very promising but currently broken
 IndentSize:      Preserve
 IndentExceptions:
   Contains:        IndentBeforeAndAfter
