@@ -4,7 +4,7 @@
 
 **Piernik** is a hydrodynamic simulation code written primarily in Fortran 90, designed for astrophysical MHD (magnetohydrodynamics) and fluid dynamics problems. It supports:
 - Structured AMR (Adaptive Mesh Refinement) grids
-- Parallel execution via MPI and OpenMP
+- Parallel execution via MPI
 - HDF5 I/O for checkpoints and outputs
 - Multiple physics modules (fluids, magnetic fields, gravity, particles, dust)
 - Problem-specific implementations in dedicated directories
@@ -15,7 +15,7 @@
 
 ### Setup and Compilation
 
-1. **Configuration**: Edit `.setuprc` files (compiler choice, flags, optimization) or create new compiler definitions in `compilers/`
+1. **Configuration**: Edit `.setuprc` file (compiler choice, flags, optimization) and create new compiler definitions in `compilers/`
    - Default: `compilers/h5pfc_gnu.in` (OpenMPI+HDF5+gfortran)
    - Each `.in` file defines: `F90`, `F90FLAGS`, `LIBS`, `LDFLAGS`, debug modes
 
@@ -29,9 +29,7 @@
    ```bash
    make                    # Rebuild all obj*/piernik executables
    make obj_ABC            # Build specific problem (obj_ABC/)
-   RS=1 make obj_ABC       # Setup only, skip compile
-   make resetup            # Re-run setup for all obj* using stored .setuprc
-   make allsetup           # Create obj directories for all valid problems
+   RS=1 make obj_ABC       # Rebuild obj_ABC (call setup script), then make
    ```
 
 4. **Important**: Each `obj_<PROBLEM>/` directory is independent. Files in `src/` are **symlinked** or copied into the obj directory during setup.
@@ -41,25 +39,24 @@
 - **Default precision**: `-fdefault-real-8` (real*8 = 64-bit floats) — changing this breaks numerics
 - **Debug mode**: Set `PIERNIK_DEBUG=1` in compiler config for stack traces, runtime checks
 - **Gfortran 14.x fix**: `-fno-recursive -fcheck=recursion` to prevent CRESP initialization errors
-- **MPI compatibility**: `-fallow-argument-mismatch` for gfortran ≥ 10 (old MPI interface)
+- **MPI compatibility**: `-fallow-argument-mismatch` for gfortran ≥ 10 and old MPI interface
 
 ## Architecture: Source Tree Organization
 
 ```
 src/
 ├── base/              # Core framework: grid, time stepping, profiling
-├── scheme/            # Numerical schemes (MUSCL, PPM, RK integration)
+├── scheme/            # Numerical integration schemes (MUSCL, PPM, RK integration)
 ├── grid/              # Grid management, AMR refinement, boundaries
 ├── fluids/            # Equation of state, density, velocity
 ├── magnetic/          # MHD equations, divergence cleaning
 ├── gravity/           # Gravity solvers (multigrid, Poisson)
 ├── IO/                # I/O abstractions (HDF5, restart, particles)
-├── particles/         # Particle tracer support
-├── scheme/            # Flux/reconstruction schemes
+├── particles/         # Particle support
 └── utils/             # Utilities (constants, physical units)
 
 problems/
-├── <problem_name>/    # Each problem: problem.par, initproblem.F90, pierce.h
+├── <problem_name>/    # Each problem: problem.par, initproblem.F90, piernik.def
 ```
 
 **Module dependency order matters**: Files in `base/` are foundational; later directories depend on them. The setup script uses `use` statements and `#include` directives to build dependency graphs.
@@ -71,7 +68,7 @@ problems/
 Each problem in `problems/<name>/` requires:
 - **`problem.par`**: Problem parameters (domain size, timesteps, physics flags)
 - **`initproblem.F90`**: Initial conditions and problem-specific subroutines
-- **`pierce.h`** (optional): C-style includes for build-time flags
+- **`piernik.def`**: Build-time flags (preprocessor defines)
 
 ### Fortran Conventions
 
@@ -103,12 +100,11 @@ The setup script (`python/DirWalk.py`) scans for:
 - **`make qa`**: Run static analysis (checks error messages, license headers)
 - **`make pycodestyle`**: Python code style checks
 - **`make gold`**: Run gold tests (reference runs in `jenkins/workspace/`) with structured outputs
-- **`make CI`**: Local equivalent of Jenkins CI pipeline
+- **`make CI`**: Local equivalent of Jenkins CI pipeline (run all checks and tests)
 
 ### Debugging
 
 - Set `PIERNIK_DEBUG=1` in compiler config for gdb-friendly builds
-- Check `bin/piernik` output format and error codes
 - Stack traces appear with `-fbacktrace`
 
 ## Cross-Component Communication
@@ -134,7 +130,7 @@ The setup script (`python/DirWalk.py`) scans for:
 
 ## External Dependencies
 
-- **Fortran compiler**: gfortran, ifort (Intel Fortran), or oneAPI compiler
+- **Fortran compiler**: gfortran or oneAPI compiler
 - **MPI**: OpenMPI or MPICH (via wrapper compilers: `mpif90`, `h5pfc`)
 - **HDF5**: Parallel HDF5 library with Fortran bindings
 - **FFTW3**: For Fourier transforms (optional physics modules)
@@ -151,23 +147,15 @@ The setup script (`python/DirWalk.py`) scans for:
 
 ```bash
 # Quick build and test for one problem
-./setup
-make obj_tearing           # or any obj_*
-
-# Check setup for all problems without building
-make allsetup
+./setup <problem>
+make obj          # or any obj_*
 
 # Find module dependencies for a problem
 make dep P=problems/tearing/initproblem.F90
 
 # Run full CI checks locally
-make CI
+make CI  # with -j it may execute tests in parallel
 
-# Rebuild with different compiler
-cat > .setuprc << EOF
-COMPILER=compilers/ifx.in
-EOF
-make resetup
 ```
 
 ## Known Gotchas
@@ -175,5 +163,5 @@ make resetup
 - **Real precision**: `-fdefault-real-8` is mandatory; 32-bit floats break physics
 - **Gfortran recursion bug (14.x)**: Use `-fno-recursive -fcheck=recursion` to avoid CRESP crashes
 - **Module name case**: Fortran is case-insensitive; setup script treats `MODULE MOD_X` and `module mod_x` as equivalent
-- **Parallel I/O**: HDF5 setup must be compiled with MPI; check with `h5pfc -showversion`
-- **obj_<PROBLEM> independence**: Changing src files requires re-setup; `make resetup` uses saved .setuprc
+- **Parallel I/O**: HDF5 setup must be compiled with MPI; check with `h5pfc -showconfig`
+- **obj_<PROBLEM> independence**: Creating or deleting src files requires re-setup; `make resetup` uses saved obj_<PROBLEM>/.setupcall
