@@ -56,7 +56,8 @@ module thermal
    real                            :: TN, ltntrna
    real, dimension(:), allocatable :: Tref, alpha, lambda0, Y, dens_tab
    real, dimension(:,:), allocatable :: Tref_tab, alpha_tab, lambda0_tab
-   integer                         :: nfuncs, neql, ndens_tab
+   integer                         :: nfuncs, neql
+   integer(kind=4)                 :: ndens_tab
    integer, dimension(:), allocatable :: nfuncs_tab, neql_tab
 
 contains
@@ -341,12 +342,12 @@ contains
 
       rlim = 10.0**(-6)
 
-      logTeql = -1.0 * huge(1)
+      logTeql = -1.0 * huge(1.)
       do i = 1, neql
          if (Teql(i) .gt. 0.0) then
             logTeql(i) = log10(Teql(i))
          else
-            logTeql(i) = -1.0 * huge(1)
+            logTeql(i) = -1.0 * huge(1.)
          endif
       enddo
 

@@ -88,7 +88,7 @@ contains
    subroutine mark_Jeans(this, cg)
 
       use constants,  only: pi, GEO_XYZ, INVALID, dirtyH
-      use dataio_pub, only: die
+      use dataio_pub, only: die, warn, msg
       use domain,     only: dom
       use fluidindex, only: iarr_all_sg, flind
       use func,       only: ekin !, emag
@@ -104,7 +104,7 @@ contains
       type(grid_container), pointer, intent(inout) :: cg    !< current grid piece
 
       real, dimension(:,:,:), pointer :: p3d
-      integer :: f
+      integer :: f, neg_e_cnt
       logical :: any_has_energy
 #ifdef MAGNETIC
       logical, save :: warned = .false.
@@ -120,6 +120,8 @@ contains
       else
          p3d => cg%wa
       endif
+
+      neg_e_cnt = 0
 
       ! assume that fluid and cs2 have updated boundaries
       if (associated(cg%cs_iso2)) then
@@ -148,7 +150,16 @@ contains
             end associate
          enddo
          ! sum of ion/neu/dst
-         p3d(:,:,:) = sqrt(pi/newtong) / maxval(cg%dl) * sqrt(p3d)/ sum(cg%u(iarr_all_sg, :, :, :), dim=1)
+         neg_e_cnt = count(p3d < 0.)
+         if (neg_e_cnt > 0) then
+            write(msg, '(a,i0,a)')"Found ", neg_e_cnt, " cells with negative internal energy (ignored for refinement)"
+            call warn(msg)
+         endif
+         where (p3d > 0.)
+            p3d(:,:,:) = sqrt(pi/newtong) / maxval(cg%dl) * sqrt(p3d)/ sum(cg%u(iarr_all_sg, :, :, :), dim=1)
+         elsewhere
+            p3d(:,:,:) = 2 * this%ref_thr
+         endwhere
       endif
 
       call cg%flag%set(p3d < this%ref_thr)

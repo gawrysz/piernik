@@ -160,7 +160,7 @@ contains
       use allreduce,        only: piernik_MPI_Allreduce
       use cg_leaves,        only: leaves
       use cg_list,          only: cg_list_element
-      use constants,        only: ndims, xdim, ydim, zdim, LO, HI, CENTER, pi, nbdn_n, I_ONE  !, pLOR
+      use constants,        only: ndims, xdim, ydim, zdim, LO, HI, CENTER, pi, nbdn_n, I_ONE, I_THREE, I_FIVE, I_SIX  !, pLOR
       use dataio_pub,       only: warn
       use domain,           only: dom
       use fluidindex,       only: flind
@@ -228,9 +228,9 @@ contains
       if (delayed) then                ! Prepare for MPI communications for energy injections
          call count_mpi_injection_cells(tinj, nsend)
          allocate(inj_send(sum(nsend) * 6))
-         ind(FIRST) = 1
+         ind(FIRST) = I_ONE
          do p = FIRST+I_ONE, LAST
-            ind(p) = ind(p-1)+nsend(p-1)*6
+            ind(p) = ind(p-1)+nsend(p-1)*I_SIX
          enddo
       endif
 
@@ -348,8 +348,8 @@ contains
                         pset => pset%nxt
                         cycle
                      endif
-                     ijkl = ijkp - 3
-                     ijkr = ijkp + 3
+                     ijkl = ijkp - I_THREE
+                     ijkr = ijkp + I_THREE
                      ijkl_coord = [cg%coord(CENTER,xdim)%r(ijkl(xdim)), cg%coord(CENTER,ydim)%r(ijkl(ydim)), cg%coord(CENTER,zdim)%r(ijkl(zdim))]
                      dist_max = 3 * cg%dx
                      call find_injection_region(pset%pdata%pos, ijkl, ijkr, ijkl_coord, cg%dx, dist_max, ijk_check, frac1)
@@ -371,7 +371,7 @@ contains
 
 
                               ijk1 = -nint((pset%pdata%pos - [cg%coord(CENTER,xdim)%r(i), cg%coord(CENTER,ydim)%r(j), cg%coord(CENTER,zdim)%r(k)]) * cg%idl, kind=4)
-                              aijk1 = sum(ijk1**2)
+                              aijk1 = int(sum(ijk1**2), kind=4)
 
                               ! KICK
                               if (kick) then
@@ -397,8 +397,8 @@ contains
                                     do p = FIRST, LAST
                                        if (.not. send_data(p)) then
                                           if (attribute_to_proc(cg%x(i), cg%y(j), cg%z(k), p)) then
-                                             inj_send(ind(p):ind(p)+5) = (/ pset%pdata%pos(xdim), pset%pdata%pos(ydim), pset%pdata%pos(zdim), frac1, dens_amb, cg%dx /)
-                                             ind(p) = ind(p)+6
+                                             inj_send(ind(p):ind(p)+I_FIVE) = (/ pset%pdata%pos(xdim), pset%pdata%pos(ydim), pset%pdata%pos(zdim), frac1, dens_amb, cg%dx /)
+                                             ind(p) = ind(p)+I_SIX
                                              send_data(p)=.true.
                                           endif
                                        endif
@@ -585,7 +585,7 @@ contains
 
     real,    intent(in)                       :: tdyn
     real                                      :: G, RJ, tcool, kbgmh, temp
-    integer, intent(in)                       :: i, j, k
+    integer(kind=4), intent(in)               :: i, j, k
     type(grid_container), pointer, intent(in) :: cg
     class(component_fluid), pointer           :: pfl
 
@@ -650,7 +650,7 @@ contains
 !    use cg_cost_data,          only: I_PARTICLE
     use cg_leaves,             only: leaves
     use cg_list,               only: cg_list_element
-    use constants,             only: ndims, I_ONE, LO, xdim, ydim, zdim, CENTER
+    use constants,             only: ndims, I_ONE, I_THREE, LO, xdim, ydim, zdim, CENTER
     use domain,                only: dom
     use fluidindex,            only: flind
     use fluidtypes,            only: component_fluid
@@ -669,7 +669,8 @@ contains
     type(particle), pointer                             :: pset
     class(component_fluid), pointer                     :: pfl
     integer(kind=4), dimension(ndims)                   :: ijkp, ijkl, ijkr
-    integer                                             :: i, j, k, p, ifl
+    integer                                             :: i, j, k, ifl
+    integer(kind=4)                                     :: p
     real                                                :: t1, tj, dens_amb, frac1, dist_max
     real, dimension(ndims)                              :: ijkl_coord
     logical, dimension(7,7,7)                           :: ijk_check
@@ -702,8 +703,8 @@ contains
                      cycle
                   endif
 
-                  ijkl = ijkp - 3
-                  ijkr = ijkp + 3
+                  ijkl = ijkp - I_THREE
+                  ijkr = ijkp + I_THREE
                   ijkl_coord = [cg%coord(CENTER,xdim)%r(ijkl(xdim)), cg%coord(CENTER,ydim)%r(ijkl(ydim)), cg%coord(CENTER,zdim)%r(ijkl(zdim))]
                   dist_max = 3 * cg%dx
                   call find_injection_region(pset%pdata%pos, ijkl, ijkr, ijkl_coord, cg%dx, dist_max, ijk_check, frac1)
@@ -757,7 +758,7 @@ contains
     implicit none
 
     real, intent(in)                            :: x,y,z
-    integer, intent(in)                         :: p
+    integer(kind=4), intent(in)                 :: p
     type(cg_level_connected_t), pointer         :: ll
     real,    dimension(ndims)                   :: ldl
     integer                                     :: b
@@ -793,7 +794,7 @@ contains
     use fluidtypes,            only: component_fluid
     use func,                  only: operator(.equals.)
     use grid_cont,             only: grid_container
-    use constants,             only: I_ONE, xdim, ydim, zdim, ndims, LO, HI, CENTER
+    use constants,             only: I_ONE, xdim, ydim, zdim, ndims, LO, HI, CENTER, I_SIX
     use MPIF,                  only: MPI_INTEGER, MPI_COMM_WORLD, MPI_DOUBLE_PRECISION
     use MPIFUN,                only: MPI_Alltoall, MPI_Alltoallv
     use mpisetup,              only: proc, FIRST, LAST, err_mpi
@@ -802,14 +803,15 @@ contains
 
     integer(kind=4), dimension(:), intent(in) :: nsend
     real, dimension(:), intent(in)            :: inj_send
-    integer, intent(in)                       :: is, ish
+    integer(kind=4), intent(in)               :: is, ish
     logical, intent(in)                       :: sne_dump
     type(grid_container), pointer             :: cg
     type(cg_list_element), pointer            :: cgl
     class(component_fluid), pointer           :: pfl
     integer(kind=4), dimension(FIRST:LAST)    :: nrecv, disps, dispr, counts, countr
     real, dimension(:), allocatable           :: inj_recv
-    integer                                   :: p, part, ind, i, j, k, aijk1, ifl
+    integer                                   :: p, part, ind, ifl
+    integer(kind=4)                           :: i, j, k, aijk1
     real                                      :: x,y,z, mfdv, dens_amb, dx, frac
     logical                                   :: in_cg
     integer(kind=4), dimension(ndims)         :: ijk1, ijkl, ijkr
@@ -818,8 +820,8 @@ contains
     call MPI_Alltoall(nsend, I_ONE, MPI_INTEGER, nrecv, I_ONE, MPI_INTEGER, MPI_COMM_WORLD, err_mpi)
 
     allocate(inj_recv(sum(nrecv)*6))
-    counts = 6 * nsend
-    countr = 6 * nrecv
+    counts = I_SIX * nsend
+    countr = I_SIX * nrecv
     disps(FIRST) = 0
     dispr(FIRST) = 0
     do p = FIRST + I_ONE, LAST
@@ -827,7 +829,7 @@ contains
        dispr(p) = dispr(p-1) + countr(p-1)
     enddo
 
-    call MPI_Alltoallv(inj_send, 6*nsend, disps, MPI_DOUBLE_PRECISION , inj_recv, 6*nrecv, dispr, MPI_DOUBLE_PRECISION, MPI_COMM_WORLD, err_mpi)
+    call MPI_Alltoallv(inj_send, I_SIX*nsend, disps, MPI_DOUBLE_PRECISION , inj_recv, I_SIX*nrecv, dispr, MPI_DOUBLE_PRECISION, MPI_COMM_WORLD, err_mpi)
     if (sum(nrecv) .eq. 0) return
 
     cgl => all_cg%first
@@ -872,7 +874,7 @@ contains
                       if (.not. ijk_check(i,j,k)) cycle
                       if (.not. cg%leafmap(i,j,k)) cycle
                       ijk1 = -nint(([x,y,z] - [cg%coord(CENTER,xdim)%r(i), cg%coord(CENTER,ydim)%r(j), cg%coord(CENTER,zdim)%r(k)]) * cg%idl, kind=4)
-                      aijk1 = sum(ijk1**2)
+                      aijk1 = int(sum(ijk1**2), kind=4)
                       if (aijk1 .eq. 0) print *, proc, 'WARNING! SNe center cell should not be in a different cg!', x,y,z, cg%coord(CENTER,xdim)%r(i), cg%coord(CENTER,ydim)%r(j), cg%coord(CENTER,zdim)%r(k), dx, cg%dx, 'in cg:', cg%coord(LO, xdim)%r(cg%ijkse(xdim,LO)), cg%coord(HI, xdim)%r(cg%ijkse(xdim,HI)),  cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO)), cg%coord(HI, ydim)%r(cg%ijkse(ydim,HI)), cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO)), cg%coord(HI, zdim)%r(cg%ijkse(zdim,HI))
 
                       call TIGRESS_injection(cg, pfl, dens_amb, dx, mfdv, frac, ijk1, aijk1, i, j, k, is, ish, sne_dump)   ! Injection scheme
@@ -903,8 +905,8 @@ contains
     real, intent(in)                          :: x,y,z,dx
     logical, intent(out)                      :: in_cg
     real                                      :: xmin, ymin, zmin, xmax, ymax, zmax, frac1
-    integer                                   :: nx,ny,nz, i
-    integer, dimension(ndims), intent(out)                 :: ijkl, ijkr
+    integer(kind=4)                           :: nx,ny,nz, i
+    integer(kind=4), dimension(ndims), intent(out) :: ijkl, ijkr
     real, dimension(ndims)                    :: ijkl_coord
     logical, dimension(:,:,:), allocatable, intent(out)    :: ijk_check
 
@@ -933,15 +935,15 @@ contains
 
     ! Deal with different resolutions between cgs in AMR: volume weighted fraction for energy injection
     if (x .lt. cg%coord(LO, xdim)%r(cg%ijkse(xdim,LO))) then
-      nx =  ceiling(((x+3*dx) - cg%coord(LO, xdim)%r(cg%ijkse(xdim,LO))) / dx)
+      nx =  ceiling(((x+3*dx) - cg%coord(LO, xdim)%r(cg%ijkse(xdim,LO))) / dx, kind=4)
       ijkl(xdim) = cg%ijkse(xdim,LO)
       ijkr(xdim) = min(cg%ijkse(xdim,LO) + nx, cg%ijkse(xdim,HI))
     else if (x .gt. cg%coord(HI, xdim)%r(cg%ijkse(xdim,HI))) then
-      nx =  ceiling((cg%coord(HI, xdim)%r(cg%ijkse(xdim,HI)) - (x-3*dx)) / dx)
+      nx =  ceiling((cg%coord(HI, xdim)%r(cg%ijkse(xdim,HI)) - (x-3*dx)) / dx, kind=4)
       ijkl(xdim) = max(cg%ijkse(xdim,HI) - nx, cg%ijkse(xdim,LO))
       ijkr(xdim) = cg%ijkse(xdim,HI)
     else
-      nx = min(ceiling((x-dx - cg%coord(LO, xdim)%r(cg%ijkse(xdim,LO))) / dx), 3) + min(ceiling((cg%coord(HI, xdim)%r(cg%ijkse(xdim,HI)) - x) / dx), 4)
+      nx = int(min(ceiling((x-dx - cg%coord(LO, xdim)%r(cg%ijkse(xdim,LO))) / dx), 3) + min(ceiling((cg%coord(HI, xdim)%r(cg%ijkse(xdim,HI)) - x) / dx), 4), kind=4)
       ijkl(xdim) = cg%ijkse(xdim,LO)
       do i = cg%ijkse(xdim, LO), cg%ijkse(xdim, HI)
          if (cg%coord(CENTER, xdim)%r(i) <= xmin) ijkl(xdim) = i
@@ -955,15 +957,15 @@ contains
       enddo
     endif
     if (y .lt. cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO))) then
-       ny =  ceiling(((y+3*dx) - cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO))) / dx)
+       ny =  ceiling(((y+3*dx) - cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO))) / dx, kind=4)
        ijkl(ydim) = cg%ijkse(ydim,LO)
        ijkr(ydim) = min(cg%ijkse(ydim,LO) + ny,  cg%ijkse(ydim,HI))
     else if (y .gt. cg%coord(HI, ydim)%r(cg%ijkse(ydim,HI))) then
-       ny =  ceiling((cg%coord(HI, ydim)%r(cg%ijkse(ydim,HI)) - (y-3*dx)) / dx)
+       ny =  ceiling((cg%coord(HI, ydim)%r(cg%ijkse(ydim,HI)) - (y-3*dx)) / dx, kind=4)
        ijkl(ydim) = max(cg%ijkse(ydim,HI) - ny, cg%ijkse(ydim,LO))
        ijkr(ydim) = cg%ijkse(ydim,HI)
     else
-      ny = min(ceiling((y-dx - cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO))) / dx), 3) + min(ceiling((cg%coord(HI, ydim)%r(cg%ijkse(ydim,HI)) - y) / dx), 4)
+      ny = int(min(ceiling((y-dx - cg%coord(LO, ydim)%r(cg%ijkse(ydim,LO))) / dx), 3) + min(ceiling((cg%coord(HI, ydim)%r(cg%ijkse(ydim,HI)) - y) / dx), 4), kind=4)
       ijkl(ydim) = cg%ijkse(ydim,LO)
       do i = cg%ijkse(ydim, LO), cg%ijkse(ydim, HI)
          if (cg%coord(CENTER, ydim)%r(i) <= ymin) ijkl(ydim) = i
@@ -977,15 +979,15 @@ contains
       enddo
     endif
     if (z .lt. cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO))) then
-      nz =  ceiling(((z+3*dx) - cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO))) / dx)
+      nz =  ceiling(((z+3*dx) - cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO))) / dx, kind=4)
       ijkl(zdim) = cg%ijkse(zdim,LO)
       ijkr(zdim) = min(cg%ijkse(zdim,LO) + nz, cg%ijkse(zdim,HI))
     else if (z .gt. cg%coord(HI, zdim)%r(cg%ijkse(zdim,HI))) then
-      nz =  ceiling((cg%coord(HI, zdim)%r(cg%ijkse(zdim,HI)) - (z-3*dx)) / dx)
+      nz =  ceiling((cg%coord(HI, zdim)%r(cg%ijkse(zdim,HI)) - (z-3*dx)) / dx, kind=4)
       ijkl(zdim) = max(cg%ijkse(zdim,HI) - nz, cg%ijkse(zdim,LO))
       ijkr(zdim) = cg%ijkse(zdim,HI)
     else
-      nz = min(ceiling((z-dx - cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO))) / dx), 3) + min(ceiling((cg%coord(HI, zdim)%r(cg%ijkse(zdim,HI)) - z) / dx), 4)
+      nz = int(min(ceiling((z-dx - cg%coord(LO, zdim)%r(cg%ijkse(zdim,LO))) / dx), 3) + min(ceiling((cg%coord(HI, zdim)%r(cg%ijkse(zdim,HI)) - z) / dx), 4), kind=4)
       ijkl(zdim) = cg%ijkse(zdim,LO)
       do i = cg%ijkse(zdim, LO), cg%ijkse(zdim, HI)
          if (cg%coord(CENTER, zdim)%r(i) <= zmin) ijkl(zdim) = i
@@ -1026,7 +1028,7 @@ contains
    class(component_fluid), pointer           :: pfl
    real, intent(in)                          :: dens_amb, dx, mfdv, frac
    integer(kind=4), dimension(:), intent(in) :: ijk1
-   integer, intent(in)                       :: is, ish, i,j,k, aijk1
+   integer(kind=4), intent(in)               :: is, ish, i,j,k, aijk1
    logical, intent(in)                       :: sne_dump
    real                                      :: padd, en_SN, en_SN01, en_SN09, maxvel, frac1, enclosed_mass, frac3, frac4, RM
    real                                      :: Ekin0, mp0cost, mp0sq, mp
@@ -1120,7 +1122,7 @@ contains
      implicit none
 
      real, dimension(ndims), intent(in)        :: ppos
-     integer, dimension(ndims), intent(in)     :: ijkl, ijkr
+     integer(kind=4), dimension(ndims), intent(in) :: ijkl, ijkr
      real, dimension(ndims), intent(in)        :: ijkl_coord
      real, intent(in)                          :: dx, dist_max
      logical, dimension(ijkl(xdim):ijkr(xdim), ijkl(ydim):ijkr(ydim), ijkl(zdim):ijkr(zdim)), intent(out)    :: ijk_check

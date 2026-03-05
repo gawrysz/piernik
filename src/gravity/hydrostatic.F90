@@ -599,7 +599,7 @@ contains
       type(axes)                              :: ax
 
       allocate(gpots(1,1,ksmin:ksmax+1))
-      lhn = 1 ; lhn(zdim,LO) = ksmin ; lhn(zdim,HI) = ksmax+1
+      lhn = 1 ; lhn(zdim,LO) = int(ksmin, kind=4) ; lhn(zdim,HI) = int(ksmax+1, kind=4)
       call ax%allocate_axes(lhn)
       ax%x          = hscg%x(iia)
       ax%y          = hscg%y(jja)
