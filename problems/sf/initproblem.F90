@@ -304,7 +304,7 @@ logical, intent(in) :: forward
       real                            :: xi, yj, zk, pres, fac
       type(cg_list_element),  pointer :: cgl
       type(grid_container),   pointer :: cg
-      integer                         :: seed   ! jrandpert
+      integer(kind=4)                 :: seed   ! jrandpert
 
       seed = proc                               ! jrandpert
       call srand(seed)                          ! jrandpert

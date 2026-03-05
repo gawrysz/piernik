@@ -34,7 +34,7 @@ module iosupport
    public :: galdisk_vars_hdf5, galdisk_tsl, read_initial_fld_from_restart, write_global_to_restart, galdisk_attrs_pre, galdisk_post_write_data
    public :: init_iosupport, galdisk_redostep
    real   :: emir, emor, emoh !< emag inner radius, outer radius, outer height
-   integer :: zflx_layer      !< index of cells layer to count mass flux through z boundaries
+   integer(kind=4) :: zflx_layer  !< index of cells layer to count mass flux through z boundaries
    logical :: t_mcmp, t_mcmp_tot, t_ovlp, t_ovlp_tot, t_emag, t_emag_tot, t_encr, t_encr_tot, t_dmass_stars, t_dmass_stars_tot,&
               t_SNI, t_SNI_tot, t_SNII, t_SNII_tot, t_emag_disk, t_emag_diskonly, t_mflx4, t_mflx_disk, t_massflxz, t_massflxz_tot, t_massflxz_lh, t_massflxz_lh_tot
 #ifdef SN_DISTRIBUTION

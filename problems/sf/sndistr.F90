@@ -57,7 +57,7 @@ module sndistr
    real, dimension(2)                    :: SNtrest, SNfreq, rec_SNtrest
    integer                               :: SNamount
    integer(kind=4)                       :: howmulti, SNamount_oneCrab, add_magn_once
-   integer, dimension(2)                 :: SNnohistory, SNcount, SNno, rec_SNnohistory, rec_SNcount
+   integer(kind=4), dimension(2)         :: SNnohistory, SNcount, SNno, rec_SNnohistory, rec_SNcount
    logical                               :: add_mass, add_ener, add_encr, add_magn, ald_ecr, ald_mag
    logical                               :: snf_unset = .true.
    logical                               :: forward_sweeps, sfr_dump, sfr2plt, sfr2hdf, dip_dump, diphdump, sne_dump
@@ -866,7 +866,7 @@ module sndistr
       implicit none
 
       real,                  intent(in)    :: sndt
-      integer, dimension(:), intent(inout) :: num
+      integer(kind=4), dimension(:), intent(inout) :: num
       real,    dimension(:), intent(in)    :: SNfreq
       real,    dimension(size(num))        :: dtime, dtxSNfreq, zerorelato, invfreq
       integer(kind=4)                      :: li
