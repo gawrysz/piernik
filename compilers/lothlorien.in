@@ -16,7 +16,8 @@ F90FLAGS  = -fdefault-real-8 -ffree-form -std=gnu -fimplicit-none -ffree-line-le
 F90FLAGS += -O3 -funroll-loops -fno-stack-arrays -fno-recursive
 F90FLAGS += -Wall -Wextra -W -Wsurprising -Wcharacter-truncation -fmodule-private
 F90FLAGS += -fbacktrace -ggdb
-F90FLAGS += -fcheck=all,no-array-temps
+F90FLAGS += -fcheck=all,no-array-temps,no-bounds
+# no-bounds required to prevent incorrect code generation in gfortran 16.1
 
 # For gfortran >= 10.0 the use mpi_f08 interface is strongly encouraged
 F90FLAGS += -pedantic
