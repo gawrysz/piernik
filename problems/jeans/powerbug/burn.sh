@@ -14,24 +14,45 @@
 # Tested only on Linux. Will require changes to run on MacOS.
 
 MODE="burn"
-if [ $# -ge 1 ] ; then
-    MODE=$1
-    if [ "$MODE" == "help" ] ; then
-	echo "Usage: $0 [mode]"
-	echo "  where the mode is:"
-	echo "  burn    – for maximum CPU heating (default, may need adjustments for particular CPU)"
-	echo "  scan    – tries few combinations of adjustable parameters to help to determine optimum block size for the burn mode"
-	echo "  user    – user-defined: provide n_d and nb as arguments"
-	echo "  help    – this help"
-	exit 0
-    fi
-fi
-
 # Count available CPU threads.
-NTHR=$( lscpu -p | grep -cv '^#' )
+NTHR_DEFAULT=$( lscpu -p | grep -cv '^#' )
+NTHR=$NTHR_DEFAULT
 VENDOR=$( grep vendor_id /proc/cpuinfo | uniq | awk '{print $3}' )
 NB=32
 ND=128
+
+if [ $# -ge 1 ] ; then
+    case "$1" in
+        help)
+            echo "Usage: $0 [mode] [args]"
+            echo "  where the mode is:"
+            echo "  burn    – for maximum CPU heating (default, may need adjustments for particular CPU)"
+            echo "  scan    – tries few combinations of adjustable parameters to help to determine optimum block size for the burn mode"
+            echo "  user    – user-defined: provide n_d, nb, and optional thread count"
+            echo "  help    – this help"
+            echo ""
+            echo "Examples:"
+            echo "  $0 burn 16           # burn mode using 16 threads"
+            echo "  $0 scan 12           # scan mode using 12 threads"
+            echo "  $0 user 144 32 8     # user mode with nd=144, nb=32, 8 threads"
+            echo "  $0 16                # burn mode using 16 threads"
+            exit 0
+            ;;
+        burn|scan|user)
+            MODE=$1
+            shift
+            ;;
+        [0-9]* )
+            NTHR=$1
+            shift
+            ;;
+        *)
+            MODE=$1
+            shift
+            ;;
+    esac
+fi
+
 case $MODE in
     "burn")
 	# Maximum power draw depends on CPU model and problem configuration:
@@ -48,17 +69,20 @@ case $MODE in
 		exit 1
 		;;
 	esac
+	[ $# -ge 1 ] && NTHR=$1
 	;;
     "user")
-	# Get $nd and $nb from arguments. Bogus values will crash Piernik thus no error checking here.
-	if [ $# -ge 2 ] ; then
-	    ND=$2
+	# Get $nd, optional $nb, and optional thread count from arguments.
+	# Bogus values will crash Piernik thus no error checking here.
+	if [ $# -ge 1 ] ; then
+	    ND=$1
 	else
 	    echo "You need to provide at least n_d, e.g.:"
 	    echo "$0 user 144 32  # equivalent to '$0 burn' on AMD"
 	    exit 5
 	fi
-	[ $# -ge 3 ] && NB=$3
+	[ $# -ge 2 ] && NB=$2
+	[ $# -ge 3 ] && NTHR=$3
 	;;
     "scan")
 	# Scan for most energy-consuming setup parameters.
@@ -66,6 +90,7 @@ case $MODE in
 
 	ND="64 96 128 160 192 224 256"
 	NB="16 32 48"
+	[ $# -ge 1 ] && NTHR=$1
 	;;
     *)
 	echo "Unknown mode '$MODE'."

@@ -11,26 +11,47 @@
 # Tested only on Linux. Will require changes to run on MacOS.
 
 MODE="ramspam"
-if [ $# -ge 1 ] ; then
-    MODE=$1
-    if [ "$MODE" == "help" ] ; then
-	echo "Usage: $0 [mode]"
-	echo "  where the mode is:"
-	echo "  burn    – for huge CPU heating (may need adjustments for particular CPU)"
-	echo "  ramspam – for high CPU heating and a lot of RAM usage (default)"
-	echo "  scan    – tries few combinations of adjustable parameters to help to determine optimum block size for the burn mode"
-	echo "  user    – user-defined: provide bs and k as arguments"
-	echo "  help    – this help"
-	exit 0
-    fi
-fi
-
 # Count available CPU threads.
-NTHR=$( lscpu -p | grep -cv '^#' )
+NTHR_DEFAULT=$( lscpu -p | grep -cv '^#' )
+NTHR=$NTHR_DEFAULT
 VENDOR=$( grep vendor_id /proc/cpuinfo | uniq | awk '{print $3}' )
 k=1
 #SL="Riemann"
 SL="RTVD"
+
+if [ $# -ge 1 ] ; then
+    case "$1" in
+        help)
+            echo "Usage: $0 [mode] [args]"
+            echo "  where the mode is:"
+            echo "  burn    – for huge CPU heating (may need adjustments for particular CPU)"
+            echo "  ramspam – for high CPU heating and a lot of RAM usage (default)"
+            echo "  scan    – tries few combinations of adjustable parameters to help to determine optimum block size for the burn mode"
+            echo "  user    – user-defined: provide bs and k and optional thread count"
+            echo "  help    – this help"
+            echo ""
+            echo "Examples:"
+            echo "  $0 burn 16           # burn mode using 16 threads"
+            echo "  $0 scan 12           # scan mode using 12 threads"
+            echo "  $0 user 300 1 8      # user mode with bs=300, k=1, 8 threads"
+            echo "  $0 16                # ramspam mode using 16 threads"
+            exit 0
+            ;;
+        burn|ramspam|scan|user)
+            MODE=$1
+            shift
+            ;;
+        [0-9]*)
+            NTHR=$1
+            shift
+            ;;
+        *)
+            MODE=$1
+            shift
+            ;;
+    esac
+fi
+
 case $MODE in
     "burn")
 	# Maximum power draw depends on CPU model and problem configuration:
@@ -48,20 +69,23 @@ case $MODE in
 		exit 1
 		;;
 	esac
+	[ $# -ge 1 ] && NTHR=$1
 	;;
     "user")
-	# Get $bs and $k from arguments. Bogus values will crash Piernik thus no error checking	here.
-	if [ $# -ge 2 ] ; then
-	    BSL=$2
+	# Get $bs and $k from arguments. Bogus values will crash Piernik thus no error checking here.
+	if [ $# -ge 1 ] ; then
+	    BSL=$1
 	else
 	    echo "You need to provide at least bs, e.g.:"
 	    echo "$0 user 300 1  # equivalent to '$0 burn' on AMD"
 	    exit 5
 	fi
-	[ $# -ge 3 ] && k=$3
+	[ $# -ge 2 ] && k=$2
+	[ $# -ge 3 ] && NTHR=$3
 	;;
     "ramspam")
 	BSL=256
+	[ $# -ge 1 ] && NTHR=$1
 	# Use all the available memory.
 	# Assume an estimate for RES = 19450 + 11960 * k**2 kB
 	k=$( LC_ALL=C free | awk '/Mem/ {print int(sqrt(($NF/'"$NTHR"'-19450.)/11960.))}' )
@@ -76,6 +100,7 @@ case $MODE in
 
 	BSL="92 116 148 188 236 300 380 480"
 	SL="Riemann RTVD"
+	[ $# -ge 1 ] && NTHR=$1
 	;;
     *)
 	echo "Unknown mode '$MODE'."
