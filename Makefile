@@ -257,6 +257,7 @@ I64:
 		( $(cleanup_tmpdir) ; $(ECHO) -e "  64-bit integer test "$(FAILED) && exit 1 )
 
 # Target to run IO version 2 restart compatision test
+# It may fail with OpenMPI running on 4 or less cores – --oversubscribe may be required
 IOv2:
 	OTMPDIR=$$(mktemp -d obj_XXXXXX) ;\
 	RUNDIR=$(RUNS_DIR)/advection_test_$${OTMPDIR//obj_/} ;\
