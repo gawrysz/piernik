@@ -80,7 +80,7 @@ DISPLAY ?= display
 PYTHON ?= python3
 SHELL := /bin/bash
 
-export LC_ALL = C
+export LC_ALL = C.UTF-8
 
 # Test environment
 SETUP = ./setup
