@@ -6,7 +6,7 @@ import shutil
 import sys
 from DirWalk import DirectoryWalker
 import subprocess as sp
-import tempfile
+import shlex
 from optparse import OptionParser
 
 try:
@@ -221,6 +221,28 @@ def get_stdout(cmd):
         return process.communicate()[0]
 
 
+def run_cpp(args, stdin_text=None):
+    """Run the C preprocessor and return its stdout.
+
+    The command is started without a shell (no quoting problems), the input
+    language is forced with -x (the extension of the file is not trusted, as
+    e.g. clang-based cpp on macOS refuses to treat *.f90 files as input) and
+    stderr is captured: warnings (e.g. #warning, triggered on purpose by
+    -D__INTEL_COMPILER) are dropped, but it is printed when cpp fails.
+    "-x c" is used for dumping macros (-dM), "-x assembler-with-cpp" for
+    preprocessing of Fortran sources (it does not mangle '//' and apostrophes).
+    """
+    cpp = ["cpp", "-E"] + args
+    try:
+        res = sp.run(cpp, input=stdin_text, stdout=sp.PIPE, stderr=sp.PIPE, universal_newlines=True)
+    except OSError as e:
+        sys.exit('\033[91m' + "Cannot execute '%s': %s" % (cpp[0], e) + '\033[0m')
+    if res.returncode != 0:
+        sys.stderr.write(res.stderr)
+        sys.exit('\033[91m' + "Command failed (exit code %d): %s" % (res.returncode, " ".join(cpp)) + '\033[0m')
+    return res.stdout
+
+
 def list_info(dir, indent):
     tab = []
     name = " " * (2 * indent) + os.path.basename(dir)
@@ -284,7 +306,7 @@ def setup_piernik(data=None):
 
     if (len(args) < 1):
         sys.stderr.write('\033[91m' + "\nNo problem_name has been provided" + '\033[0m' + "\n")
-        exit()
+        sys.exit()
 
     if (len(args) > 1):
         sys.stderr.write('\033[93m' + "Ignored spurious arguments: " + '\033[0m' + "%s\n" % args[1:])
@@ -381,18 +403,21 @@ def setup_piernik(data=None):
     if (req_missing):
         sys.exit()
 
-    foo_fd, foo_path = tempfile.mkstemp(suffix=".f90", dir='.')
-    cmd = "echo '#include \"%spiernik.h\"' > \"%s\"" % ('src/base/', foo_path)
-    cmd += " && cpp -E -x c %s -dM -I%s \"%s\" && rm \"%s\"" % (
-        cppflags, os.path.dirname(piernikdef), foo_path, foo_path)
-    defines = get_stdout(cmd).rstrip().split("\n")
+    # Read the code from stdin: no temporary file (which could be left behind
+    # when cpp fails and which cpp on some systems refuses to handle).
+    cpp_args = ["-x", "c", "-dM"] + shlex.split(cppflags) + ["-I" + os.path.dirname(piernikdef), "-"]
+    cmd = "cpp -E " + " ".join(cpp_args)
+    defines = run_cpp(cpp_args, '#include "src/base/piernik.h"\n').rstrip().split("\n")
     if (options.verbose):
         print(cmd)
         print("Defined symbols:")
         for defin in defines:
             print(defin)
 
-    our_defs = [f.split(" ")[1] for f in filter(cpp_junk.match, defines)]
+    # cpp_junk drops the compiler-specific "#define _..." lines
+    our_defs = [f.split(" ")[1] for f in filter(cpp_junk.match, defines) if f.startswith("#define ")]
+    if (len(our_defs) == 0):
+        sys.exit('\033[91m' + "No preprocessor symbols found. Does '" + cmd + "' work on your system?" + '\033[0m')
     if (options.verbose):
         print("our_defs:")
         print(our_defs)
@@ -403,12 +428,13 @@ def setup_piernik(data=None):
     incl = ['']
     module = dict()
 
-    for f in f90files:  # exclude links that symbolise file locks
-        if (not os.access(f, os.F_OK)):
-            print('\033[93m' + "Warning: Cannot access file:" + '\033[0m', f)
-            f90files.remove(f)
+    # exclude links that symbolise file locks
+    # (do not remove items from the list that is being iterated over)
+    for f in [x for x in f90files if not os.access(x, os.F_OK)]:
+        print('\033[93m' + "Warning: Cannot access file:" + '\033[0m', f)
+        f90files.remove(f)
 
-    for f in f90files:
+    for f in list(f90files):  # iterate over a copy: f90files.remove(w) below
         for line in open(f):
             if overriding(line):
                 o_cnt = 0
@@ -458,9 +484,10 @@ def setup_piernik(data=None):
 
         if (keys_logic1 or keys_logic2):
             # workaround the fact that we're using cpp and some of use clauses may depend on __INTEL_COMPILER
-            cmd = "cpp -E -x assembler-with-cpp %s -I%s -I%s -I%s %s" % (cppflags + " -D__INTEL_COMPILER", probdir, 'src/base', os.path.dirname(piernikdef), f)
+            cpp_args = ["-x", "assembler-with-cpp"] + shlex.split(cppflags) + \
+                ["-D__INTEL_COMPILER", "-I" + probdir, "-Isrc/base", "-I" + os.path.dirname(piernikdef), f]
             # Scan preprocessed files
-            lines = get_stdout(cmd).split('\n')
+            lines = run_cpp(cpp_args).split('\n')
             for line in lines:
                 if have_use(line):
                     luse.append(line.split()[1].rstrip(","))
@@ -625,7 +652,7 @@ def setup_piernik(data=None):
     # create dictionary that maps file to directories
     dirs = {}
     for f in files:
-        temp = f.rstrip('.F90').split('/')
+        temp = os.path.splitext(f)[0].split('/')  # rstrip('.F90') would strip characters, not the suffix
         key = temp[-1]
         dirs[key] = [temp[0]]
         if len(temp) > 2:
