@@ -4,7 +4,7 @@ Lowest layer; used by everything. Parent: [../AGENTS.md](../AGENTS.md).
 
 ## Core definitions
 - `constants.F90` – numeric constants, **enumerations** (solver ids, directions `xdim/ydim/zdim`, `PIERNIK_*` code-progress states, string lengths). Add new enum ids here.
-- `units.F90` – physical constants and unit systems. `types.F90`, `axes.F90`, `problem_pub.F90`, `timestep_pub.F90`, `fluids/fluids_pub` – small shared types/variables.
+- `units.F90` – physical constants and unit systems. `types.F90`, `axes.F90`, `problem_pub.F90`, `timestep_pub.F90`, and `../fluids/fluids_pub.F90` – small shared types/variables.
 - `global.F90` – global run-time parameters (namelists `NUMERICAL_SETUP`, `PARALLEL_SETUP`, ...): `t`, `dt`, `nstep`, CFL, solver choice (`which_solver`: rtvd / hllc / riemann / unsplit), `divB_0_method`, limiters, etc.
 - `piernik.h` – central header included by (almost) every file: pulls `piernik.def`, derives symbols, defines `RNG` (cell range macro), `MPIF`/`MPIFUN`. `defines.c` only validates `piernik.def` consistency.
 - `piernik.F90` – main program; `initpiernik.F90` / `finalizepiernik.F90` – init and cleanup sequence (order matters: namelist-reading `init_*` calls depend on each other).

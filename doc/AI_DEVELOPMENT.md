@@ -47,7 +47,7 @@ When you change structure (move/rename modules, add a directory, change `setup`)
 ## 7. Known traps in this codebase (assistants fall into these)
 - Assuming `src/` subdirectories are namespaces: they are not, module names must be unique globally.
 - Message prefix is the *file* name, not module name (`[divB:...]` in `divB.F90`); enforced by `bin/checkmessages.sh`.
-- Using raw `MPI_*` calls, missing `implicit none`/`private`/`only:`, magic numbers – rejected by `bin/qa.py`.
+- Use the `piernik_MPI_*` wrappers where available. `bin/qa.py` checks `implicit none`, `private`/`public`, `only:`, and related Fortran style issues, and reports magic integers; it does not enforce MPI-wrapper use.
 - Python 2 scripts in `python/`, `bin/` (see the lists in AGENTS.md) – do not try to "fix" them unless asked.
 - `piernik.def` symbols (compile time) vs `problem.par` parameters (run time) are different mechanisms – don't add `#if` where a namelist parameter would do.
 - Changing initial conditions or defaults silently changes gold-test results.

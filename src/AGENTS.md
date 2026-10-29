@@ -1,6 +1,6 @@
 # src/ – source tree map
 
-All Fortran modules live here; **one module per file**. The module name is *usually* but not always the file name
+The core Fortran modules live here; problem-specific modules (for example `problems/*/initproblem.F90`) live with their problems. Each file normally contains one module. The module name is *usually* but not always the file name
 (`divB.F90`→`div_B`, `multigridmultipole.F90`→`multipole`, `signal_handler.F90`→`signalhandler`, `ppprofiling.F90`→`ppp`):
 `setup` finds modules by scanning `module` statements, while message prefixes `[file_basename:routine]` follow the *file* name (`[divB:...]`). The directory structure is thematic only: `setup` flattens everything into
 one `obj*/` directory, so there are no per-directory namespaces and module names must be globally unique.

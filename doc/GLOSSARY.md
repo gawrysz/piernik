@@ -6,7 +6,7 @@ Terms marked (?) are my best understanding – confirm/correct when you know bet
 ## Grid and data
 | Term | Meaning |
 |------|---------|
-| `cg` | "computational grid" block: a rectangular chunk of cells plus guardcells, owned by one MPI rank (`grid/grid_cont.F90`, type `grid_container`) |
+| `cg` | "computational grid" block: a rectangular chunk of cells plus guardcells, owned by one MPI rank (`grid/grid_container.F90`, type `grid_container`) |
 | `cg_list`, `cg_level`, `leaves`, `all_cg` | lists of `cg`s; `leaves` = the finest blocks covering the domain (standard iteration target), `all_cg` = all blocks on all levels (`grid/cg_list*.F90`, `cg_leaves`, `cg_list_global`) |
 | `nb` | number of guardcells (boundary cells) around the physical domain; same in all directions (`grid/domain.F90`) |
 | `dom` | the global domain description (sizes, boundary types, decomposition) |
