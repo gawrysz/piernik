@@ -13,7 +13,7 @@ Parent: [../AGENTS.md](../AGENTS.md).
 ## hdf5/ (everything pulled by `HDF5`, the default; `I_KNOW_WHAT_I_AM_DOING` disables it)
 - Low level: `helpers_hdf5` (overloaded create-attribute/dataset wrappers), `set_get_attributes`, `read_attribute`, `common_hdf5` (shared by dumps/restarts/slices).
 - Outputs: `data_hdf5` (single-precision data dumps, GDF-compatible via `grid_data_format` = module `gdf`, readable by yt),
-  `restart_hdf5` (front-end) → `restart_hdf5_v2` (current, AMR-capable) and `restart_hdf5_v1` (read old archives only).
+  `restart_hdf5` (front-end) → `restart_hdf5_v2` (current, AMR-capable) and `restart_hdf5_v1` (legacy reader and writer; writes when `use_v2_io = .false.`).
 - `particles_io` (`NBODY && HDF5`), `io_debug` (`DEBUG`; namelist `PIERNIK_IO_DEBUG`).
 - Parallel-HDF5 collectives: every rank must take part in every dataset call, or the run deadlocks.
 

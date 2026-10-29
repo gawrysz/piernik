@@ -1,12 +1,12 @@
 # jenkins/ – gold (regression) tests and CI glue
 
-Parent: [../AGENTS.md](../AGENTS.md). User-level description: [README.md](README.md). `make gold` (part of `make CI`) calls `gold_test_list.sh`.
+Parent: [../AGENTS.md](../AGENTS.md). User-level description: [README.md](README.md). `make gold` (part of `make CI`) invokes `gold_test.sh` through the root Makefile's per-test targets; `make gold-serial` and `make oldgold` (deprecated, likely to be removed soon) use `gold_test_list.sh`.
 
 ## How a gold test works
 `gold_test.sh <config>` reads these variables from `gold_configs/<name>.config`: `GOLD_COMMIT` (SHA of a commit considered correct), `PROBLEM_NAME`,
-`SETUP_PARAMS` (current code), `GOLD_PARAMS` (setup options for the old commit), `OUTPUT` (file to compare), optional `NTHR`.
+`SETUP_PARAMS` (setup options for both builds), `GOLD_PARAMS` (run-time arguments for the reference executable), `OUTPUT` (file to compare), optional `NTHR`.
 It clones the repository (plus all `refs/pull/*`) into a workspace (`jenkins/workspace/`, git-ignored), checks out `GOLD_COMMIT`, builds and runs it, builds and runs the current tree
-(using the **current** `setup` and `compilers/` – rsynced over the old checkout), and compares the HDF5 outputs with `bin/gdf_distance` (result mapped via log10 to a pass/fail threshold).
+(the reference build uses `setup` from `GOLD_COMMIT` with the **current** `compilers/` rsynced into it), and compares the HDF5 outputs with `bin/gdf_distance` (only zero total difference passes; log10 values are recorded in CSV for reporting).
 `gold_test_list.sh` runs all `gold_configs/*.config` in parallel (GNU `parallel`) or serially (`SERIAL=1`, `make gold-serial`).
 Configs: `MHDsedovAMR`, `mcrtest_new`, `mcrtest_CRESP`, `mcrwind`, `resist`, `streaming_instability`.
 

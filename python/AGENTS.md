@@ -22,9 +22,9 @@ the second part (`The setup script`) describes `./setup`.
 `./setup` is a symlink to `python/piernik_setup.py` (helper: `python/DirWalk.py`). It must be run
 from the repository root. It does **not** compile anything by itself (unless `-n` is absent, then it
 finally calls `make -j<ncpu> -C obj_<name>`). Its job is to assemble a build directory
-`obj[_<suffix>]/` (option `-o`/`--objdir`) and a run directory `runs/<problem>[_<suffix>]/`.
+`obj[_<suffix>]/` (option `-o`/`--obj`) and a run directory `runs/<problem>[_<suffix>]/`.
 
-Typical use: `./setup sedov -c gcc` (problem name = directory in `problems/`, possibly nested,
+Typical use: `./setup sedov -c h5pfc_gnu` (problem name = directory in `problems/`, possibly nested,
 e.g. `mcrtest/mcrtest_new`), `-n` skips compilation, `--copy` copies files instead of symlinking,
 `-d FLAG1,FLAG2` adds `-D` preprocessor symbols, `-p file` selects a parameter file,
 `-v` prints verbose diagnostics (the cpp command and all symbols found), `--problems`/`-u` list problems/units.
@@ -56,11 +56,11 @@ The last invocation is pickled in `.lastsetup` (`--last` repeats it); the call i
 - The compiler-driver `cpp` is not the same everywhere: on macOS `cpp` is clang-based and
   refuses to guess the language of `*.f90` / `*.F90` files (error `cc: error: no input files` or
   "linker input file unused"). GNU cpp (Linux, Homebrew `cpp-14`) is happy with them.
-- Therefore all calls go through `run_cpp()`: `cpp -E -x <lang> ...`, no shell, no temporary file,
-  stderr captured (shown only on failure, because #warning directives fire under -D__INTEL_COMPILER), non-zero exit code is fatal.
-  - `-x c` together with `-dM` and the code passed through stdin (`-`) to get the macro list,
-  - `-x assembler-with-cpp` to preprocess Fortran (keeps `//` concatenation operator and
-    apostrophes intact; `-x c` would treat `//` as a comment).
+- Currently both `cpp` calls use `get_stdout()` with shell command strings; there is no `run_cpp()` helper.
+  Macro discovery uses a temporary `.f90` file, and neither invocation selects the input language explicitly.
+  `get_stdout()` discards stderr and does not check the subprocess return code.
+- Explicit language selection that preserves Fortran syntax, avoiding temporary files, and checked subprocess
+  execution with useful diagnostics are proposed portability improvements, not implemented behaviour.
 - Do not rely on `$CPP` or on a specific `cpp` version. Do not assume GNU-specific flags
   (e.g. `-traditional-cpp` behaves differently on clang).
 - If a user reports problems, ask for: `cpp --version`, `which cpp`, and the output of
@@ -70,7 +70,7 @@ The last invocation is pickled in `.lastsetup` (`--last` repeats it); the call i
 
 ## Known pitfalls / things to keep in mind
 - `cpp_junk` regexp filters out `#define _...` lines (compiler internals); only symbol names are used.
-  Empty output of the macro dump is treated as a fatal error with a hint.
+  Empty macro output is not validated and raises `IndexError` while constructing `our_defs`; an explicit diagnostic is still needed.
 - Lists must not be modified while iterated (this was a bug in the file-lock and `overrides` loops).
 - Python sets are used for dependencies, so the order of items in the generated `Makefile` may vary
   between runs (set `PYTHONHASHSEED=0` and compare sorted lines when diffing Makefiles).
@@ -99,4 +99,4 @@ The last invocation is pickled in `.lastsetup` (`--last` repeats it); the call i
 - `problems/<name>/` – `piernik.def`, `initproblem.F90`, `problem.par`, optional `info`, `Makefile.in`,
   extra modules.
 - `compilers/*.in` – compiler configs; `compilers/tests/` – feature test programs.
-- `obj*/`, `runs/` – generated; safe to delete.
+- `obj*/` – generated build directories, usually disposable. `runs/` contains run-specific parameters, logs, snapshots and restart checkpoints; preserve or back up needed runs before deleting them.

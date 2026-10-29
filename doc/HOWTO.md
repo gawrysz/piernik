@@ -41,11 +41,11 @@ Search for an existing similar type (e.g. `BND_OUTH`) with `grep -rn BND_OUTH sr
 ## 7. Add a source term / physics component
 Sources are collected in `src/fluids/sources.F90`; physics components live in `src/fluids/<component>/` and are switched by a preprocessor symbol from `piernik.def`.
 New files need a `! pulled by SYMBOL` comment so that `./setup` compiles them (see [../python/AGENTS.md](../python/AGENTS.md)); module names must be globally unique.
-Check with `./setup <problem> -n` that the file is picked up only when intended, and that problems **without** your symbol still build (`make allsetup`).
+Check with `./setup <problem> -n` that the file is picked up only when intended. To verify that problems **without** your symbol still build, run `make allsetup`, then `make obj_A_* -j`.
 
 ## 8. Add a refinement criterion
 User-defined: hook `problem_refine_derefine` or the URC framework (`src/grid/refinement/URC*.F90`; `URC_user`, `URC_Jeans`, `URC_nbody` are examples).
-Parameters live in the `AMR` namelist; example of a problem using it: `problems/sedov` (`ref_thr`, `ref_eps`).
+Framework criteria are configured through the `AMR` namelist (e.g. `refine_vars`). Sedov's problem-specific criterion uses `ref_thr` and `ref_eps` in `PROBLEM_CONTROL`; see `problems/sedov/initproblem.F90`.
 
 ## 9. Add a new compiler configuration
 Copy `compilers/default.in`, adapt, test with `./setup sedov -c <name> -n` and a build. Do not edit `default.in` for a local setup
