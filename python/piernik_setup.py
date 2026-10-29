@@ -383,7 +383,7 @@ def setup_piernik(data=None):
 
     foo_fd, foo_path = tempfile.mkstemp(suffix=".f90", dir='.')
     cmd = "echo '#include \"%spiernik.h\"' > \"%s\"" % ('src/base/', foo_path)
-    cmd += " && cpp %s -dM -I%s \"%s\" && rm \"%s\"" % (
+    cmd += " && cpp -E -x c %s -dM -I%s \"%s\" && rm \"%s\"" % (
         cppflags, os.path.dirname(piernikdef), foo_path, foo_path)
     defines = get_stdout(cmd).rstrip().split("\n")
     if (options.verbose):
@@ -458,7 +458,7 @@ def setup_piernik(data=None):
 
         if (keys_logic1 or keys_logic2):
             # workaround the fact that we're using cpp and some of use clauses may depend on __INTEL_COMPILER
-            cmd = "cpp %s -I%s -I%s -I%s %s" % (cppflags + " -D__INTEL_COMPILER", probdir, 'src/base', os.path.dirname(piernikdef), f)
+            cmd = "cpp -E -x assembler-with-cpp %s -I%s -I%s -I%s %s" % (cppflags + " -D__INTEL_COMPILER", probdir, 'src/base', os.path.dirname(piernikdef), f)
             # Scan preprocessed files
             lines = get_stdout(cmd).split('\n')
             for line in lines:
