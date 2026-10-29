@@ -3,7 +3,7 @@
 Parent: [../AGENTS.md](../AGENTS.md). The first part describes the other scripts in this directory,
 the second part (`The setup script`) describes `./setup`.
 
-## Other scripts (not covered by CI, except `piernik_setup.py` and `DirWalk.py`)
+## Other scripts (no functional tests in CI, except `piernik_setup.py` and `DirWalk.py`; all tracked `*.py` undergo pycodestyle check)
 | Script | Purpose | State |
 |--------|---------|-------|
 | `DirWalk.py` | directory walker used by `setup` (`DirectoryWalker`) | needed |

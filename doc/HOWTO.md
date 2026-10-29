@@ -31,7 +31,7 @@ Access it through `cg%q(qna%ind(name))%arr` (3D) or `cg%w(wna%ind(name))%arr` (4
 ## 5. Output a new variable to HDF5
 Standard variable: add its name to the variable list handling in the `*_hdf5` module under `src/IO/` and keep names consistent with the Python tools in `python/` and `visual/`
 (they look up datasets by name). Problem-specific variable: use the `user_vars_hdf5` hook (recipe 3) – no change in `src/` needed.
-Time-series (`*_tsl.log`) columns: the `user_tsl` hook (`dataio_user::tsl_out`).
+Time-series (`*_tsl`) columns: the `user_tsl` hook (`dataio_user::tsl_out`).
 
 ## 6. Add a boundary condition
 Boundary types are enumerators `BND_*` in `src/base/constants.F90` and string names in the `bnd_xl ...` parameters of `BASE_DOMAIN` (`src/grid/domain.F90`).

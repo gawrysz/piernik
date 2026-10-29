@@ -45,8 +45,8 @@ When you move/rename modules, update the corresponding file in the same commit.
 - `jenkins/` holds the gold-test scripts and configs used by the Makefile.
 
 ## Conventions
-- Every module has a license header (checked by `bin/check_license_headers.sh`) and a Doxygen
-  `\brief`; start new files from `doc/general/new_source_file.F90`.
+- Every module should have a license header (checked by `bin/check_license_headers.sh`) and a Doxygen
+  `\brief`; start new files from `doc/general/new_source_file.F90`. The modules which lack Doxygen comments, should be updated to include them.
 - Messages: `die`, `warn`, `printinfo` from `dataio_pub`, text prefixed with `"[file_basename:routine]"`
   (enforced by `bin/checkmessages.sh`; this is the *file* name, which may differ from the module name).
 - `bin/qa.py` (part of `make QA`) enforces: `implicit none`, explicit `public`/`private`, `use ... only:`,

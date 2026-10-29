@@ -9,7 +9,7 @@ Developers who want to use AI assistants: see [AI_DEVELOPMENT.md](AI_DEVELOPMENT
 cd runs/sedov
 mpirun -n 4 ./piernik         # tend = 1e-3 in problem.par, so it is short
 ```
-Results appear in the run directory: HDF5 snapshots (`*.h5`, every `dt_hdf`), a text log (`*.log`), time-series (`*_tsl.log`) and restart files (`*.res`, every `dt_res`).
+Results appear in the run directory: HDF5 snapshots (`*.h5`, every `dt_hdf`), a text log (`*.log`), time-series (`*.tsl`) and restart files (`*.res`, every `dt_res`).
 `./setup --problems` lists all problems with one-line descriptions; `./setup --help` lists options.
 
 ## 2. The three levels of configuration
