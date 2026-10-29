@@ -10,7 +10,7 @@ Parent: [../AGENTS.md](../AGENTS.md). Documentation is Doxygen-based and lives m
 - `images/*.eps` – figures referenced by the Doxygen pages (EPS only; no PNG/SVG for web output). `weno.gnuplot` – plot script for the WENO notes.
 
 ## Human-oriented guides (Markdown)
-`GETTING_STARTED.md` (first run, configuration levels, contributing), `AI_DEVELOPMENT.md` (using AI assistants) and `BACKLOG.md` (cleanup tasks grouped by difficulty and blast radius). Keep them consistent with `../INSTALL.md` and the root `AGENTS.md`.
+`GETTING_STARTED.md` (first run, configuration levels, contributing), `HOWTO.md` (recipes: add parameter/hook/field/output/BC/...), `GLOSSARY.md` (vocabulary), `AI_DEVELOPMENT.md` (using AI assistants), `BACKLOG.md` (cleanup tasks by difficulty and blast radius), `MACOS_SETUP_DEBUG.md` (open macOS `cpp` problem). Keep them consistent with `../INSTALL.md` and the root `AGENTS.md`.
 
 ## Also read (outside `doc/`)
 `../INSTALL.md` (install, MPI/HDF5 pitfalls, Intel compilers, CI usage), `../README` (pointer to the web page), `../Makefile` header (usage of all targets),
