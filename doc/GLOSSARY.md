@@ -30,14 +30,14 @@ Terms marked (?) are my best understanding – confirm/correct when you know bet
 | CT | constrained transport – keeps ∇·B = 0 using face-centred B (`scheme/ct.F90`) |
 | HDC | hyperbolic divergence cleaning – the alternative ∇·B treatment for Riemann solvers |
 | CFL | Courant–Friedrichs–Lewy number: time-step limit (`base/timestep*`) |
-| multigrid | solver for the Poisson equation (self-gravity) and CR diffusion (`multigrid/`, `gravity/multigrid_*`) |
+| multigrid | shared solver infrastructure used for the Poisson equation (self-gravity) and implicit anisotropic CR diffusion (`multigrid/`, `gravity/multigrid_*`, `fluids/cosmicrays/multigrid_diffusion.F90`); other applications may also be possible |
 | multipole | multipole expansion of the mass distribution, giving external boundary conditions for the Poisson solver (`gravity/multigridmultipole.F90`) |
 | FARGO | orbital-advection scheme for rotating discs (`fargo/`) |
 | shearing box | local model of a rotating disc; boundary conditions in `shear/` |
 
 ## Physics components (preprocessor symbols from `piernik.def`)
-`IONIZED` (ionised gas, implies `MAGNETIC`), `NEUTRAL` (neutral gas), `DUST` (pressureless dust fluid), `COSM_RAYS` (CR fluid in the diffusion–advection approximation),
-`CRESP` (spectral CR model: momentum bins per cell), `GRAV`/`SELF_GRAV`/`MULTIGRID` (gravity), `NBODY` (particles), `SHEAR`, `RESISTIVE`, `SN_SRC` (supernovae).
+`IONIZED` (ionised gas, implies `MAGNETIC` unless `NONMAGNETIC`; without magnetic fields it is intended to behave like `NEUTRAL`), `NEUTRAL` (neutral gas), `DUST` (pressureless dust fluid), `COSM_RAYS` (older CR-component diffusion model),
+`CRESP` (extension of `COSM_RAYS` that resolves CR components into energy fractions/bins), `GRAV`/`SELF_GRAV`/`MULTIGRID` (gravity and other multigrid applications), `NBODY` (particles), `SHEAR`, `RESISTIVE`, `SN_SRC` (supernovae).
 Authoritative list and implications: `doc/general/precompiler.F90` (may be incomplete) and `src/base/piernik.h`.
 
 ## Run, build and test

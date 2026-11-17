@@ -33,6 +33,10 @@ Users plug in through hooks declared in `base/user_hooks.F90` (set from `initpro
   `THERM`, `PIERNIK_OPENCL`, `DEBUG`, ... full list: `doc/general/precompiler.F90`.
   Implications: `SELF_GRAV` ⇒ `GRAV` + `MULTIGRID`; `NBODY` ⇒ `SELF_GRAV`; `CRESP` ⇒ `COSM_RAYS`; `IONIZED` ⇒ `MAGNETIC`
   unless `NONMAGNETIC`.
+- Model distinctions: `DUST` is pressureless; `CRESP` extends the older `COSM_RAYS` model with energy bins; `IONIZED` without
+  magnetic fields is intended to behave like `NEUTRAL` (verify the implementation before merging code paths). `MULTIGRID` serves
+  both self-gravity's Poisson solve and implicit anisotropic CR diffusion, with other applications also possible.
+- `VERBOSE` is a deprecated compile-time flag; use the run-time `verbosity` setting for message filtering.
 - Run-time options are namelists (`doc/general/namelists.F90`), read in each module's `init_*`;
   a new namelist parameter needs: declaration, namelist group, MPI broadcast, validation.
 
@@ -54,9 +58,10 @@ Moving files is cheap for `setup` (it globs `src/**`) but changes `git blame`/hi
    `coriolis`, `non_inertial`, `gridgeometry`, `mass_defect` depend on grid/fluids. Candidates for `grid/` or `scheme/`/`fluids/`.
    Also: profiling cluster (`ppp*`) → `base/ppp/`; containers (`cnt_array`, `log_bins`, `real_vector`,
    `sortable_list`, `primes`, `overlap`, `axes`) → `base/containers/`.
-3. Multigrid is split in three places: generic in `multigrid/`, Poisson solver in `gravity/multigrid_*`, and
-   diffusion solver in `fluids/cosmicrays/multigrid_diffusion.F90`. Suggest moving the `gravity/multigrid*`, `pcg`,
-   `multipole_array`, `old_soln_list` files and the CR diffusion solver into `multigrid/`.
+3. Multigrid infrastructure is split across three areas: shared machinery in `multigrid/`, the Poisson application in
+   `gravity/multigrid_*`, and implicit anisotropic CR diffusion in `fluids/cosmicrays/multigrid_diffusion.F90`.
+   Consider organizing shared numerical infrastructure together without conflating these distinct physical applications.
+   Other applications of the solver may also be possible.
 4. `scheme/ct.F90` (constrained transport) and `magnetic/` (divB, bfc_bcc) belong together; `magnetic/resist/` has one file.
 5. `IO/hdf5/particles_io.F90` and `particles/particle_func.F90`, `particle_types.F90` are pulled by different
    symbols (`NBODY && HDF5`, `GRAV`) – verify the `pulled by` lines are intended.

@@ -1,7 +1,9 @@
 # src/multigrid – multigrid infrastructure
 
-Parent: [../AGENTS.md](../AGENTS.md). Pulled by `MULTIGRID` (set automatically by `SELF_GRAV`); FFT use needs FFTW (`NO_FFT` disables it).
-Users of this infrastructure: Poisson solver in `../gravity/multigrid_*`, implicit CR diffusion in `../fluids/cosmicrays/multigrid_diffusion.F90`.
+Parent: [../AGENTS.md](../AGENTS.md). Pulled by `MULTIGRID` (set automatically by `SELF_GRAV`); FFT use needs FFTW (`NO_FFT` disables the gravity solver's FFT path).
+Current users are the Poisson solver in `../gravity/multigrid_*` and implicit anisotropic CR diffusion in
+`../fluids/cosmicrays/multigrid_diffusion.F90`. These are distinct physical applications of shared numerical infrastructure.
+Other applications of the solver may also be possible.
 
 - `multigrid.F90` – init/cleanup, namelist `MULTIGRID_SOLVER` (`level_depth`, prolongation order, V-cycle verbosity), allocates levels/fields.
 - `multigridvars.F90`, `multigrid_helpers.F90`, `multigrid_vstats.F90` – shared variables/types, helpers, V-cycle convergence statistics.

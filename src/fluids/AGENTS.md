@@ -25,10 +25,18 @@ Parent: [../AGENTS.md](../AGENTS.md). Each component has its own subdirectory (m
 Each `init*` reads its namelist (e.g. `COSMIC_RAYS`), sets EOS parameters and registers variables in `flind`.
 Isothermal vs adiabatic is a compile-time choice (`ISO`) plus run-time parameters.
 
+- `DUST` is a pressureless fluid component; do not treat it as an ordinary
+  pressure-bearing gas when comparing component implementations.
+- `IONIZED` with magnetic fields disabled is intended to behave like `NEUTRAL`.
+  This is a physical/modeling expectation, not proof that the current code paths
+  are interchangeable; verify equations, initialization and regressions before
+  attempting to merge the implementations.
+
 ## cosmicrays/
 - Fluid-like CR energy species: `initcosmicrays`, `cr_data`, `fluxcosmicrays`, `sourcecosmicrays`, `timestepcosmicrays`,
   `crdiffusion` (explicit anisotropic diffusion), `crhelpers`, `multigrid_diffusion` (implicit diffusion; needs `MULTIGRID`).
-- **CRESP** (spectral model, `CRESP`): `initcrspectrum` (namelist, spectrum grid), `cresp_crspectrum` (core algorithm, ~2000 lines),
+- **CRESP** (`CRESP`) extends the older `COSM_RAYS` functionality for diffusion of CR components by resolving their energy
+  distribution into fractions (bins). It uses `initcrspectrum` (namelist, spectrum grid), `cresp_crspectrum` (core algorithm, ~2000 lines),
   `cresp_NR_method` (Newton–Raphson solvers for spectrum reconstruction), `cresp_grid` (apply to every cell),
   `timestep_cresp`, `cresp_io`, `cresp_helpers`, `cresp_variables`. Numerically delicate – use the `crtest`/`mcrtest` problems and gold tests
   `gold_CRESP`, `gold_mcrtest`, `gold_mcrwind` after any change. Compiling with `-frecursive` is known to break CRESP initialisation (see `INSTALL.md`).
