@@ -28,7 +28,7 @@ Parameter files used by tests must keep working: changing `problem.par.gold`/`.b
 `sedov` (Sedov–Taylor; also standard performance benchmark), `maclaurin`/`jeans`/`selfgrav_clump`/`lingrav` (self-gravity), `otvortex`/`cpaw`/`field_loop_mhd`/`magnetic_rotor`/`khi`/`blob`/`tearing`/`shock1d_rj`/`sod2d`/`2D_RIEMANN` (hydro/MHD classics),
 `crtest`/`mcrtest`/`mcrwind` (cosmic rays, CRESP), `dust*`/`stream*`/`streaming_global` (dust, streaming instability), `kepler`/`roche`/`galdiskmao4`/`wt4`/`fargo_test` (discs, rotation), `2body`/`particle_map_test` (N-body),
 `therm_inst`, `turbulence`, `wind`, `slab`, `divvtest`, `advection_test`.
-`testing_and_debuging/` is a drawer of old developer experiments ("not guaranteed to be useful or work anymore"); its `chimaera` includes nearly all of `src/` and is the *compile-everything* test. It has `.skipauto` so `make allsetup` skips it.
+`testing_and_debuging/` is a drawer of old developer experiments ("not guaranteed to be useful or work anymore"). Its `chimaera` problem includes nearly all of `src/` and is used only to check compilation/configuration coverage (e.g. `dep`/`I64` artifacts); it has no physical meaning and is not intended to be run as a simulation. It has `.skipauto` so `make allsetup` skips it.
 
 ## Adding a problem
 Copy the closest existing one; provide `piernik.def`, `initproblem.F90` (start from `doc/general/new_source_file.F90` for the licence header), `problem.par`, `info`.
