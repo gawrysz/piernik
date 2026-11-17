@@ -67,6 +67,7 @@
     smallei= 1.e-5
     print_divb = 10
     solver_str = "Riemann"
+    cfl_glm = 0.3
  /
 
  $GRAVITY
