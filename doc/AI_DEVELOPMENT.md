@@ -52,6 +52,12 @@ When you change structure (move/rename modules, add a directory, change `setup`)
 - `piernik.def` symbols (compile time) vs `problem.par` parameters (run time) are different mechanisms – don't add `#if` where a namelist parameter would do.
 - Changing initial conditions or defaults silently changes gold-test results.
 
-## 8. Etiquette
+## 8. Performance and research evidence
+- Prefer computationally efficient methods when they do not make the implementation substantially harder to understand. In frequently called routines, avoid repeated parsing, string comparisons, allocation, or other work when a clear value can be validated or precomputed once; for example, decode a namelist string to a typed selector during initialization rather than comparing strings in a hot path.
+- Do not guess which routines are hot or claim a speedup from intuition alone. Use call frequency, profiling, or a focused benchmark when performance is material, and report when a change is an expected optimization rather than a measured one.
+- When external research informs a scientific, numerical, or algorithmic choice, add the relevant primary publication(s) to the nearby source documentation or user-facing docs. Include enough bibliographic detail or a stable DOI/URL to find the source, summarize which result supports the choice, and state its workload or metric limits; do not present one study as a universal ranking.
+- Keep citations close to the design they explain, and do not add research references to unrelated code or routine edits.
+
+## 9. Etiquette
 Mention significant AI assistance in the pull request description (helps reviewers decide how closely to look), keep the licence header and
 authorship conventions, and never commit generated artefacts (`obj*/`, `runs/`, images, tmp files).
