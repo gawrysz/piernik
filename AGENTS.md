@@ -55,6 +55,7 @@ When you move/rename modules, update the corresponding file in the same commit.
 - MPI: use the wrappers in `src/base/mpi` (`piernik_MPI_*`) instead of raw `MPI_*` calls where one exists.
 - Preprocessor symbols belong to `piernik.def`; derived symbols are set in `src/base/piernik.h`.
 - Python scripts must pass `pycodestyle` (long lines ignored).
+- Performance and research guidance for AI-assisted changes is in [doc/AI_DEVELOPMENT.md](doc/AI_DEVELOPMENT.md): avoid repeated work in hot paths when a clear precomputed alternative exists, and cite research that informs scientific or numerical design.
 - Generated artefacts (`obj*/`, `runs/`, `*.png`, `tmp*.f90`) should not be committed.
 
 ## Known technical debt (details in the per-directory files)
