@@ -84,3 +84,22 @@ to make a test pass.
 
 The root Makefile maps named targets to configs and `custom_gold` discovers
 other configs. The older `gold_test_list.sh` runner also discovers configs.
+
+## Possible test-suite improvements
+
+- Before combining or removing tests, record their cost, prerequisites and
+  unique coverage. Similar restart or cosmic-ray tests can exercise different
+  configurations and invariants.
+- Make individual tests safer to run and easier to diagnose: isolate their
+  output, propagate failures and retain useful logs without overwriting user
+  data. This benefits both developers and validation skills.
+- Add focused tests for invariants that are not adequately covered, such as
+  SFC ordering and block ownership after MPI/AMR redistribution. Small,
+  deterministic regression tests are candidates for CI.
+- Consider extending `mcrtest` with an analytical anisotropic diffusion
+  comparison. An analytical test and a gold test serve different purposes;
+  investigate their coverage before replacing either.
+- Keep expensive or environment-specific diagnostics, such as Valgrind,
+  broader MPI/AMR configuration matrices and convergence studies, available
+  on demand outside CI. Skills should select existing tests by relevance,
+  not maintain a separate AI-only suite.
