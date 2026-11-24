@@ -1,0 +1,12 @@
+{
+  "source_dirs": [
+    "src/**"
+  ],
+  "include_dirs": [
+    "src/**"
+  ],
+  "nthreads": 4,
+  "incremental_sync": true,
+  "disable_autoupdate": true,
+  "disable_diagnostics": true
+}
